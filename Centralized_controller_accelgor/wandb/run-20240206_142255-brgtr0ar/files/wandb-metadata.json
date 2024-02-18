@@ -1,0 +1,287 @@
+{
+    "os": "Linux-4.18.0-477.36.1.el8_8.x86_64-x86_64-with-glibc2.28",
+    "python": "3.11.7",
+    "heartbeatAt": "2024-02-06T13:23:00.960759",
+    "startedAt": "2024-02-06T13:22:55.814409",
+    "docker": null,
+    "cuda": null,
+    "args": [],
+    "state": "running",
+    "program": "<python with no main file>",
+    "codePathLocal": null,
+    "git": {
+        "remote": "https://github.com/Matthias2807/bsc.git",
+        "commit": "aa10b9b6fdcc79d0d41f11010d246f4ad19f42c4"
+    },
+    "email": "matthias.pex@telenet.be",
+    "root": "/kyukon/home/gent/457/vsc45787/bsc",
+    "host": "node3901.accelgor.os",
+    "username": "vsc45787",
+    "executable": "/user/gent/457/vsc45787/.conda/envs/hope/bin/python",
+    "cpu_count": 48,
+    "cpu_count_logical": 48,
+    "cpu_freq": {
+        "current": 2731.0722083333353,
+        "min": 0.0,
+        "max": 0.0
+    },
+    "cpu_freq_per_core": [
+        {
+            "current": 2645.069,
+            "min": 0.0,
+            "max": 0.0
+        },
+        {
+            "current": 2645.069,
+            "min": 0.0,
+            "max": 0.0
+        },
+        {
+            "current": 2645.069,
+            "min": 0.0,
+            "max": 0.0
+        },
+        {
+            "current": 2645.069,
+            "min": 0.0,
+            "max": 0.0
+        },
+        {
+            "current": 2645.069,
+            "min": 0.0,
+            "max": 0.0
+        },
+        {
+            "current": 2645.069,
+            "min": 0.0,
+            "max": 0.0
+        },
+        {
+            "current": 2645.069,
+            "min": 0.0,
+            "max": 0.0
+        },
+        {
+            "current": 2645.069,
+            "min": 0.0,
+            "max": 0.0
+        },
+        {
+            "current": 2645.069,
+            "min": 0.0,
+            "max": 0.0
+        },
+        {
+            "current": 2645.069,
+            "min": 0.0,
+            "max": 0.0
+        },
+        {
+            "current": 2645.069,
+            "min": 0.0,
+            "max": 0.0
+        },
+        {
+            "current": 3616.97,
+            "min": 0.0,
+            "max": 0.0
+        },
+        {
+            "current": 2645.069,
+            "min": 0.0,
+            "max": 0.0
+        },
+        {
+            "current": 2645.069,
+            "min": 0.0,
+            "max": 0.0
+        },
+        {
+            "current": 2645.069,
+            "min": 0.0,
+            "max": 0.0
+        },
+        {
+            "current": 2888.44,
+            "min": 0.0,
+            "max": 0.0
+        },
+        {
+            "current": 2645.069,
+            "min": 0.0,
+            "max": 0.0
+        },
+        {
+            "current": 2645.069,
+            "min": 0.0,
+            "max": 0.0
+        },
+        {
+            "current": 2645.069,
+            "min": 0.0,
+            "max": 0.0
+        },
+        {
+            "current": 2645.069,
+            "min": 0.0,
+            "max": 0.0
+        },
+        {
+            "current": 2645.069,
+            "min": 0.0,
+            "max": 0.0
+        },
+        {
+            "current": 2645.069,
+            "min": 0.0,
+            "max": 0.0
+        },
+        {
+            "current": 2645.069,
+            "min": 0.0,
+            "max": 0.0
+        },
+        {
+            "current": 2645.069,
+            "min": 0.0,
+            "max": 0.0
+        },
+        {
+            "current": 3616.18,
+            "min": 0.0,
+            "max": 0.0
+        },
+        {
+            "current": 2645.069,
+            "min": 0.0,
+            "max": 0.0
+        },
+        {
+            "current": 2645.069,
+            "min": 0.0,
+            "max": 0.0
+        },
+        {
+            "current": 2645.069,
+            "min": 0.0,
+            "max": 0.0
+        },
+        {
+            "current": 2645.069,
+            "min": 0.0,
+            "max": 0.0
+        },
+        {
+            "current": 2645.069,
+            "min": 0.0,
+            "max": 0.0
+        },
+        {
+            "current": 3615.954,
+            "min": 0.0,
+            "max": 0.0
+        },
+        {
+            "current": 2645.069,
+            "min": 0.0,
+            "max": 0.0
+        },
+        {
+            "current": 2645.069,
+            "min": 0.0,
+            "max": 0.0
+        },
+        {
+            "current": 2645.069,
+            "min": 0.0,
+            "max": 0.0
+        },
+        {
+            "current": 2645.069,
+            "min": 0.0,
+            "max": 0.0
+        },
+        {
+            "current": 2645.069,
+            "min": 0.0,
+            "max": 0.0
+        },
+        {
+            "current": 2645.069,
+            "min": 0.0,
+            "max": 0.0
+        },
+        {
+            "current": 2645.069,
+            "min": 0.0,
+            "max": 0.0
+        },
+        {
+            "current": 2645.069,
+            "min": 0.0,
+            "max": 0.0
+        },
+        {
+            "current": 2645.069,
+            "min": 0.0,
+            "max": 0.0
+        },
+        {
+            "current": 2645.069,
+            "min": 0.0,
+            "max": 0.0
+        },
+        {
+            "current": 2645.069,
+            "min": 0.0,
+            "max": 0.0
+        },
+        {
+            "current": 2645.069,
+            "min": 0.0,
+            "max": 0.0
+        },
+        {
+            "current": 2645.069,
+            "min": 0.0,
+            "max": 0.0
+        },
+        {
+            "current": 2645.069,
+            "min": 0.0,
+            "max": 0.0
+        },
+        {
+            "current": 2645.069,
+            "min": 0.0,
+            "max": 0.0
+        },
+        {
+            "current": 2645.069,
+            "min": 0.0,
+            "max": 0.0
+        },
+        {
+            "current": 3615.955,
+            "min": 0.0,
+            "max": 0.0
+        }
+    ],
+    "disk": {
+        "/": {
+            "total": 9.745380401611328,
+            "used": 6.688575744628906
+        }
+    },
+    "gpu": "NVIDIA A100-SXM4-80GB",
+    "gpu_count": 1,
+    "gpu_devices": [
+        {
+            "name": "NVIDIA A100-SXM4-80GB",
+            "memory_total": 85899345920
+        }
+    ],
+    "memory": {
+        "total": 503.0003547668457
+    }
+}

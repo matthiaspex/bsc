@@ -1,0 +1,186 @@
+generation:  0
+time since start:  0.00017571449279785156
+generation:  10
+time since start:  1005.644825220108
+generation:  20
+time since start:  1964.0191445350647
+generation:  30
+time since start:  2922.3421037197113
+generation:  40
+time since start:  3880.8173661231995
+(1, 40626)
+-6.10524
+{'params': {'layers_0': {'bias': (1, 128), 'kernel': (1, 137, 128)}, 'layers_1': {'bias': (1, 128), 'kernel': (1, 128, 128)}, 'layers_2': {'bias': (1, 50), 'kernel': (1, 128, 50)}}}
+1
+2
+3
+4
+5
+6
+7
+8
+9
+10
+11
+12
+13
+14
+15
+16
+17
+18
+19
+20
+21
+22
+23
+24
+25
+26
+27
+28
+29
+30
+31
+32
+33
+34
+35
+36
+37
+38
+39
+40
+41
+42
+43
+44
+45
+46
+47
+48
+49
+50
+51
+52
+53
+54
+55
+56
+57
+58
+59
+60
+61
+62
+63
+64
+65
+66
+67
+68
+69
+70
+71
+72
+73
+74
+75
+76
+77
+78
+79
+80
+81
+82
+83
+84
+85
+86
+87
+88
+89
+90
+91
+92
+93
+94
+95
+96
+97
+98
+99
+100
+101
+102
+103
+104
+105
+106
+107
+108
+109
+110
+111
+112
+113
+114
+115
+116
+117
+118
+119
+120
+121
+122
+123
+124
+125
+Number of actuator outputs: dofs =  20
+[simulation_time] The total amount of time (in seconds) that one simulation episode takes: 5
+[physics_timestep] The amount of time (in seconds) that one 'physics step' advances the physics: 0.004
+[control_timestep] The amount of time (in seconds) that one 'control step' advances the physics: 0.04
+[total_num_physics_steps] The total amount of physics steps that happen during one simulation episode: 1250
+[total_num_control_steps] The total amount of control steps that happen during one simulation episode: 125
+MJX Observatin Space:
+	Dict('in_plane_joint_position': Box(-0.5235988, 0.5235988, (10,), <class 'jax.numpy.float32'>), 'out_of_plane_joint_position': Box(-0.5235988, 0.5235988, (10,), <class 'jax.numpy.float32'>), 'in_plane_joint_velocity': Box(-inf, inf, (10,), <class 'jax.numpy.float32'>), 'out_of_plane_joint_velocity': Box(-inf, inf, (10,), <class 'jax.numpy.float32'>), 'segment_contact': Box(0.0, 1.0, (10,), <class 'jax.numpy.float32'>), 'disk_position': Box(-inf, inf, (3,), <class 'jax.numpy.float32'>), 'disk_rotation': Box(-3.1415927, 3.1415927, (3,), <class 'jax.numpy.float32'>), 'disk_linear_velocity': Box(-inf, inf, (3,), <class 'jax.numpy.float32'>), 'disk_angular_velocity': Box(-inf, inf, (3,), <class 'jax.numpy.float32'>))
+MJX Action Space:
+	Box(-0.5235988, 0.5235988, (20,), <class 'jax.numpy.float32'>)
+First 5 actuators:
+	MJX: ['BrittleStarMorphology/arm_0_segment_0_in_plane_joint_p_control', 'BrittleStarMorphology/arm_0_segment_0_out_of_plane_joint_p_control', 'BrittleStarMorphology/arm_0_segment_1_in_plane_joint_p_control', 'BrittleStarMorphology/arm_0_segment_1_out_of_plane_joint_p_control', 'BrittleStarMorphology/arm_1_segment_0_in_plane_joint_p_control']
+{'in_plane_joint_position': Array([0., 0., 0., 0., 0., 0., 0., 0., 0., 0.], dtype=float32), 'out_of_plane_joint_position': Array([0., 0., 0., 0., 0., 0., 0., 0., 0., 0.], dtype=float32), 'in_plane_joint_velocity': Array([0., 0., 0., 0., 0., 0., 0., 0., 0., 0.], dtype=float32), 'out_of_plane_joint_velocity': Array([0., 0., 0., 0., 0., 0., 0., 0., 0., 0.], dtype=float32), 'segment_contact': Array([0, 0, 0, 0, 0, 0, 0, 0, 0, 0], dtype=int32), 'disk_position': Array([0.  , 0.  , 0.11], dtype=float32), 'disk_rotation': Array([-3.142,  0.   ,  0.   ], dtype=float32), 'disk_linear_velocity': Array([0., 0., 0.], dtype=float32), 'disk_angular_velocity': Array([0., 0., 0.], dtype=float32)}
+['in_plane_joint_position', 'out_of_plane_joint_position', 'in_plane_joint_velocity', 'out_of_plane_joint_velocity', 'segment_contact', 'disk_position', 'disk_rotation', 'disk_linear_velocity', 'disk_angular_velocity']
+{'in_plane_joint_position': 10, 'out_of_plane_joint_position': 10, 'in_plane_joint_velocity': 10, 'out_of_plane_joint_velocity': 10, 'segment_contact': 10, 'disk_position': 3, 'disk_rotation': 3, 'disk_linear_velocity': 3, 'disk_angular_velocity': 3}
+[0. 0. 0. 0. 0. 0. 0. 0. 0. 0.]
+30
+62
+Observation Space:
+Dict('in_plane_joint_position': Box(-0.5235988, 0.5235988, (10,), <class 'jax.numpy.float32'>), 'out_of_plane_joint_position': Box(-0.5235988, 0.5235988, (10,), <class 'jax.numpy.float32'>), 'in_plane_joint_velocity': Box(-inf, inf, (10,), <class 'jax.numpy.float32'>), 'out_of_plane_joint_velocity': Box(-inf, inf, (10,), <class 'jax.numpy.float32'>), 'segment_contact': Box(0.0, 1.0, (10,), <class 'jax.numpy.float32'>), 'disk_position': Box(-inf, inf, (3,), <class 'jax.numpy.float32'>), 'disk_rotation': Box(-3.1415927, 3.1415927, (3,), <class 'jax.numpy.float32'>), 'disk_linear_velocity': Box(-inf, inf, (3,), <class 'jax.numpy.float32'>), 'disk_angular_velocity': Box(-inf, inf, (3,), <class 'jax.numpy.float32'>))
+('in_plane_joint_position', 'out_of_plane_joint_position', 'segment_contact')
+(6912, 62)
+62
+20
+shape of the input layer:  (62,)
+[128, 128, 20]
+dict_keys(['layers_0', 'layers_1', 'layers_2'])
+{'params': {'layers_0': {'bias': (128,), 'kernel': (62, 128)}, 'layers_1': {'bias': (128,), 'kernel': (128, 128)}, 'layers_2': {'bias': (20,), 'kernel': (128, 20)}}}
+initialized parameter shapes:
+ {'params': {'layers_0': {'bias': (128,), 'kernel': (62, 128)}, 'layers_1': {'bias': (128,), 'kernel': (128, 128)}, 'layers_2': {'bias': (20,), 'kernel': (128, 20)}}}
+Range of the output is [-0.3911007046699524, 0.3561345636844635]
+ParameterReshaper: 27156 parameters detected for optimization.
+es_params: EvoParams(opt_params=OptParams(lrate_init=0.05, lrate_decay=1.0, lrate_limit=0.001, momentum=None, beta_1=0.99, beta_2=0.999, beta_3=None, eps=1e-08, max_speed=None), sigma_init=0.03, sigma_decay=1.0, sigma_limit=0.01, init_min=0.0, init_max=0.0, clip_min=-3.4028235e+38, clip_max=3.4028235e+38)
+candidate solution shape: (6912, 27156)
+{'params': {'layers_0': {'bias': (6912, 128), 'kernel': (6912, 62, 128)}, 'layers_1': {'bias': (6912, 128), 'kernel': (6912, 128, 128)}, 'layers_2': {'bias': (6912, 20), 'kernel': (6912, 128, 20)}}}
+Total number of control timesteps per episode: 125
+Total simulation time [seconds]: 5s
+Selected sensors: ('in_plane_joint_position', 'out_of_plane_joint_position', 'segment_contact')
+Neural network architecture: [62, 128, 128, 20] with:
+	Sensory input layer dimension: 30:
+	Actuator output dimension: 20
+	Number of hidden layers / nodes per hidden layer: [128, 128]
+Arm setup: [2, 2, 2, 2, 2]
+Joint control: position
+Reward_type: distance
+Number of generations for updating policy parameters: 50
+Population size per generation of policy parameters: 6912
+Number of parallel MJX environments: 6912

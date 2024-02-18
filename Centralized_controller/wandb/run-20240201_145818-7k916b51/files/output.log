@@ -1,0 +1,56 @@
+generation:  0
+time since start:  0.010919809341430664
+generation:  10
+time since start:  212.70444750785828
+generation:  20
+time since start:  371.79262685775757
+generation:  30
+time since start:  530.7829859256744
+generation:  40
+time since start:  689.874463558197
+generation:  50
+time since start:  848.9108946323395
+generation:  60
+time since start:  1007.9594519138336
+generation:  70
+time since start:  1167.122848033905
+generation:  80
+time since start:  1326.1118545532227
+generation:  90
+time since start:  1485.2356581687927
+generation:  100
+time since start:  1644.2181115150452
+generation:  110
+time since start:  1803.3509995937347
+generation:  120
+time since start:  1962.320333480835
+generation:  130
+time since start:  2121.3812227249146
+generation:  140
+time since start:  2280.4700026512146
+generation:  150
+time since start:  2439.527854204178
+generation:  160
+time since start:  2598.634321451187
+generation:  170
+time since start:  2757.6717460155487
+generation:  180
+time since start:  2916.7117931842804
+generation:  190
+time since start:  3075.6843860149384
+generation:  200
+time since start:  3234.6668395996094
+generation:  210
+time since start:  3393.718590259552
+generation:  220
+time since start:  3552.674283027649
+EvoParams(opt_params=OptParams(lrate_init=0.05, lrate_decay=1.0, lrate_limit=0.001, momentum=None, beta_1=0.99, beta_2=0.999, beta_3=None, eps=1e-08, max_speed=None), sigma_init=0.03, sigma_decay=1.0, sigma_limit=0.01, init_min=0.0, init_max=0.0, clip_min=-3.4028235e+38, clip_max=3.4028235e+38)
+candidate solution shape:  (300, 23060)
+{'params': {'layers_0': {'bias': (300, 128), 'kernel': (300, 30, 128)}, 'layers_1': {'bias': (300, 128), 'kernel': (300, 128, 128)}, 'layers_2': {'bias': (300, 20), 'kernel': (300, 128, 20)}}}
+	Dict('in_plane_joint_position': Box(-0.5235988, 0.5235988, (10,), <class 'jax.numpy.float32'>), 'out_of_plane_joint_position': Box(-0.5235988, 0.5235988, (10,), <class 'jax.numpy.float32'>), 'in_plane_joint_velocity': Box(-inf, inf, (10,), <class 'jax.numpy.float32'>), 'out_of_plane_joint_velocity': Box(-inf, inf, (10,), <class 'jax.numpy.float32'>), 'segment_contact': Box(0.0, 1.0, (10,), <class 'jax.numpy.float32'>), 'disk_position': Box(-inf, inf, (3,), <class 'jax.numpy.float32'>), 'disk_rotation': Box(-3.1415927, 3.1415927, (3,), <class 'jax.numpy.float32'>), 'disk_linear_velocity': Box(-inf, inf, (3,), <class 'jax.numpy.float32'>), 'disk_angular_velocity': Box(-inf, inf, (3,), <class 'jax.numpy.float32'>))
+['in_plane_joint_position', 'out_of_plane_joint_position', 'segment_contact']
+(300, 10)
+(300, 10)
+(300, 10)
+(3, 300, 10)
+(300, 30)

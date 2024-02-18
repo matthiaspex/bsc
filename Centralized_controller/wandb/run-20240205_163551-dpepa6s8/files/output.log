@@ -1,0 +1,17 @@
+generation:  0
+time since start:  0.00019669532775878906
+/user/gent/457/vsc45787/.conda/envs/hope/lib/python3.11/site-packages/jax/_src/api_util.py:231: SyntaxWarning: Jitted function has invalid argnames {'segment_contact', 'in_plane_joint_position', 'out_of_plane_joint_position'} in static_argnames. Function does not take these args.This warning will be replaced by an error after 2022-08-20 at the earliest.
+  warnings.warn(f"Jitted function has invalid argnames {invalid_argnames} "
+Total number of control timesteps per episode: 125
+Total simulation time [seconds]: 5s
+Selected sensors: ['in_plane_joint_position', 'out_of_plane_joint_position', 'segment_contact']
+Neural network architecture: [30, 128, 128, 20] with:
+	Sensory input layer dimension: 30:
+	Actuator output dimension: 20
+	Number of hidden layers / nodes per hidden layer: [128, 128]
+Arm setup: [5, 0, 5, 0, 0]
+Joint control: position
+Reward_type: distance
+Number of generations for updating policy parameters: 2500
+Population size per generation of policy parameters: 300
+Number of parallel MJX environments: 300

@@ -1,0 +1,165 @@
+generation:  0
+time since start:  0.00028133392333984375
+time spent on rollout: 0
+generation:  10
+time since start:  166.49732303619385
+time spent on rollout: 163.8335464000702
+generation:  20
+time since start:  279.6905996799469
+time spent on rollout: 111.38236594200134
+generation:  30
+time since start:  392.87832856178284
+time spent on rollout: 111.3818154335022
+generation:  40
+time since start:  506.08527517318726
+time spent on rollout: 111.40140748023987
+generation:  50
+time since start:  619.2484855651855
+time spent on rollout: 111.35521697998047
+generation:  60
+time since start:  732.4374639987946
+time spent on rollout: 111.379878282547
+generation:  70
+time since start:  845.625855922699
+time spent on rollout: 111.37775111198425
+generation:  80
+time since start:  958.7816033363342
+time spent on rollout: 111.34488558769226
+generation:  90
+time since start:  1071.9493494033813
+time spent on rollout: 111.3598108291626
+generation:  100
+time since start:  1185.120041847229
+time spent on rollout: 111.36279225349426
+generation:  110
+time since start:  1298.3078277111053
+time spent on rollout: 111.37737607955933
+generation:  120
+time since start:  1411.525482416153
+time spent on rollout: 111.4074809551239
+generation:  130
+time since start:  1524.6955173015594
+time spent on rollout: 111.36443638801575
+generation:  140
+time since start:  1637.9117255210876
+time spent on rollout: 111.40455842018127
+generation:  150
+time since start:  1751.1038663387299
+time spent on rollout: 111.38415312767029
+generation:  160
+time since start:  1864.2881240844727
+time spent on rollout: 111.3757209777832
+generation:  170
+time since start:  1977.4913210868835
+time spent on rollout: 111.37510442733765
+generation:  180
+time since start:  2090.6630086898804
+time spent on rollout: 111.36490750312805
+generation:  190
+time since start:  2203.8400416374207
+time spent on rollout: 111.37231254577637
+generation:  200
+time since start:  2317.0248646736145
+time spent on rollout: 111.37692594528198
+generation:  210
+time since start:  2430.1976432800293
+time spent on rollout: 111.3644368648529
+generation:  220
+time since start:  2543.3503103256226
+time spent on rollout: 111.34539675712585
+generation:  230
+time since start:  2656.518443107605
+time spent on rollout: 111.36140966415405
+generation:  240
+time since start:  2769.6815168857574
+time spent on rollout: 111.356618642807
+generation:  250
+time since start:  2882.837527036667
+time spent on rollout: 111.35031414031982
+generation:  260
+time since start:  2995.989058971405
+time spent on rollout: 111.34315657615662
+generation:  270
+time since start:  3109.146739244461
+time spent on rollout: 111.35282135009766
+generation:  280
+time since start:  3222.3165493011475
+time spent on rollout: 111.36037516593933
+generation:  290
+time since start:  3335.4730751514435
+time spent on rollout: 111.34947943687439
+generation:  300
+time since start:  3448.621629714966
+time spent on rollout: 111.34442090988159
+generation:  310
+time since start:  3561.782593011856
+time spent on rollout: 111.35113644599915
+generation:  320
+time since start:  3674.951530456543
+time spent on rollout: 111.35952138900757
+generation:  330
+time since start:  3788.1172008514404
+time spent on rollout: 111.35967659950256
+generation:  340
+time since start:  3901.283123254776
+time spent on rollout: 111.3585410118103
+generation:  350
+time since start:  4014.4570257663727
+time spent on rollout: 111.3647723197937
+generation:  360
+time since start:  4127.617821216583
+time spent on rollout: 111.35215473175049
+generation:  370
+time since start:  4240.771397829056
+time spent on rollout: 111.3444812297821
+generation:  380
+time since start:  4353.933222055435
+time spent on rollout: 111.35265040397644
+generation:  390
+time since start:  4467.090028524399
+time spent on rollout: 111.34727454185486
+generation:  400
+time since start:  4580.252428770065
+time spent on rollout: 111.35416793823242
+generation:  410
+time since start:  4693.407970905304
+time spent on rollout: 111.34653735160828
+generation:  420
+time since start:  4806.571454048157
+time spent on rollout: 111.35504412651062
+generation:  430
+time since start:  4919.742205142975
+time spent on rollout: 111.36248540878296
+generation:  440
+time since start:  5032.900852680206
+time spent on rollout: 111.35177183151245
+Observation Space:
+Dict('in_plane_joint_position': Box(-0.5235988, 0.5235988, (10,), <class 'jax.numpy.float32'>), 'out_of_plane_joint_position': Box(-0.5235988, 0.5235988, (10,), <class 'jax.numpy.float32'>), 'in_plane_joint_velocity': Box(-inf, inf, (10,), <class 'jax.numpy.float32'>), 'out_of_plane_joint_velocity': Box(-inf, inf, (10,), <class 'jax.numpy.float32'>), 'segment_contact': Box(0.0, 1.0, (10,), <class 'jax.numpy.float32'>), 'disk_position': Box(-inf, inf, (3,), <class 'jax.numpy.float32'>), 'disk_rotation': Box(-3.1415927, 3.1415927, (3,), <class 'jax.numpy.float32'>), 'disk_linear_velocity': Box(-inf, inf, (3,), <class 'jax.numpy.float32'>), 'disk_angular_velocity': Box(-inf, inf, (3,), <class 'jax.numpy.float32'>))
+('in_plane_joint_position', 'out_of_plane_joint_position', 'segment_contact')
+(100, 62)
+62
+20
+shape of the input layer:  (62,)
+[128, 128, 20]
+dict_keys(['layers_0', 'layers_1', 'layers_2'])
+{'params': {'layers_0': {'bias': (128,), 'kernel': (62, 128)}, 'layers_1': {'bias': (128,), 'kernel': (128, 128)}, 'layers_2': {'bias': (20,), 'kernel': (128, 20)}}}
+initialized parameter shapes:
+ {'params': {'layers_0': {'bias': (128,), 'kernel': (62, 128)}, 'layers_1': {'bias': (128,), 'kernel': (128, 128)}, 'layers_2': {'bias': (20,), 'kernel': (128, 20)}}}
+Range of the output is [-0.24391287565231323, 0.3032015860080719]
+ParameterReshaper: 27156 parameters detected for optimization.
+es_params: EvoParams(opt_params=OptParams(lrate_init=0.05, lrate_decay=1.0, lrate_limit=0.001, momentum=None, beta_1=0.99, beta_2=0.999, beta_3=None, eps=1e-08, max_speed=None), sigma_init=0.03, sigma_decay=1.0, sigma_limit=0.01, init_min=0.0, init_max=0.0, clip_min=-3.4028235e+38, clip_max=3.4028235e+38)
+candidate solution shape: (100, 27156)
+{'params': {'layers_0': {'bias': (100, 128), 'kernel': (100, 62, 128)}, 'layers_1': {'bias': (100, 128), 'kernel': (100, 128, 128)}, 'layers_2': {'bias': (100, 20), 'kernel': (100, 128, 20)}}}
+Total number of control timesteps per episode: 125
+Total simulation time [seconds]: 5s
+Selected sensors: ('in_plane_joint_position', 'out_of_plane_joint_position', 'segment_contact')
+Neural network architecture: [30, 128, 128, 20] with:
+	Sensory input layer dimension: 30:
+	Actuator output dimension: 20
+	Number of hidden layers / nodes per hidden layer: [128, 128]
+Arm setup: [5, 0, 5, 0, 0]
+Joint control: position
+Reward_type: distance
+Number of generations for updating policy parameters: 2500
+Population size per generation of policy parameters: 100
+Number of parallel MJX environments: 100

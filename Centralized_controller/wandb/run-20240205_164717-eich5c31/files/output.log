@@ -1,0 +1,24 @@
+generation:  0
+time since start:  0.00024962425231933594
+	Dict('in_plane_joint_position': Box(-0.5235988, 0.5235988, (10,), <class 'jax.numpy.float32'>), 'out_of_plane_joint_position': Box(-0.5235988, 0.5235988, (10,), <class 'jax.numpy.float32'>), 'in_plane_joint_velocity': Box(-inf, inf, (10,), <class 'jax.numpy.float32'>), 'out_of_plane_joint_velocity': Box(-inf, inf, (10,), <class 'jax.numpy.float32'>), 'segment_contact': Box(0.0, 1.0, (10,), <class 'jax.numpy.float32'>), 'disk_position': Box(-inf, inf, (3,), <class 'jax.numpy.float32'>), 'disk_rotation': Box(-3.1415927, 3.1415927, (3,), <class 'jax.numpy.float32'>), 'disk_linear_velocity': Box(-inf, inf, (3,), <class 'jax.numpy.float32'>), 'disk_angular_velocity': Box(-inf, inf, (3,), <class 'jax.numpy.float32'>))
+('in_plane_joint_position', 'out_of_plane_joint_position', 'segment_contact')
+(300, 10)
+(300, 10)
+(300, 10)
+(3, 300, 10)
+(300, 30)
+['in_plane_joint_position', 'out_of_plane_joint_position', 'in_plane_joint_velocity', 'out_of_plane_joint_velocity', 'segment_contact', 'disk_position', 'disk_rotation', 'disk_linear_velocity', 'disk_angular_velocity']
+('in_plane_joint_position', 'out_of_plane_joint_position', 'segment_contact')
+Total number of control timesteps per episode: 125
+Total simulation time [seconds]: 5s
+Selected sensors: ('in_plane_joint_position', 'out_of_plane_joint_position', 'segment_contact')
+Neural network architecture: [30, 128, 128, 20] with:
+	Sensory input layer dimension: 30:
+	Actuator output dimension: 20
+	Number of hidden layers / nodes per hidden layer: [128, 128]
+Arm setup: [5, 0, 5, 0, 0]
+Joint control: position
+Reward_type: distance
+Number of generations for updating policy parameters: 2500
+Population size per generation of policy parameters: 300
+Number of parallel MJX environments: 300

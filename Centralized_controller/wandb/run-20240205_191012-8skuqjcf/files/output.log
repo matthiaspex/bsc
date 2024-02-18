@@ -1,0 +1,13 @@
+Total number of control timesteps per episode: 125
+Total simulation time [seconds]: 5s
+Selected sensors: ('in_plane_joint_position', 'out_of_plane_joint_position', 'segment_contact')
+Neural network architecture: [30, 128, 128, 20] with:
+	Sensory input layer dimension: 30:
+	Actuator output dimension: 20
+	Number of hidden layers / nodes per hidden layer: [128, 128]
+Arm setup: [5, 0, 5, 0, 0]
+Joint control: position
+Reward_type: distance
+Number of generations for updating policy parameters: 2500
+Population size per generation of policy parameters: 300
+Number of parallel MJX environments: 300

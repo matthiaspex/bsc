@@ -1,0 +1,51 @@
+generation:  0
+time since start:  0.00021195411682128906
+time spent on rollout: 0
+generation:  10
+time since start:  62.76390051841736
+time spent on rollout: 61.54448914527893
+generation:  20
+time since start:  89.31724143028259
+time spent on rollout: 26.115920305252075
+generation:  30
+time since start:  115.86571788787842
+time spent on rollout: 26.112509727478027
+generation:  40
+time since start:  142.4146466255188
+time spent on rollout: 26.112220525741577
+generation:  50
+time since start:  168.97708892822266
+time spent on rollout: 26.12801718711853
+generation:  60
+time since start:  195.5576171875
+time spent on rollout: 26.144423961639404
+Observation Space:
+Dict('in_plane_joint_position': Box(-0.5235988, 0.5235988, (10,), <class 'jax.numpy.float32'>), 'out_of_plane_joint_position': Box(-0.5235988, 0.5235988, (10,), <class 'jax.numpy.float32'>), 'in_plane_joint_velocity': Box(-inf, inf, (10,), <class 'jax.numpy.float32'>), 'out_of_plane_joint_velocity': Box(-inf, inf, (10,), <class 'jax.numpy.float32'>), 'segment_contact': Box(0.0, 1.0, (10,), <class 'jax.numpy.float32'>), 'disk_position': Box(-inf, inf, (3,), <class 'jax.numpy.float32'>), 'disk_rotation': Box(-3.1415927, 3.1415927, (3,), <class 'jax.numpy.float32'>), 'disk_linear_velocity': Box(-inf, inf, (3,), <class 'jax.numpy.float32'>), 'disk_angular_velocity': Box(-inf, inf, (3,), <class 'jax.numpy.float32'>))
+('in_plane_joint_position', 'out_of_plane_joint_position', 'segment_contact')
+(100, 62)
+62
+20
+shape of the input layer:  (62,)
+[128, 128, 20]
+dict_keys(['layers_0', 'layers_1', 'layers_2'])
+{'params': {'layers_0': {'bias': (128,), 'kernel': (62, 128)}, 'layers_1': {'bias': (128,), 'kernel': (128, 128)}, 'layers_2': {'bias': (20,), 'kernel': (128, 20)}}}
+initialized parameter shapes:
+ {'params': {'layers_0': {'bias': (128,), 'kernel': (62, 128)}, 'layers_1': {'bias': (128,), 'kernel': (128, 128)}, 'layers_2': {'bias': (20,), 'kernel': (128, 20)}}}
+Range of the output is [-0.19957903027534485, 0.42349836230278015]
+ParameterReshaper: 27156 parameters detected for optimization.
+es_params: EvoParams(opt_params=OptParams(lrate_init=0.05, lrate_decay=1.0, lrate_limit=0.001, momentum=None, beta_1=0.99, beta_2=0.999, beta_3=None, eps=1e-08, max_speed=None), sigma_init=0.03, sigma_decay=1.0, sigma_limit=0.01, init_min=0.0, init_max=0.0, clip_min=-3.4028235e+38, clip_max=3.4028235e+38)
+candidate solution shape: (100, 27156)
+{'params': {'layers_0': {'bias': (100, 128), 'kernel': (100, 62, 128)}, 'layers_1': {'bias': (100, 128), 'kernel': (100, 128, 128)}, 'layers_2': {'bias': (100, 20), 'kernel': (100, 128, 20)}}}
+Total number of control timesteps per episode: 125
+Total simulation time [seconds]: 5s
+Selected sensors: ('in_plane_joint_position', 'out_of_plane_joint_position', 'segment_contact')
+Neural network architecture: [30, 128, 128, 20] with:
+	Sensory input layer dimension: 30:
+	Actuator output dimension: 20
+	Number of hidden layers / nodes per hidden layer: [128, 128]
+Arm setup: [5, 0, 5, 0, 0]
+Joint control: position
+Reward_type: distance
+Number of generations for updating policy parameters: 2500
+Population size per generation of policy parameters: 100
+Number of parallel MJX environments: 100

@@ -1,0 +1,196 @@
+2024-02-05 19:10:49,522 INFO    StreamThr :578042 [internal.py:wandb_internal():86] W&B internal server running at pid: 578042, started at: 2024-02-05 19:10:49.522380
+2024-02-05 19:10:49,523 DEBUG   HandlerThread:578042 [handler.py:handle_request():146] handle_request: status
+2024-02-05 19:10:49,524 INFO    WriterThread:578042 [datastore.py:open_for_write():87] open: /kyukon/home/gent/457/vsc45787/bsc/Centralized_controller/wandb/run-20240205_191043-hlifbcqx/run-hlifbcqx.wandb
+2024-02-05 19:10:49,525 DEBUG   SenderThread:578042 [sender.py:send():382] send: header
+2024-02-05 19:10:49,525 DEBUG   SenderThread:578042 [sender.py:send():382] send: run
+2024-02-05 19:10:49,904 INFO    SenderThread:578042 [dir_watcher.py:__init__():211] watching files in: /kyukon/home/gent/457/vsc45787/bsc/Centralized_controller/wandb/run-20240205_191043-hlifbcqx/files
+2024-02-05 19:10:49,904 INFO    SenderThread:578042 [sender.py:_start_run_threads():1136] run started: hlifbcqx with start time 1707156648.546141
+2024-02-05 19:10:49,912 DEBUG   HandlerThread:578042 [handler.py:handle_request():146] handle_request: check_version
+2024-02-05 19:10:49,912 DEBUG   SenderThread:578042 [sender.py:send_request():409] send_request: check_version
+2024-02-05 19:10:49,973 DEBUG   HandlerThread:578042 [handler.py:handle_request():146] handle_request: run_start
+2024-02-05 19:10:49,974 DEBUG   HandlerThread:578042 [system_info.py:__init__():27] System info init
+2024-02-05 19:10:49,974 DEBUG   HandlerThread:578042 [system_info.py:__init__():42] System info init done
+2024-02-05 19:10:49,974 INFO    HandlerThread:578042 [system_monitor.py:start():194] Starting system monitor
+2024-02-05 19:10:49,974 INFO    SystemMonitor:578042 [system_monitor.py:_start():158] Starting system asset monitoring threads
+2024-02-05 19:10:49,974 INFO    HandlerThread:578042 [system_monitor.py:probe():214] Collecting system info
+2024-02-05 19:10:49,974 INFO    SystemMonitor:578042 [interfaces.py:start():190] Started cpu monitoring
+2024-02-05 19:10:49,976 INFO    SystemMonitor:578042 [interfaces.py:start():190] Started disk monitoring
+2024-02-05 19:10:49,976 INFO    SystemMonitor:578042 [interfaces.py:start():190] Started gpu monitoring
+2024-02-05 19:10:49,977 INFO    SystemMonitor:578042 [interfaces.py:start():190] Started memory monitoring
+2024-02-05 19:10:49,983 INFO    SystemMonitor:578042 [interfaces.py:start():190] Started network monitoring
+2024-02-05 19:10:49,994 DEBUG   HandlerThread:578042 [system_info.py:probe():151] Probing system
+2024-02-05 19:10:49,995 DEBUG   HandlerThread:578042 [system_info.py:_probe_git():136] Probing git
+2024-02-05 19:10:50,013 DEBUG   HandlerThread:578042 [system_info.py:_probe_git():144] Probing git done
+2024-02-05 19:10:50,013 DEBUG   HandlerThread:578042 [system_info.py:probe():199] Probing system done
+2024-02-05 19:10:50,013 DEBUG   HandlerThread:578042 [system_monitor.py:probe():223] {'os': 'Linux-4.18.0-477.36.1.el8_8.x86_64-x86_64-with-glibc2.28', 'python': '3.11.7', 'heartbeatAt': '2024-02-05T18:10:49.994707', 'startedAt': '2024-02-05T18:10:43.965840', 'docker': None, 'cuda': None, 'args': (), 'state': 'running', 'program': '<python with no main file>', 'codePathLocal': None, 'git': {'remote': 'https://github.com/Matthias2807/bsc.git', 'commit': 'aa10b9b6fdcc79d0d41f11010d246f4ad19f42c4'}, 'email': 'matthias.pex@telenet.be', 'root': '/kyukon/home/gent/457/vsc45787/bsc', 'host': 'node4004.donphan.os', 'username': 'vsc45787', 'executable': '/user/gent/457/vsc45787/.conda/envs/hope/bin/python', 'cpu_count': 36, 'cpu_count_logical': 36, 'cpu_freq': {'current': 3883.334083333333, 'min': 3900.0, 'max': 3900.0}, 'cpu_freq_per_core': [{'current': 3900.0, 'min': 3900.0, 'max': 3900.0}, {'current': 3900.0, 'min': 3900.0, 'max': 3900.0}, {'current': 3300.027, 'min': 3900.0, 'max': 3900.0}, {'current': 3900.0, 'min': 3900.0, 'max': 3900.0}, {'current': 3900.0, 'min': 3900.0, 'max': 3900.0}, {'current': 3900.0, 'min': 3900.0, 'max': 3900.0}, {'current': 3900.0, 'min': 3900.0, 'max': 3900.0}, {'current': 3900.0, 'min': 3900.0, 'max': 3900.0}, {'current': 3900.0, 'min': 3900.0, 'max': 3900.0}, {'current': 3900.0, 'min': 3900.0, 'max': 3900.0}, {'current': 3900.0, 'min': 3900.0, 'max': 3900.0}, {'current': 3900.0, 'min': 3900.0, 'max': 3900.0}, {'current': 3900.0, 'min': 3900.0, 'max': 3900.0}, {'current': 3900.0, 'min': 3900.0, 'max': 3900.0}, {'current': 3900.0, 'min': 3900.0, 'max': 3900.0}, {'current': 3900.0, 'min': 3900.0, 'max': 3900.0}, {'current': 3900.0, 'min': 3900.0, 'max': 3900.0}, {'current': 3900.0, 'min': 3900.0, 'max': 3900.0}, {'current': 3900.0, 'min': 3900.0, 'max': 3900.0}, {'current': 3900.0, 'min': 3900.0, 'max': 3900.0}, {'current': 3900.0, 'min': 3900.0, 'max': 3900.0}, {'current': 3900.0, 'min': 3900.0, 'max': 3900.0}, {'current': 3900.0, 'min': 3900.0, 'max': 3900.0}, {'current': 3900.0, 'min': 3900.0, 'max': 3900.0}, {'current': 3900.0, 'min': 3900.0, 'max': 3900.0}, {'current': 3900.0, 'min': 3900.0, 'max': 3900.0}, {'current': 3900.0, 'min': 3900.0, 'max': 3900.0}, {'current': 3900.0, 'min': 3900.0, 'max': 3900.0}, {'current': 3900.0, 'min': 3900.0, 'max': 3900.0}, {'current': 3900.0, 'min': 3900.0, 'max': 3900.0}, {'current': 3900.0, 'min': 3900.0, 'max': 3900.0}, {'current': 3900.0, 'min': 3900.0, 'max': 3900.0}, {'current': 3900.0, 'min': 3900.0, 'max': 3900.0}, {'current': 3900.0, 'min': 3900.0, 'max': 3900.0}, {'current': 3900.0, 'min': 3900.0, 'max': 3900.0}, {'current': 3900.0, 'min': 3900.0, 'max': 3900.0}], 'disk': {'/': {'total': 9.745380401611328, 'used': 6.5585174560546875}}, 'gpu': 'NVIDIA A2', 'gpu_count': 1, 'gpu_devices': [{'name': 'NVIDIA A2', 'memory_total': 16101933056}], 'memory': {'total': 754.0293846130371}}
+2024-02-05 19:10:50,014 INFO    HandlerThread:578042 [system_monitor.py:probe():224] Finished collecting system info
+2024-02-05 19:10:50,014 INFO    HandlerThread:578042 [system_monitor.py:probe():227] Publishing system info
+2024-02-05 19:10:50,014 DEBUG   HandlerThread:578042 [system_info.py:_save_conda():208] Saving list of conda packages installed into the current environment
+2024-02-05 19:10:50,776 DEBUG   HandlerThread:578042 [system_info.py:_save_conda():220] Saving conda packages done
+2024-02-05 19:10:50,777 INFO    HandlerThread:578042 [system_monitor.py:probe():229] Finished publishing system info
+2024-02-05 19:10:50,778 DEBUG   SenderThread:578042 [sender.py:send():382] send: files
+2024-02-05 19:10:50,778 INFO    SenderThread:578042 [sender.py:_save_file():1403] saving file wandb-metadata.json with policy now
+2024-02-05 19:10:50,786 DEBUG   HandlerThread:578042 [handler.py:handle_request():146] handle_request: python_packages
+2024-02-05 19:10:50,786 DEBUG   SenderThread:578042 [sender.py:send_request():409] send_request: python_packages
+2024-02-05 19:10:50,786 DEBUG   HandlerThread:578042 [handler.py:handle_request():146] handle_request: stop_status
+2024-02-05 19:10:50,787 DEBUG   SenderThread:578042 [sender.py:send_request():409] send_request: stop_status
+2024-02-05 19:10:50,791 DEBUG   HandlerThread:578042 [handler.py:handle_request():146] handle_request: internal_messages
+2024-02-05 19:10:50,906 INFO    Thread-242:578042 [dir_watcher.py:_on_file_created():271] file/dir created: /kyukon/home/gent/457/vsc45787/bsc/Centralized_controller/wandb/run-20240205_191043-hlifbcqx/files/conda-environment.yaml
+2024-02-05 19:10:50,906 INFO    Thread-242:578042 [dir_watcher.py:_on_file_created():271] file/dir created: /kyukon/home/gent/457/vsc45787/bsc/Centralized_controller/wandb/run-20240205_191043-hlifbcqx/files/requirements.txt
+2024-02-05 19:10:50,906 INFO    Thread-242:578042 [dir_watcher.py:_on_file_created():271] file/dir created: /kyukon/home/gent/457/vsc45787/bsc/Centralized_controller/wandb/run-20240205_191043-hlifbcqx/files/wandb-metadata.json
+2024-02-05 19:10:51,074 DEBUG   SenderThread:578042 [sender.py:send():382] send: telemetry
+2024-02-05 19:10:51,297 INFO    wandb-upload_0:578042 [upload_job.py:push():131] Uploaded file /tmp/tmps1f4ensbwandb/r22poolm-wandb-metadata.json
+2024-02-05 19:10:55,075 DEBUG   HandlerThread:578042 [handler.py:handle_request():146] handle_request: status_report
+2024-02-05 19:11:00,075 DEBUG   HandlerThread:578042 [handler.py:handle_request():146] handle_request: status_report
+2024-02-05 19:11:05,076 DEBUG   HandlerThread:578042 [handler.py:handle_request():146] handle_request: status_report
+2024-02-05 19:11:05,786 DEBUG   HandlerThread:578042 [handler.py:handle_request():146] handle_request: stop_status
+2024-02-05 19:11:05,786 DEBUG   SenderThread:578042 [sender.py:send_request():409] send_request: stop_status
+2024-02-05 19:11:05,826 DEBUG   HandlerThread:578042 [handler.py:handle_request():146] handle_request: internal_messages
+2024-02-05 19:11:11,018 DEBUG   HandlerThread:578042 [handler.py:handle_request():146] handle_request: status_report
+2024-02-05 19:11:16,018 DEBUG   HandlerThread:578042 [handler.py:handle_request():146] handle_request: status_report
+2024-02-05 19:11:20,786 DEBUG   HandlerThread:578042 [handler.py:handle_request():146] handle_request: stop_status
+2024-02-05 19:11:20,786 DEBUG   SenderThread:578042 [sender.py:send_request():409] send_request: stop_status
+2024-02-05 19:11:20,826 DEBUG   HandlerThread:578042 [handler.py:handle_request():146] handle_request: internal_messages
+2024-02-05 19:11:21,032 DEBUG   HandlerThread:578042 [handler.py:handle_request():146] handle_request: status_report
+2024-02-05 19:11:21,910 INFO    Thread-242:578042 [dir_watcher.py:_on_file_modified():288] file/dir modified: /kyukon/home/gent/457/vsc45787/bsc/Centralized_controller/wandb/run-20240205_191043-hlifbcqx/files/config.yaml
+2024-02-05 19:11:26,195 DEBUG   HandlerThread:578042 [handler.py:handle_request():146] handle_request: status_report
+2024-02-05 19:11:27,571 DEBUG   SenderThread:578042 [sender.py:send():382] send: telemetry
+2024-02-05 19:11:27,571 DEBUG   SenderThread:578042 [sender.py:send():382] send: exit
+2024-02-05 19:11:27,571 INFO    SenderThread:578042 [sender.py:send_exit():589] handling exit code: 0
+2024-02-05 19:11:27,571 INFO    SenderThread:578042 [sender.py:send_exit():591] handling runtime: 37
+2024-02-05 19:11:27,573 INFO    SenderThread:578042 [sender.py:_save_file():1403] saving file wandb-summary.json with policy end
+2024-02-05 19:11:27,574 INFO    SenderThread:578042 [sender.py:send_exit():597] send defer
+2024-02-05 19:11:27,574 DEBUG   HandlerThread:578042 [handler.py:handle_request():146] handle_request: defer
+2024-02-05 19:11:27,574 INFO    HandlerThread:578042 [handler.py:handle_request_defer():172] handle defer: 0
+2024-02-05 19:11:27,574 DEBUG   SenderThread:578042 [sender.py:send_request():409] send_request: defer
+2024-02-05 19:11:27,574 INFO    SenderThread:578042 [sender.py:send_request_defer():613] handle sender defer: 0
+2024-02-05 19:11:27,574 INFO    SenderThread:578042 [sender.py:transition_state():617] send defer: 1
+2024-02-05 19:11:27,574 DEBUG   HandlerThread:578042 [handler.py:handle_request():146] handle_request: defer
+2024-02-05 19:11:27,574 INFO    HandlerThread:578042 [handler.py:handle_request_defer():172] handle defer: 1
+2024-02-05 19:11:27,575 DEBUG   SenderThread:578042 [sender.py:send_request():409] send_request: defer
+2024-02-05 19:11:27,575 INFO    SenderThread:578042 [sender.py:send_request_defer():613] handle sender defer: 1
+2024-02-05 19:11:27,575 INFO    SenderThread:578042 [sender.py:transition_state():617] send defer: 2
+2024-02-05 19:11:27,575 DEBUG   HandlerThread:578042 [handler.py:handle_request():146] handle_request: defer
+2024-02-05 19:11:27,575 INFO    HandlerThread:578042 [handler.py:handle_request_defer():172] handle defer: 2
+2024-02-05 19:11:27,575 INFO    HandlerThread:578042 [system_monitor.py:finish():203] Stopping system monitor
+2024-02-05 19:11:27,575 DEBUG   SystemMonitor:578042 [system_monitor.py:_start():172] Starting system metrics aggregation loop
+2024-02-05 19:11:27,575 DEBUG   SystemMonitor:578042 [system_monitor.py:_start():179] Finished system metrics aggregation loop
+2024-02-05 19:11:27,575 DEBUG   SystemMonitor:578042 [system_monitor.py:_start():183] Publishing last batch of metrics
+2024-02-05 19:11:27,581 INFO    HandlerThread:578042 [interfaces.py:finish():202] Joined cpu monitor
+2024-02-05 19:11:27,581 INFO    HandlerThread:578042 [interfaces.py:finish():202] Joined disk monitor
+2024-02-05 19:11:27,581 INFO    HandlerThread:578042 [interfaces.py:finish():202] Joined gpu monitor
+2024-02-05 19:11:27,582 INFO    HandlerThread:578042 [interfaces.py:finish():202] Joined memory monitor
+2024-02-05 19:11:27,582 INFO    HandlerThread:578042 [interfaces.py:finish():202] Joined network monitor
+2024-02-05 19:11:27,582 DEBUG   SenderThread:578042 [sender.py:send_request():409] send_request: defer
+2024-02-05 19:11:27,582 INFO    SenderThread:578042 [sender.py:send_request_defer():613] handle sender defer: 2
+2024-02-05 19:11:27,582 INFO    SenderThread:578042 [sender.py:transition_state():617] send defer: 3
+2024-02-05 19:11:27,582 DEBUG   SenderThread:578042 [sender.py:send():382] send: stats
+2024-02-05 19:11:27,582 DEBUG   HandlerThread:578042 [handler.py:handle_request():146] handle_request: defer
+2024-02-05 19:11:27,582 INFO    HandlerThread:578042 [handler.py:handle_request_defer():172] handle defer: 3
+2024-02-05 19:11:27,582 DEBUG   SenderThread:578042 [sender.py:send_request():409] send_request: defer
+2024-02-05 19:11:27,582 INFO    SenderThread:578042 [sender.py:send_request_defer():613] handle sender defer: 3
+2024-02-05 19:11:27,582 INFO    SenderThread:578042 [sender.py:transition_state():617] send defer: 4
+2024-02-05 19:11:27,583 DEBUG   HandlerThread:578042 [handler.py:handle_request():146] handle_request: defer
+2024-02-05 19:11:27,583 INFO    HandlerThread:578042 [handler.py:handle_request_defer():172] handle defer: 4
+2024-02-05 19:11:27,583 DEBUG   SenderThread:578042 [sender.py:send_request():409] send_request: defer
+2024-02-05 19:11:27,583 INFO    SenderThread:578042 [sender.py:send_request_defer():613] handle sender defer: 4
+2024-02-05 19:11:27,583 INFO    SenderThread:578042 [sender.py:transition_state():617] send defer: 5
+2024-02-05 19:11:27,583 DEBUG   HandlerThread:578042 [handler.py:handle_request():146] handle_request: defer
+2024-02-05 19:11:27,583 INFO    HandlerThread:578042 [handler.py:handle_request_defer():172] handle defer: 5
+2024-02-05 19:11:27,583 DEBUG   SenderThread:578042 [sender.py:send():382] send: summary
+2024-02-05 19:11:27,583 INFO    SenderThread:578042 [sender.py:_save_file():1403] saving file wandb-summary.json with policy end
+2024-02-05 19:11:27,583 DEBUG   SenderThread:578042 [sender.py:send_request():409] send_request: defer
+2024-02-05 19:11:27,583 INFO    SenderThread:578042 [sender.py:send_request_defer():613] handle sender defer: 5
+2024-02-05 19:11:27,583 INFO    SenderThread:578042 [sender.py:transition_state():617] send defer: 6
+2024-02-05 19:11:27,583 DEBUG   HandlerThread:578042 [handler.py:handle_request():146] handle_request: defer
+2024-02-05 19:11:27,583 INFO    HandlerThread:578042 [handler.py:handle_request_defer():172] handle defer: 6
+2024-02-05 19:11:27,583 DEBUG   SenderThread:578042 [sender.py:send_request():409] send_request: defer
+2024-02-05 19:11:27,583 INFO    SenderThread:578042 [sender.py:send_request_defer():613] handle sender defer: 6
+2024-02-05 19:11:27,587 DEBUG   HandlerThread:578042 [handler.py:handle_request():146] handle_request: status_report
+2024-02-05 19:11:27,767 INFO    SenderThread:578042 [sender.py:transition_state():617] send defer: 7
+2024-02-05 19:11:27,767 DEBUG   HandlerThread:578042 [handler.py:handle_request():146] handle_request: defer
+2024-02-05 19:11:27,767 INFO    HandlerThread:578042 [handler.py:handle_request_defer():172] handle defer: 7
+2024-02-05 19:11:27,768 DEBUG   SenderThread:578042 [sender.py:send_request():409] send_request: defer
+2024-02-05 19:11:27,768 INFO    SenderThread:578042 [sender.py:send_request_defer():613] handle sender defer: 7
+2024-02-05 19:11:27,911 INFO    Thread-242:578042 [dir_watcher.py:_on_file_modified():288] file/dir modified: /kyukon/home/gent/457/vsc45787/bsc/Centralized_controller/wandb/run-20240205_191043-hlifbcqx/files/config.yaml
+2024-02-05 19:11:27,912 INFO    Thread-242:578042 [dir_watcher.py:_on_file_created():271] file/dir created: /kyukon/home/gent/457/vsc45787/bsc/Centralized_controller/wandb/run-20240205_191043-hlifbcqx/files/output.log
+2024-02-05 19:11:27,912 INFO    Thread-242:578042 [dir_watcher.py:_on_file_created():271] file/dir created: /kyukon/home/gent/457/vsc45787/bsc/Centralized_controller/wandb/run-20240205_191043-hlifbcqx/files/wandb-summary.json
+2024-02-05 19:11:28,542 DEBUG   HandlerThread:578042 [handler.py:handle_request():146] handle_request: poll_exit
+2024-02-05 19:11:29,531 INFO    SenderThread:578042 [sender.py:transition_state():617] send defer: 8
+2024-02-05 19:11:29,531 DEBUG   SenderThread:578042 [sender.py:send_request():409] send_request: poll_exit
+2024-02-05 19:11:29,531 DEBUG   HandlerThread:578042 [handler.py:handle_request():146] handle_request: defer
+2024-02-05 19:11:29,531 INFO    HandlerThread:578042 [handler.py:handle_request_defer():172] handle defer: 8
+2024-02-05 19:11:29,531 DEBUG   SenderThread:578042 [sender.py:send_request():409] send_request: defer
+2024-02-05 19:11:29,531 INFO    SenderThread:578042 [sender.py:send_request_defer():613] handle sender defer: 8
+2024-02-05 19:11:29,531 INFO    SenderThread:578042 [job_builder.py:build():296] Attempting to build job artifact
+2024-02-05 19:11:29,532 INFO    SenderThread:578042 [job_builder.py:_get_source_type():426] is repo sourced job
+2024-02-05 19:11:29,532 INFO    SenderThread:578042 [job_builder.py:_get_program_relpath():444] run is notebook based run
+2024-02-05 19:11:29,532 INFO    SenderThread:578042 [sender.py:transition_state():617] send defer: 9
+2024-02-05 19:11:29,532 DEBUG   HandlerThread:578042 [handler.py:handle_request():146] handle_request: defer
+2024-02-05 19:11:29,532 INFO    HandlerThread:578042 [handler.py:handle_request_defer():172] handle defer: 9
+2024-02-05 19:11:29,532 DEBUG   SenderThread:578042 [sender.py:send_request():409] send_request: defer
+2024-02-05 19:11:29,532 INFO    SenderThread:578042 [sender.py:send_request_defer():613] handle sender defer: 9
+2024-02-05 19:11:29,532 INFO    SenderThread:578042 [dir_watcher.py:finish():358] shutting down directory watcher
+2024-02-05 19:11:29,542 DEBUG   HandlerThread:578042 [handler.py:handle_request():146] handle_request: poll_exit
+2024-02-05 19:11:29,912 INFO    Thread-242:578042 [dir_watcher.py:_on_file_modified():288] file/dir modified: /kyukon/home/gent/457/vsc45787/bsc/Centralized_controller/wandb/run-20240205_191043-hlifbcqx/files/output.log
+2024-02-05 19:11:29,912 INFO    SenderThread:578042 [dir_watcher.py:finish():388] scan: /kyukon/home/gent/457/vsc45787/bsc/Centralized_controller/wandb/run-20240205_191043-hlifbcqx/files
+2024-02-05 19:11:29,912 INFO    SenderThread:578042 [dir_watcher.py:finish():402] scan save: /kyukon/home/gent/457/vsc45787/bsc/Centralized_controller/wandb/run-20240205_191043-hlifbcqx/files/conda-environment.yaml conda-environment.yaml
+2024-02-05 19:11:29,913 INFO    SenderThread:578042 [dir_watcher.py:finish():402] scan save: /kyukon/home/gent/457/vsc45787/bsc/Centralized_controller/wandb/run-20240205_191043-hlifbcqx/files/wandb-metadata.json wandb-metadata.json
+2024-02-05 19:11:29,913 INFO    SenderThread:578042 [dir_watcher.py:finish():402] scan save: /kyukon/home/gent/457/vsc45787/bsc/Centralized_controller/wandb/run-20240205_191043-hlifbcqx/files/config.yaml config.yaml
+2024-02-05 19:11:29,915 INFO    SenderThread:578042 [dir_watcher.py:finish():402] scan save: /kyukon/home/gent/457/vsc45787/bsc/Centralized_controller/wandb/run-20240205_191043-hlifbcqx/files/requirements.txt requirements.txt
+2024-02-05 19:11:29,918 INFO    SenderThread:578042 [dir_watcher.py:finish():402] scan save: /kyukon/home/gent/457/vsc45787/bsc/Centralized_controller/wandb/run-20240205_191043-hlifbcqx/files/wandb-summary.json wandb-summary.json
+2024-02-05 19:11:29,920 INFO    SenderThread:578042 [dir_watcher.py:finish():402] scan save: /kyukon/home/gent/457/vsc45787/bsc/Centralized_controller/wandb/run-20240205_191043-hlifbcqx/files/output.log output.log
+2024-02-05 19:11:29,921 INFO    SenderThread:578042 [sender.py:transition_state():617] send defer: 10
+2024-02-05 19:11:29,925 DEBUG   SenderThread:578042 [sender.py:send_request():409] send_request: poll_exit
+2024-02-05 19:11:29,925 DEBUG   HandlerThread:578042 [handler.py:handle_request():146] handle_request: defer
+2024-02-05 19:11:29,925 INFO    HandlerThread:578042 [handler.py:handle_request_defer():172] handle defer: 10
+2024-02-05 19:11:29,926 DEBUG   SenderThread:578042 [sender.py:send_request():409] send_request: defer
+2024-02-05 19:11:29,926 INFO    SenderThread:578042 [sender.py:send_request_defer():613] handle sender defer: 10
+2024-02-05 19:11:29,926 INFO    SenderThread:578042 [file_pusher.py:finish():175] shutting down file pusher
+2024-02-05 19:11:30,285 INFO    wandb-upload_0:578042 [upload_job.py:push():131] Uploaded file /kyukon/home/gent/457/vsc45787/bsc/Centralized_controller/wandb/run-20240205_191043-hlifbcqx/files/conda-environment.yaml
+2024-02-05 19:11:30,335 INFO    wandb-upload_2:578042 [upload_job.py:push():131] Uploaded file /kyukon/home/gent/457/vsc45787/bsc/Centralized_controller/wandb/run-20240205_191043-hlifbcqx/files/requirements.txt
+2024-02-05 19:11:30,430 INFO    wandb-upload_3:578042 [upload_job.py:push():131] Uploaded file /kyukon/home/gent/457/vsc45787/bsc/Centralized_controller/wandb/run-20240205_191043-hlifbcqx/files/wandb-summary.json
+2024-02-05 19:11:30,437 INFO    wandb-upload_4:578042 [upload_job.py:push():131] Uploaded file /kyukon/home/gent/457/vsc45787/bsc/Centralized_controller/wandb/run-20240205_191043-hlifbcqx/files/output.log
+2024-02-05 19:11:30,437 INFO    wandb-upload_1:578042 [upload_job.py:push():131] Uploaded file /kyukon/home/gent/457/vsc45787/bsc/Centralized_controller/wandb/run-20240205_191043-hlifbcqx/files/config.yaml
+2024-02-05 19:11:30,544 DEBUG   HandlerThread:578042 [handler.py:handle_request():146] handle_request: poll_exit
+2024-02-05 19:11:30,544 DEBUG   SenderThread:578042 [sender.py:send_request():409] send_request: poll_exit
+2024-02-05 19:11:30,637 INFO    Thread-241 (_thread_body):578042 [sender.py:transition_state():617] send defer: 11
+2024-02-05 19:11:30,638 DEBUG   HandlerThread:578042 [handler.py:handle_request():146] handle_request: defer
+2024-02-05 19:11:30,638 INFO    HandlerThread:578042 [handler.py:handle_request_defer():172] handle defer: 11
+2024-02-05 19:11:30,638 DEBUG   SenderThread:578042 [sender.py:send_request():409] send_request: defer
+2024-02-05 19:11:30,638 INFO    SenderThread:578042 [sender.py:send_request_defer():613] handle sender defer: 11
+2024-02-05 19:11:30,638 INFO    SenderThread:578042 [file_pusher.py:join():181] waiting for file pusher
+2024-02-05 19:11:30,638 INFO    SenderThread:578042 [sender.py:transition_state():617] send defer: 12
+2024-02-05 19:11:30,638 DEBUG   HandlerThread:578042 [handler.py:handle_request():146] handle_request: defer
+2024-02-05 19:11:30,638 INFO    HandlerThread:578042 [handler.py:handle_request_defer():172] handle defer: 12
+2024-02-05 19:11:30,638 DEBUG   SenderThread:578042 [sender.py:send_request():409] send_request: defer
+2024-02-05 19:11:30,638 INFO    SenderThread:578042 [sender.py:send_request_defer():613] handle sender defer: 12
+2024-02-05 19:11:30,638 INFO    SenderThread:578042 [file_stream.py:finish():595] file stream finish called
+2024-02-05 19:11:30,799 INFO    SenderThread:578042 [file_stream.py:finish():599] file stream finish is done
+2024-02-05 19:11:30,799 INFO    SenderThread:578042 [sender.py:transition_state():617] send defer: 13
+2024-02-05 19:11:30,799 DEBUG   HandlerThread:578042 [handler.py:handle_request():146] handle_request: defer
+2024-02-05 19:11:30,799 INFO    HandlerThread:578042 [handler.py:handle_request_defer():172] handle defer: 13
+2024-02-05 19:11:30,799 DEBUG   SenderThread:578042 [sender.py:send_request():409] send_request: defer
+2024-02-05 19:11:30,799 INFO    SenderThread:578042 [sender.py:send_request_defer():613] handle sender defer: 13
+2024-02-05 19:11:30,799 INFO    SenderThread:578042 [sender.py:transition_state():617] send defer: 14
+2024-02-05 19:11:30,799 DEBUG   HandlerThread:578042 [handler.py:handle_request():146] handle_request: defer
+2024-02-05 19:11:30,799 INFO    HandlerThread:578042 [handler.py:handle_request_defer():172] handle defer: 14
+2024-02-05 19:11:30,799 DEBUG   SenderThread:578042 [sender.py:send():382] send: final
+2024-02-05 19:11:30,799 DEBUG   SenderThread:578042 [sender.py:send():382] send: footer
+2024-02-05 19:11:30,799 DEBUG   SenderThread:578042 [sender.py:send_request():409] send_request: defer
+2024-02-05 19:11:30,799 INFO    SenderThread:578042 [sender.py:send_request_defer():613] handle sender defer: 14
+2024-02-05 19:11:30,800 DEBUG   HandlerThread:578042 [handler.py:handle_request():146] handle_request: poll_exit
+2024-02-05 19:11:30,800 DEBUG   SenderThread:578042 [sender.py:send_request():409] send_request: poll_exit
+2024-02-05 19:11:30,801 DEBUG   HandlerThread:578042 [handler.py:handle_request():146] handle_request: internal_messages
+2024-02-05 19:11:30,801 DEBUG   HandlerThread:578042 [handler.py:handle_request():146] handle_request: server_info
+2024-02-05 19:11:30,801 DEBUG   SenderThread:578042 [sender.py:send_request():409] send_request: server_info
+2024-02-05 19:11:30,841 DEBUG   HandlerThread:578042 [handler.py:handle_request():146] handle_request: get_summary
+2024-02-05 19:11:30,841 DEBUG   HandlerThread:578042 [handler.py:handle_request():146] handle_request: sampled_history
+2024-02-05 19:11:30,841 DEBUG   HandlerThread:578042 [handler.py:handle_request():146] handle_request: job_info
+2024-02-05 19:11:30,926 DEBUG   SenderThread:578042 [sender.py:send_request():409] send_request: job_info
+2024-02-05 19:11:30,926 DEBUG   HandlerThread:578042 [handler.py:handle_request():146] handle_request: shutdown
+2024-02-05 19:11:30,927 INFO    HandlerThread:578042 [handler.py:finish():869] shutting down handler
+2024-02-05 19:11:31,842 INFO    WriterThread:578042 [datastore.py:close():296] close: /kyukon/home/gent/457/vsc45787/bsc/Centralized_controller/wandb/run-20240205_191043-hlifbcqx/run-hlifbcqx.wandb
+2024-02-05 19:11:31,926 INFO    SenderThread:578042 [sender.py:finish():1572] shutting down sender
+2024-02-05 19:11:31,926 INFO    SenderThread:578042 [file_pusher.py:finish():175] shutting down file pusher
+2024-02-05 19:11:31,926 INFO    SenderThread:578042 [file_pusher.py:join():181] waiting for file pusher

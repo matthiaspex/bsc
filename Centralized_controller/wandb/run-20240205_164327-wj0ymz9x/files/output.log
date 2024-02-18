@@ -1,0 +1,21 @@
+generation:  0
+time since start:  0.0002295970916748047
+{'in_plane_joint_position': Array([0., 0., 0., 0., 0., 0., 0., 0., 0., 0.], dtype=float32), 'out_of_plane_joint_position': Array([0., 0., 0., 0., 0., 0., 0., 0., 0., 0.], dtype=float32), 'in_plane_joint_velocity': Array([0., 0., 0., 0., 0., 0., 0., 0., 0., 0.], dtype=float32), 'out_of_plane_joint_velocity': Array([0., 0., 0., 0., 0., 0., 0., 0., 0., 0.], dtype=float32), 'segment_contact': Array([0, 0, 0, 0, 0, 0, 0, 0, 0, 0], dtype=int32), 'disk_position': Array([0.  , 0.  , 0.11], dtype=float32), 'disk_rotation': Array([-3.142,  0.   ,  0.   ], dtype=float32), 'disk_linear_velocity': Array([0., 0., 0.], dtype=float32), 'disk_angular_velocity': Array([0., 0., 0.], dtype=float32)}
+['in_plane_joint_position', 'out_of_plane_joint_position', 'in_plane_joint_velocity', 'out_of_plane_joint_velocity', 'segment_contact', 'disk_position', 'disk_rotation', 'disk_linear_velocity', 'disk_angular_velocity']
+{'in_plane_joint_position': 10, 'out_of_plane_joint_position': 10, 'in_plane_joint_velocity': 10, 'out_of_plane_joint_velocity': 10, 'segment_contact': 10, 'disk_position': 3, 'disk_rotation': 3, 'disk_linear_velocity': 3, 'disk_angular_velocity': 3}
+[0. 0. 0. 0. 0. 0. 0. 0. 0. 0.]
+30
+('in_plane_joint_position', 'out_of_plane_joint_position', 'segment_contact')
+Total number of control timesteps per episode: 125
+Total simulation time [seconds]: 5s
+Selected sensors: ('in_plane_joint_position', 'out_of_plane_joint_position', 'segment_contact')
+Neural network architecture: [30, 128, 128, 20] with:
+	Sensory input layer dimension: 30:
+	Actuator output dimension: 20
+	Number of hidden layers / nodes per hidden layer: [128, 128]
+Arm setup: [5, 0, 5, 0, 0]
+Joint control: position
+Reward_type: distance
+Number of generations for updating policy parameters: 2500
+Population size per generation of policy parameters: 300
+Number of parallel MJX environments: 300

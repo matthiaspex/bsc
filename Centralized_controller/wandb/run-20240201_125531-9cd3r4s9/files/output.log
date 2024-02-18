@@ -1,0 +1,286 @@
+
+generation:  0
+generation:  1
+generation:  2
+generation:  3
+generation:  4
+generation:  5
+generation:  6
+generation:  7
+generation:  8
+generation:  9
+generation:  10
+generation:  11
+generation:  12
+generation:  13
+generation:  14
+generation:  15
+generation:  16
+generation:  17
+generation:  18
+generation:  19
+generation:  20
+generation:  21
+generation:  22
+generation:  23
+generation:  24
+generation:  25
+generation:  26
+generation:  27
+generation:  28
+generation:  29
+generation:  30
+generation:  31
+generation:  32
+generation:  33
+generation:  34
+generation:  35
+generation:  36
+generation:  37
+generation:  38
+generation:  39
+20
+5
+[simulation_time] The total amount of time (in seconds) that one simulation episode takes: 5
+[physics_timestep] The amount of time (in seconds) that one 'physics step' advances the physics: 0.004
+[control_timestep] The amount of time (in seconds) that one 'control step' advances the physics: 0.04
+[total_num_physics_steps] The total amount of physics steps that happen during one simulation episode: 1250
+[total_num_control_steps] The total amount of control steps that happen during one simulation episode: 125
+MJX:
+	Dict('in_plane_joint_position': Box(-0.5235988, 0.5235988, (10,), <class 'jax.numpy.float32'>), 'out_of_plane_joint_position': Box(-0.5235988, 0.5235988, (10,), <class 'jax.numpy.float32'>), 'in_plane_joint_velocity': Box(-inf, inf, (10,), <class 'jax.numpy.float32'>), 'out_of_plane_joint_velocity': Box(-inf, inf, (10,), <class 'jax.numpy.float32'>), 'segment_contact': Box(0.0, 1.0, (10,), <class 'jax.numpy.float32'>), 'disk_position': Box(-inf, inf, (3,), <class 'jax.numpy.float32'>), 'disk_rotation': Box(-3.1415927, 3.1415927, (3,), <class 'jax.numpy.float32'>), 'disk_linear_velocity': Box(-inf, inf, (3,), <class 'jax.numpy.float32'>), 'disk_angular_velocity': Box(-inf, inf, (3,), <class 'jax.numpy.float32'>))
+MJX:
+	Box(-1.0, 1.0, (20,), <class 'jax.numpy.float32'>)
+First 5 actuators:
+	MJX: ['BrittleStarMorphology/arm_0_segment_0_in_plane_joint_torque_control', 'BrittleStarMorphology/arm_0_segment_0_out_of_plane_joint_torque_control', 'BrittleStarMorphology/arm_0_segment_1_in_plane_joint_torque_control', 'BrittleStarMorphology/arm_0_segment_1_out_of_plane_joint_torque_control', 'BrittleStarMorphology/arm_0_segment_2_in_plane_joint_torque_control']
+{'in_plane_joint_position': Array([0., 0., 0., 0., 0., 0., 0., 0., 0., 0.], dtype=float32), 'out_of_plane_joint_position': Array([0., 0., 0., 0., 0., 0., 0., 0., 0., 0.], dtype=float32), 'in_plane_joint_velocity': Array([0., 0., 0., 0., 0., 0., 0., 0., 0., 0.], dtype=float32), 'out_of_plane_joint_velocity': Array([0., 0., 0., 0., 0., 0., 0., 0., 0., 0.], dtype=float32), 'segment_contact': Array([0, 0, 0, 0, 0, 0, 0, 0, 0, 0], dtype=int32), 'disk_position': Array([0.  , 0.  , 0.11], dtype=float32), 'disk_rotation': Array([-3.142,  0.   ,  0.   ], dtype=float32), 'disk_linear_velocity': Array([0., 0., 0.], dtype=float32), 'disk_angular_velocity': Array([0., 0., 0.], dtype=float32)}
+['in_plane_joint_position', 'out_of_plane_joint_position', 'in_plane_joint_velocity', 'out_of_plane_joint_velocity', 'segment_contact', 'disk_position', 'disk_rotation', 'disk_linear_velocity', 'disk_angular_velocity']
+{'in_plane_joint_position': 10, 'out_of_plane_joint_position': 10, 'in_plane_joint_velocity': 10, 'out_of_plane_joint_velocity': 10, 'segment_contact': 10, 'disk_position': 3, 'disk_rotation': 3, 'disk_linear_velocity': 3, 'disk_angular_velocity': 3}
+[0. 0. 0. 0. 0. 0. 0. 0. 0. 0.]
+30
+20
+5
+[simulation_time] The total amount of time (in seconds) that one simulation episode takes: 5
+[physics_timestep] The amount of time (in seconds) that one 'physics step' advances the physics: 0.004
+[control_timestep] The amount of time (in seconds) that one 'control step' advances the physics: 0.04
+[total_num_physics_steps] The total amount of physics steps that happen during one simulation episode: 1250
+[total_num_control_steps] The total amount of control steps that happen during one simulation episode: 125
+MJX:
+	Dict('in_plane_joint_position': Box(-0.5235988, 0.5235988, (10,), <class 'jax.numpy.float32'>), 'out_of_plane_joint_position': Box(-0.5235988, 0.5235988, (10,), <class 'jax.numpy.float32'>), 'in_plane_joint_velocity': Box(-inf, inf, (10,), <class 'jax.numpy.float32'>), 'out_of_plane_joint_velocity': Box(-inf, inf, (10,), <class 'jax.numpy.float32'>), 'segment_contact': Box(0.0, 1.0, (10,), <class 'jax.numpy.float32'>), 'disk_position': Box(-inf, inf, (3,), <class 'jax.numpy.float32'>), 'disk_rotation': Box(-3.1415927, 3.1415927, (3,), <class 'jax.numpy.float32'>), 'disk_linear_velocity': Box(-inf, inf, (3,), <class 'jax.numpy.float32'>), 'disk_angular_velocity': Box(-inf, inf, (3,), <class 'jax.numpy.float32'>))
+MJX:
+	Box(-1.0, 1.0, (20,), <class 'jax.numpy.float32'>)
+First 5 actuators:
+	MJX: ['BrittleStarMorphology/arm_0_segment_0_in_plane_joint_torque_control', 'BrittleStarMorphology/arm_0_segment_0_out_of_plane_joint_torque_control', 'BrittleStarMorphology/arm_0_segment_1_in_plane_joint_torque_control', 'BrittleStarMorphology/arm_0_segment_1_out_of_plane_joint_torque_control', 'BrittleStarMorphology/arm_0_segment_2_in_plane_joint_torque_control']
+20
+5
+[simulation_time] The total amount of time (in seconds) that one simulation episode takes: 5
+[physics_timestep] The amount of time (in seconds) that one 'physics step' advances the physics: 0.004
+[control_timestep] The amount of time (in seconds) that one 'control step' advances the physics: 0.04
+[total_num_physics_steps] The total amount of physics steps that happen during one simulation episode: 1250
+[total_num_control_steps] The total amount of control steps that happen during one simulation episode: 125
+MJX:
+	Dict('in_plane_joint_position': Box(-0.5235988, 0.5235988, (10,), <class 'jax.numpy.float32'>), 'out_of_plane_joint_position': Box(-0.5235988, 0.5235988, (10,), <class 'jax.numpy.float32'>), 'in_plane_joint_velocity': Box(-inf, inf, (10,), <class 'jax.numpy.float32'>), 'out_of_plane_joint_velocity': Box(-inf, inf, (10,), <class 'jax.numpy.float32'>), 'segment_contact': Box(0.0, 1.0, (10,), <class 'jax.numpy.float32'>), 'disk_position': Box(-inf, inf, (3,), <class 'jax.numpy.float32'>), 'disk_rotation': Box(-3.1415927, 3.1415927, (3,), <class 'jax.numpy.float32'>), 'disk_linear_velocity': Box(-inf, inf, (3,), <class 'jax.numpy.float32'>), 'disk_angular_velocity': Box(-inf, inf, (3,), <class 'jax.numpy.float32'>))
+MJX:
+	Box(-0.5235988, 0.5235988, (20,), <class 'jax.numpy.float32'>)
+First 5 actuators:
+	MJX: ['BrittleStarMorphology/arm_0_segment_0_in_plane_joint_p_control', 'BrittleStarMorphology/arm_0_segment_0_out_of_plane_joint_p_control', 'BrittleStarMorphology/arm_0_segment_1_in_plane_joint_p_control', 'BrittleStarMorphology/arm_0_segment_1_out_of_plane_joint_p_control', 'BrittleStarMorphology/arm_0_segment_2_in_plane_joint_p_control']
+MJX Observatin Space:
+	Dict('in_plane_joint_position': Box(-0.5235988, 0.5235988, (10,), <class 'jax.numpy.float32'>), 'out_of_plane_joint_position': Box(-0.5235988, 0.5235988, (10,), <class 'jax.numpy.float32'>), 'in_plane_joint_velocity': Box(-inf, inf, (10,), <class 'jax.numpy.float32'>), 'out_of_plane_joint_velocity': Box(-inf, inf, (10,), <class 'jax.numpy.float32'>), 'segment_contact': Box(0.0, 1.0, (10,), <class 'jax.numpy.float32'>), 'disk_position': Box(-inf, inf, (3,), <class 'jax.numpy.float32'>), 'disk_rotation': Box(-3.1415927, 3.1415927, (3,), <class 'jax.numpy.float32'>), 'disk_linear_velocity': Box(-inf, inf, (3,), <class 'jax.numpy.float32'>), 'disk_angular_velocity': Box(-inf, inf, (3,), <class 'jax.numpy.float32'>))
+MJX Action Space:
+	Box(-0.5235988, 0.5235988, (20,), <class 'jax.numpy.float32'>)
+First 5 actuators:
+	MJX: ['BrittleStarMorphology/arm_0_segment_0_in_plane_joint_p_control', 'BrittleStarMorphology/arm_0_segment_0_out_of_plane_joint_p_control', 'BrittleStarMorphology/arm_0_segment_1_in_plane_joint_p_control', 'BrittleStarMorphology/arm_0_segment_1_out_of_plane_joint_p_control', 'BrittleStarMorphology/arm_0_segment_2_in_plane_joint_p_control']
+20
+5
+[simulation_time] The total amount of time (in seconds) that one simulation episode takes: 5
+[physics_timestep] The amount of time (in seconds) that one 'physics step' advances the physics: 0.004
+[control_timestep] The amount of time (in seconds) that one 'control step' advances the physics: 0.04
+[total_num_physics_steps] The total amount of physics steps that happen during one simulation episode: 1250
+[total_num_control_steps] The total amount of control steps that happen during one simulation episode: 125
+MJX Observatin Space:
+	Dict('in_plane_joint_position': Box(-0.5235988, 0.5235988, (10,), <class 'jax.numpy.float32'>), 'out_of_plane_joint_position': Box(-0.5235988, 0.5235988, (10,), <class 'jax.numpy.float32'>), 'in_plane_joint_velocity': Box(-inf, inf, (10,), <class 'jax.numpy.float32'>), 'out_of_plane_joint_velocity': Box(-inf, inf, (10,), <class 'jax.numpy.float32'>), 'segment_contact': Box(0.0, 1.0, (10,), <class 'jax.numpy.float32'>), 'disk_position': Box(-inf, inf, (3,), <class 'jax.numpy.float32'>), 'disk_rotation': Box(-3.1415927, 3.1415927, (3,), <class 'jax.numpy.float32'>), 'disk_linear_velocity': Box(-inf, inf, (3,), <class 'jax.numpy.float32'>), 'disk_angular_velocity': Box(-inf, inf, (3,), <class 'jax.numpy.float32'>))
+MJX Action Space:
+	Box(-0.5235988, 0.5235988, (20,), <class 'jax.numpy.float32'>)
+First 5 actuators:
+	MJX: ['BrittleStarMorphology/arm_0_segment_0_in_plane_joint_p_control', 'BrittleStarMorphology/arm_0_segment_0_out_of_plane_joint_p_control', 'BrittleStarMorphology/arm_0_segment_1_in_plane_joint_p_control', 'BrittleStarMorphology/arm_0_segment_1_out_of_plane_joint_p_control', 'BrittleStarMorphology/arm_0_segment_2_in_plane_joint_p_control']
+{'in_plane_joint_position': Array([0., 0., 0., 0., 0., 0., 0., 0., 0., 0.], dtype=float32), 'out_of_plane_joint_position': Array([0., 0., 0., 0., 0., 0., 0., 0., 0., 0.], dtype=float32), 'in_plane_joint_velocity': Array([0., 0., 0., 0., 0., 0., 0., 0., 0., 0.], dtype=float32), 'out_of_plane_joint_velocity': Array([0., 0., 0., 0., 0., 0., 0., 0., 0., 0.], dtype=float32), 'segment_contact': Array([0, 0, 0, 0, 0, 0, 0, 0, 0, 0], dtype=int32), 'disk_position': Array([0.  , 0.  , 0.11], dtype=float32), 'disk_rotation': Array([-3.142,  0.   ,  0.   ], dtype=float32), 'disk_linear_velocity': Array([0., 0., 0.], dtype=float32), 'disk_angular_velocity': Array([0., 0., 0.], dtype=float32)}
+['in_plane_joint_position', 'out_of_plane_joint_position', 'in_plane_joint_velocity', 'out_of_plane_joint_velocity', 'segment_contact', 'disk_position', 'disk_rotation', 'disk_linear_velocity', 'disk_angular_velocity']
+{'in_plane_joint_position': 10, 'out_of_plane_joint_position': 10, 'in_plane_joint_velocity': 10, 'out_of_plane_joint_velocity': 10, 'segment_contact': 10, 'disk_position': 3, 'disk_rotation': 3, 'disk_linear_velocity': 3, 'disk_angular_velocity': 3}
+[0. 0. 0. 0. 0. 0. 0. 0. 0. 0.]
+30
+20
+5
+[simulation_time] The total amount of time (in seconds) that one simulation episode takes: 5
+[physics_timestep] The amount of time (in seconds) that one 'physics step' advances the physics: 0.004
+[control_timestep] The amount of time (in seconds) that one 'control step' advances the physics: 0.04
+[total_num_physics_steps] The total amount of physics steps that happen during one simulation episode: 1250
+[total_num_control_steps] The total amount of control steps that happen during one simulation episode: 125
+20
+5
+[simulation_time] The total amount of time (in seconds) that one simulation episode takes: 5
+[physics_timestep] The amount of time (in seconds) that one 'physics step' advances the physics: 0.004
+[control_timestep] The amount of time (in seconds) that one 'control step' advances the physics: 0.04
+[total_num_physics_steps] The total amount of physics steps that happen during one simulation episode: 1250
+[total_num_control_steps] The total amount of control steps that happen during one simulation episode: 125
+20
+5
+[simulation_time] The total amount of time (in seconds) that one simulation episode takes: 5
+[physics_timestep] The amount of time (in seconds) that one 'physics step' advances the physics: 0.004
+[control_timestep] The amount of time (in seconds) that one 'control step' advances the physics: 0.04
+[total_num_physics_steps] The total amount of physics steps that happen during one simulation episode: 1250
+[total_num_control_steps] The total amount of control steps that happen during one simulation episode: 125
+MJX Observatin Space:
+	Dict('in_plane_joint_position': Box(-0.5235988, 0.5235988, (10,), <class 'jax.numpy.float32'>), 'out_of_plane_joint_position': Box(-0.5235988, 0.5235988, (10,), <class 'jax.numpy.float32'>), 'in_plane_joint_velocity': Box(-inf, inf, (10,), <class 'jax.numpy.float32'>), 'out_of_plane_joint_velocity': Box(-inf, inf, (10,), <class 'jax.numpy.float32'>), 'segment_contact': Box(0.0, 1.0, (10,), <class 'jax.numpy.float32'>), 'disk_position': Box(-inf, inf, (3,), <class 'jax.numpy.float32'>), 'disk_rotation': Box(-3.1415927, 3.1415927, (3,), <class 'jax.numpy.float32'>), 'disk_linear_velocity': Box(-inf, inf, (3,), <class 'jax.numpy.float32'>), 'disk_angular_velocity': Box(-inf, inf, (3,), <class 'jax.numpy.float32'>))
+MJX Action Space:
+	Box(-1.0, 1.0, (20,), <class 'jax.numpy.float32'>)
+First 5 actuators:
+	MJX: ['BrittleStarMorphology/arm_0_segment_0_in_plane_joint_torque_control', 'BrittleStarMorphology/arm_0_segment_0_out_of_plane_joint_torque_control', 'BrittleStarMorphology/arm_0_segment_1_in_plane_joint_torque_control', 'BrittleStarMorphology/arm_0_segment_1_out_of_plane_joint_torque_control', 'BrittleStarMorphology/arm_0_segment_2_in_plane_joint_torque_control']
+20
+5
+[simulation_time] The total amount of time (in seconds) that one simulation episode takes: 5
+[physics_timestep] The amount of time (in seconds) that one 'physics step' advances the physics: 0.004
+[control_timestep] The amount of time (in seconds) that one 'control step' advances the physics: 0.04
+[total_num_physics_steps] The total amount of physics steps that happen during one simulation episode: 1250
+[total_num_control_steps] The total amount of control steps that happen during one simulation episode: 125
+[0. 0. 0. 0. 0. 0. 0. 0. 0. 0. 0. 0. 0. 0. 0. 0. 0. 0. 0. 0. 0. 0. 0. 0. 0. 0. 0. 0. 0. 0.]
+[128, 128, 20]
+dict_keys(['layers_0', 'layers_1', 'layers_2'])
+{'params': {'layers_0': {'bias': (128,), 'kernel': (30, 128)}, 'layers_1': {'bias': (128,), 'kernel': (128, 128)}, 'layers_2': {'bias': (20,), 'kernel': (128, 20)}}}
+initialized parameter shapes:
+ {'params': {'layers_0': {'bias': (128,), 'kernel': (30, 128)}, 'layers_1': {'bias': (128,), 'kernel': (128, 128)}, 'layers_2': {'bias': (20,), 'kernel': (128, 20)}}}
+[0. 0. 0. 0. 0. 0. 0. 0. 0. 0. 0. 0. 0. 0. 0. 0. 0. 0. 0. 0. 0. 0. 0. 0. 0. 0. 0. 0. 0. 0.]
+[128, 128, 20]
+dict_keys(['layers_0', 'layers_1', 'layers_2'])
+{'params': {'layers_0': {'bias': (128,), 'kernel': (30, 128)}, 'layers_1': {'bias': (128,), 'kernel': (128, 128)}, 'layers_2': {'bias': (20,), 'kernel': (128, 20)}}}
+initialized parameter shapes:
+ {'params': {'layers_0': {'bias': (128,), 'kernel': (30, 128)}, 'layers_1': {'bias': (128,), 'kernel': (128, 128)}, 'layers_2': {'bias': (20,), 'kernel': (128, 20)}}}
+[0. 0. 0. 0. 0. 0. 0. 0. 0. 0. 0. 0. 0. 0. 0. 0. 0. 0. 0. 0. 0. 0. 0. 0. 0. 0. 0. 0. 0. 0.]
+[128, 128, 20]
+dict_keys(['layers_0', 'layers_1', 'layers_2'])
+{'params': {'layers_0': {'bias': (128,), 'kernel': (30, 128)}, 'layers_1': {'bias': (128,), 'kernel': (128, 128)}, 'layers_2': {'bias': (20,), 'kernel': (128, 20)}}}
+initialized parameter shapes:
+ {'params': {'layers_0': {'bias': (128,), 'kernel': (30, 128)}, 'layers_1': {'bias': (128,), 'kernel': (128, 128)}, 'layers_2': {'bias': (20,), 'kernel': (128, 20)}}}
+[0. 0. 0. 0. 0. 0. 0. 0. 0. 0. 0. 0. 0. 0. 0. 0. 0. 0. 0. 0. 0. 0. 0. 0. 0. 0. 0. 0. 0. 0.]
+[128, 128, 20]
+dict_keys(['layers_0', 'layers_1', 'layers_2'])
+{'params': {'layers_0': {'bias': (128,), 'kernel': (30, 128)}, 'layers_1': {'bias': (128,), 'kernel': (128, 128)}, 'layers_2': {'bias': (20,), 'kernel': (128, 20)}}}
+initialized parameter shapes:
+ {'params': {'layers_0': {'bias': (128,), 'kernel': (30, 128)}, 'layers_1': {'bias': (128,), 'kernel': (128, 128)}, 'layers_2': {'bias': (20,), 'kernel': (128, 20)}}}
+[0. 0. 0. ... 0. 0. 0.]
+[128, 128, 20]
+dict_keys(['layers_0', 'layers_1', 'layers_2'])
+{'params': {'layers_0': {'bias': (128,), 'kernel': (3000, 128)}, 'layers_1': {'bias': (128,), 'kernel': (128, 128)}, 'layers_2': {'bias': (20,), 'kernel': (128, 20)}}}
+initialized parameter shapes:
+ {'params': {'layers_0': {'bias': (128,), 'kernel': (3000, 128)}, 'layers_1': {'bias': (128,), 'kernel': (128, 128)}, 'layers_2': {'bias': (20,), 'kernel': (128, 20)}}}
+-0.19631374 0.2537817
+[0. 0. 0. ... 0. 0. 0.]
+[128, 128, 20]
+dict_keys(['layers_0', 'layers_1', 'layers_2'])
+{'params': {'layers_0': {'bias': (128,), 'kernel': (3000, 128)}, 'layers_1': {'bias': (128,), 'kernel': (128, 128)}, 'layers_2': {'bias': (20,), 'kernel': (128, 20)}}}
+initialized parameter shapes:
+ {'params': {'layers_0': {'bias': (128,), 'kernel': (3000, 128)}, 'layers_1': {'bias': (128,), 'kernel': (128, 128)}, 'layers_2': {'bias': (20,), 'kernel': (128, 20)}}}
+-0.22677803 0.32598048
+[0. 0. 0. ... 0. 0. 0.]
+[128, 128, 20]
+dict_keys(['layers_0', 'layers_1', 'layers_2'])
+{'params': {'layers_0': {'bias': (128,), 'kernel': (3000, 128)}, 'layers_1': {'bias': (128,), 'kernel': (128, 128)}, 'layers_2': {'bias': (20,), 'kernel': (128, 20)}}}
+initialized parameter shapes:
+ {'params': {'layers_0': {'bias': (128,), 'kernel': (3000, 128)}, 'layers_1': {'bias': (128,), 'kernel': (128, 128)}, 'layers_2': {'bias': (20,), 'kernel': (128, 20)}}}
+-0.3227311 0.15752819
+[0. 0. 0. ... 0. 0. 0.]
+[128, 128, 20]
+dict_keys(['layers_0', 'layers_1', 'layers_2'])
+{'params': {'layers_0': {'bias': (128,), 'kernel': (3000, 128)}, 'layers_1': {'bias': (128,), 'kernel': (128, 128)}, 'layers_2': {'bias': (20,), 'kernel': (128, 20)}}}
+initialized parameter shapes:
+ {'params': {'layers_0': {'bias': (128,), 'kernel': (3000, 128)}, 'layers_1': {'bias': (128,), 'kernel': (128, 128)}, 'layers_2': {'bias': (20,), 'kernel': (128, 20)}}}
+-0.25991288 0.41634044
+[0. 0. 0. ... 0. 0. 0.]
+[128, 128, 20]
+dict_keys(['layers_0', 'layers_1', 'layers_2'])
+{'params': {'layers_0': {'bias': (128,), 'kernel': (3000, 128)}, 'layers_1': {'bias': (128,), 'kernel': (128, 128)}, 'layers_2': {'bias': (20,), 'kernel': (128, 20)}}}
+initialized parameter shapes:
+ {'params': {'layers_0': {'bias': (128,), 'kernel': (3000, 128)}, 'layers_1': {'bias': (128,), 'kernel': (128, 128)}, 'layers_2': {'bias': (20,), 'kernel': (128, 20)}}}
+-0.20167986 0.28774458
+[0. 0. 0. ... 0. 0. 0.]
+[128, 128, 20]
+dict_keys(['layers_0', 'layers_1', 'layers_2'])
+{'params': {'layers_0': {'bias': (128,), 'kernel': (3000, 128)}, 'layers_1': {'bias': (128,), 'kernel': (128, 128)}, 'layers_2': {'bias': (20,), 'kernel': (128, 20)}}}
+initialized parameter shapes:
+ {'params': {'layers_0': {'bias': (128,), 'kernel': (3000, 128)}, 'layers_1': {'bias': (128,), 'kernel': (128, 128)}, 'layers_2': {'bias': (20,), 'kernel': (128, 20)}}}
+-0.37856576 0.35013402
+[0. 0. 0. ... 0. 0. 0.]
+[128, 128, 20]
+dict_keys(['layers_0', 'layers_1', 'layers_2'])
+{'params': {'layers_0': {'bias': (128,), 'kernel': (3000, 128)}, 'layers_1': {'bias': (128,), 'kernel': (128, 128)}, 'layers_2': {'bias': (20,), 'kernel': (128, 20)}}}
+initialized parameter shapes:
+ {'params': {'layers_0': {'bias': (128,), 'kernel': (3000, 128)}, 'layers_1': {'bias': (128,), 'kernel': (128, 128)}, 'layers_2': {'bias': (20,), 'kernel': (128, 20)}}}
+-0.24946614 0.3586452
+[0. 0. 0. ... 0. 0. 0.]
+[128, 128, 20]
+dict_keys(['layers_0', 'layers_1', 'layers_2'])
+{'params': {'layers_0': {'bias': (128,), 'kernel': (3000, 128)}, 'layers_1': {'bias': (128,), 'kernel': (128, 128)}, 'layers_2': {'bias': (20,), 'kernel': (128, 20)}}}
+initialized parameter shapes:
+ {'params': {'layers_0': {'bias': (128,), 'kernel': (3000, 128)}, 'layers_1': {'bias': (128,), 'kernel': (128, 128)}, 'layers_2': {'bias': (20,), 'kernel': (128, 20)}}}
+-0.38947365 0.27267614
+[0. 0. 0. ... 0. 0. 0.]
+[128, 128, 20]
+dict_keys(['layers_0', 'layers_1', 'layers_2'])
+{'params': {'layers_0': {'bias': (128,), 'kernel': (3000, 128)}, 'layers_1': {'bias': (128,), 'kernel': (128, 128)}, 'layers_2': {'bias': (20,), 'kernel': (128, 20)}}}
+initialized parameter shapes:
+ {'params': {'layers_0': {'bias': (128,), 'kernel': (3000, 128)}, 'layers_1': {'bias': (128,), 'kernel': (128, 128)}, 'layers_2': {'bias': (20,), 'kernel': (128, 20)}}}
+-0.24344121 0.2737679
+[0. 0. 0. ... 0. 0. 0.]
+[128, 128, 20]
+dict_keys(['layers_0', 'layers_1', 'layers_2'])
+{'params': {'layers_0': {'bias': (128,), 'kernel': (3000, 128)}, 'layers_1': {'bias': (128,), 'kernel': (128, 128)}, 'layers_2': {'bias': (20,), 'kernel': (128, 20)}}}
+initialized parameter shapes:
+ {'params': {'layers_0': {'bias': (128,), 'kernel': (3000, 128)}, 'layers_1': {'bias': (128,), 'kernel': (128, 128)}, 'layers_2': {'bias': (20,), 'kernel': (128, 20)}}}
+-0.2559099 0.27172038
+[0. 0. 0. ... 0. 0. 0.]
+[128, 128, 20]
+dict_keys(['layers_0', 'layers_1', 'layers_2'])
+{'params': {'layers_0': {'bias': (128,), 'kernel': (3000, 128)}, 'layers_1': {'bias': (128,), 'kernel': (128, 128)}, 'layers_2': {'bias': (20,), 'kernel': (128, 20)}}}
+initialized parameter shapes:
+ {'params': {'layers_0': {'bias': (128,), 'kernel': (3000, 128)}, 'layers_1': {'bias': (128,), 'kernel': (128, 128)}, 'layers_2': {'bias': (20,), 'kernel': (128, 20)}}}
+-0.35852948 0.32982373
+[0. 0. 0. ... 0. 0. 0.]
+[128, 128, 20]
+dict_keys(['layers_0', 'layers_1', 'layers_2'])
+{'params': {'layers_0': {'bias': (128,), 'kernel': (3000, 128)}, 'layers_1': {'bias': (128,), 'kernel': (128, 128)}, 'layers_2': {'bias': (20,), 'kernel': (128, 20)}}}
+initialized parameter shapes:
+ {'params': {'layers_0': {'bias': (128,), 'kernel': (3000, 128)}, 'layers_1': {'bias': (128,), 'kernel': (128, 128)}, 'layers_2': {'bias': (20,), 'kernel': (128, 20)}}}
+-0.3435527 0.283254
+[0. 0. 0. ... 0. 0. 0.]
+[128, 128, 20]
+dict_keys(['layers_0', 'layers_1', 'layers_2'])
+{'params': {'layers_0': {'bias': (128,), 'kernel': (3000, 128)}, 'layers_1': {'bias': (128,), 'kernel': (128, 128)}, 'layers_2': {'bias': (20,), 'kernel': (128, 20)}}}
+initialized parameter shapes:
+ {'params': {'layers_0': {'bias': (128,), 'kernel': (3000, 128)}, 'layers_1': {'bias': (128,), 'kernel': (128, 128)}, 'layers_2': {'bias': (20,), 'kernel': (128, 20)}}}
+-0.32310075 0.3036308
+[0. 0. 0. ... 0. 0. 0.]
+[128, 128, 20]
+dict_keys(['layers_0', 'layers_1', 'layers_2'])
+{'params': {'layers_0': {'bias': (128,), 'kernel': (3000, 128)}, 'layers_1': {'bias': (128,), 'kernel': (128, 128)}, 'layers_2': {'bias': (20,), 'kernel': (128, 20)}}}
+initialized parameter shapes:
+ {'params': {'layers_0': {'bias': (128,), 'kernel': (3000, 128)}, 'layers_1': {'bias': (128,), 'kernel': (128, 128)}, 'layers_2': {'bias': (20,), 'kernel': (128, 20)}}}
+-0.31821054 0.2945292
+[0. 0. 0. ... 0. 0. 0.]
+[128, 128, 20]
+dict_keys(['layers_0', 'layers_1', 'layers_2'])
+{'params': {'layers_0': {'bias': (128,), 'kernel': (3000, 128)}, 'layers_1': {'bias': (128,), 'kernel': (128, 128)}, 'layers_2': {'bias': (20,), 'kernel': (128, 20)}}}
+initialized parameter shapes:
+ {'params': {'layers_0': {'bias': (128,), 'kernel': (3000, 128)}, 'layers_1': {'bias': (128,), 'kernel': (128, 128)}, 'layers_2': {'bias': (20,), 'kernel': (128, 20)}}}
+-0.2794169 0.31697434
+[0. 0. 0. ... 0. 0. 0.]
+[128, 128, 20]
+dict_keys(['layers_0', 'layers_1', 'layers_2'])
+{'params': {'layers_0': {'bias': (128,), 'kernel': (300000, 128)}, 'layers_1': {'bias': (128,), 'kernel': (128, 128)}, 'layers_2': {'bias': (20,), 'kernel': (128, 20)}}}
+initialized parameter shapes:
+ {'params': {'layers_0': {'bias': (128,), 'kernel': (300000, 128)}, 'layers_1': {'bias': (128,), 'kernel': (128, 128)}, 'layers_2': {'bias': (20,), 'kernel': (128, 20)}}}
+-0.36124536 0.26804772
+[0. 0. 0. ... 0. 0. 0.]
+[128, 128, 20]
+dict_keys(['layers_0', 'layers_1', 'layers_2'])
+{'params': {'layers_0': {'bias': (128,), 'kernel': (300000, 128)}, 'layers_1': {'bias': (128,), 'kernel': (128, 128)}, 'layers_2': {'bias': (20,), 'kernel': (128, 20)}}}
+initialized parameter shapes:
+ {'params': {'layers_0': {'bias': (128,), 'kernel': (300000, 128)}, 'layers_1': {'bias': (128,), 'kernel': (128, 128)}, 'layers_2': {'bias': (20,), 'kernel': (128, 20)}}}
+-0.34940326 0.31004083
