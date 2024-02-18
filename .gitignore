@@ -1,2 +1,5 @@
 # ignore the wandb directory
 wandb/
+# ignore .ipynb_checkpoints directories
+.ipynb_checkpoints/
+*ipynb_checkpoints/
