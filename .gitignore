@@ -3,3 +3,6 @@ wandb/
 # ignore .ipynb_checkpoints directories
 .ipynb_checkpoints/
 *ipynb_checkpoints/
+# ignore bsc environment folder
+bsc/
+
