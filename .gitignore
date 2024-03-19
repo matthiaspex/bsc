@@ -5,4 +5,12 @@ wandb/
 *ipynb_checkpoints/
 # ignore bsc environment folder
 bsc/
+# ignore all .mp4 files
+*.mp4
+# ignore all .jpg files
+*.jpg
 
+# ignore Videos folder
+Videos/
+# ignore wandb API key file
+*wandb_key.txt
