@@ -1,0 +1,20 @@
+/kyukon/home/gent/457/vsc45787/bsc
+no change     /apps/gent/RHEL8/cascadelake-ib/software/Miniconda3/23.5.2-0/condabin/conda
+no change     /apps/gent/RHEL8/cascadelake-ib/software/Miniconda3/23.5.2-0/bin/conda
+no change     /apps/gent/RHEL8/cascadelake-ib/software/Miniconda3/23.5.2-0/bin/conda-env
+no change     /apps/gent/RHEL8/cascadelake-ib/software/Miniconda3/23.5.2-0/bin/activate
+no change     /apps/gent/RHEL8/cascadelake-ib/software/Miniconda3/23.5.2-0/bin/deactivate
+no change     /apps/gent/RHEL8/cascadelake-ib/software/Miniconda3/23.5.2-0/etc/profile.d/conda.sh
+no change     /apps/gent/RHEL8/cascadelake-ib/software/Miniconda3/23.5.2-0/etc/fish/conf.d/conda.fish
+no change     /apps/gent/RHEL8/cascadelake-ib/software/Miniconda3/23.5.2-0/shell/condabin/Conda.psm1
+no change     /apps/gent/RHEL8/cascadelake-ib/software/Miniconda3/23.5.2-0/shell/condabin/conda-hook.ps1
+no change     /apps/gent/RHEL8/cascadelake-ib/software/Miniconda3/23.5.2-0/lib/python3.11/site-packages/xontrib/conda.xsh
+no change     /apps/gent/RHEL8/cascadelake-ib/software/Miniconda3/23.5.2-0/etc/profile.d/conda.csh
+no change     /user/gent/457/vsc45787/.bashrc
+No action taken.
+which python
+/user/gent/457/vsc45787/.conda/envs/hope/bin/python
+Already up to date.
+Run started
+sys.executable:  /apps/gent/RHEL8/cascadelake-ib/software/Python/3.11.3-GCCcore-12.3.0/bin/python
+Run finished

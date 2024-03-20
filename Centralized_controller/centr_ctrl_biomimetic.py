@@ -1,9 +1,8 @@
 import argparse
 
 import sys
-print(sys.executable)
-sys.path.insert(0,'C:\\Users\\Matthias\\OneDrive - UGent\\Documents\\DOCUMENTEN\\3. Thesis\\BSC\\')
-
+print("sys.executable: ", sys.executable)
+# sys.path.insert(0,'C:\\Users\\Matthias\\OneDrive - UGent\\Documents\\DOCUMENTEN\\3. Thesis\\BSC\\')
 
 
 import numpy as np
@@ -20,7 +19,8 @@ import matplotlib.pyplot as plt
 
 import wandb
 # query notes to save with the wandb run
-notes = input("Notes to pass on to wandb initialisation: ")
+# notes = input("Notes to pass on to wandb initialisation: ")
+notes = "test_trial_batch_job"
 
 import moviepy
 import imageio
