@@ -13,8 +13,8 @@ interface='VSC' # either VSC or HPC
 arm_setup='5,0,5,0,0' # number of segments per arm, specify for 5 arms
 reward_type='distance' # choose from 'distance', 'target' or 'light'
 
-es_popsize='500'
-num_generations='70'
+es_popsize='20'
+num_generations='20'
 
 sensor_selection='joint_position,joint_actuator_force,segment_contact'
 layers='128,128' # number of nodes in the hidden layers only, specify number of layers in the above variable
@@ -22,7 +22,7 @@ damage='False'
 
 # wandb
 project='Switch_to_VSC' # no spaces
-notes='run_1' # no spaces
+notes='run_2' # no spaces
 
 # optional arguments: if not provided, default values can be found in the python script itself
 joint_control='position' # either position or torque

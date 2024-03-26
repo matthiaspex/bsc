@@ -63,6 +63,14 @@ if interface == 'VSC':
     print('sys path insert enabled for VSC')
     sys.path.insert(0,'C:\\Users\\Matthias\\OneDrive - UGent\\Documents\\DOCUMENTEN\\3. Thesis\\BSC\\')
 
+if os.environ["TMP_DIR"]:
+    TMP_DIR = os.environ["TMP_DIR"]
+    print("TMP_DIR path: ", TMP_DIR)
+    video_path = TMP_DIR
+else:
+    video_path = "Videos\\"
+
+
 
 print(f"""
       damage = {damage}
@@ -157,10 +165,11 @@ try:
 
     # Configure MuJoCo to use the EGL rendering backend (requires GPU)
     print('Setting environment variable to use GPU rendering:')
-    os.environ["MUJOCO_GL"] = "egl"
-    xla_flags = os.environ.get('XLA_FLAGS', '')
-    xla_flags += ' --xla_gpu_triton_gemm_any=True'
-    os.environ['XLA_FLAGS'] = xla_flags
+    if interface != 'HPC': # otherwise these are defined in batch script used in hpc
+        os.environ["MUJOCO_GL"] = "egl"
+        xla_flags = os.environ.get('XLA_FLAGS', '')
+        xla_flags += ' --xla_gpu_triton_gemm_any=True'
+        os.environ['XLA_FLAGS'] = xla_flags
 
     # Check if jax finds the GPU
     import jax
@@ -685,8 +694,19 @@ while not jnp.any(mjx_vectorized_state.terminated | mjx_vectorized_state.truncat
                 )
             )
 
-show_video(images=mjx_frames, fps = fps)
-create_video(frames=mjx_frames, framerate=fps, out_path=f"Videos\{reward_type} {joint_control} arms {arm_setup} popsize {es_popsize} {notes}.mp4")
+# show_video(images=mjx_frames, fps = fps)
+# create_video(frames=mjx_frames, framerate=fps, out_path=f"Videos\{reward_type} {joint_control} arms {arm_setup} popsize {es_popsize} {notes}.mp4")
+imgio_kargs = {
+    'fps': fps, 'quality': 10, 'macro_block_size': None, 'codec': 'h264',
+    'ffmpeg_params': ['-vf', 'crop=trunc(iw/2)*2:trunc(ih/2)*2']
+    }
+writer = imageio.get_writer(video_path + f"{reward_type} {joint_control} arms {arm_setup} popsize {es_popsize} {notes}.mp4", **imgio_kargs)
+for frame in mjx_frames:
+    writer.append_data(frame)
+writer.close()
+
+wandb.log({"Video trained model": wandb.Video(video_path + f"{reward_type} {joint_control} arms {arm_setup} popsize {es_popsize} {notes}.mp4",
+                                              caption="5 arms torques cost trial run", fps=fps, format='mp4')})
 
 
 
@@ -718,7 +738,6 @@ plt.show()
 
 
 
-wandb.finish()
 
 #########################################################
 # Damage: Applying trained policy to a damaged morphology
@@ -802,9 +821,26 @@ if damage:
                     )
                 )
 
-    show_video(images=mjx_frames_damage, fps=fps)
-    create_video(frames=mjx_frames_damage, framerate=fps, out_path=f"Videos\{reward_type} {joint_control} arms {arm_setup} popsize {es_popsize} {notes} DAMAGE.mp4")
+    # show_video(images=mjx_frames_damage, fps=fps)
+    # create_video(frames=mjx_frames_damage, framerate=fps, out_path=f"Videos\{reward_type} {joint_control} arms {arm_setup} popsize {es_popsize} {notes} DAMAGE.mp4")
+    imgio_kargs = {
+        'fps': fps, 'quality': 10, 'macro_block_size': None, 'codec': 'h264',
+        'ffmpeg_params': ['-vf', 'crop=trunc(iw/2)*2:trunc(ih/2)*2']
+        }
+    writer = imageio.get_writer(video_path + f"{reward_type} {joint_control} arms {arm_setup} popsize {es_popsize} {notes} DAMAGE.mp4", **imgio_kargs)
+    for frame in mjx_frames_damage:
+        writer.append_data(frame)
+    writer.close()
+
+    wandb.log({"Video damaged morphology": wandb.Video(video_path + f"{reward_type} {joint_control} arms {arm_setup} popsize {es_popsize} {notes} DAMAGE.mp4",
+                                                       caption="5 arms torques cost trial run", fps=fps, format='mp4')})
 
 else:
     print('no damage simulation has been run')
+
+
+
+
+
+wandb.finish()
 
