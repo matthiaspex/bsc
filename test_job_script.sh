@@ -11,8 +11,8 @@
 
 ml purge
 ml load glew/2.2.0-GCCcore-11.2.0-osmesa
-ml load FFmpeg/6.0-GCCcore-12.3.0
-ml load typing-extensions/4.9.0-GCCcore-12.3.0
+ml load FFmpeg/4.3.2-GCCcore-11.2.0
+# ml load typing-extensions/3.10.0.2-GCCcore-11.2.0
 export MUJOCO_GL="osmesa"
 export XLA_FLAGS="--xla_gpu_triton_gemm_any=True"
 
@@ -55,7 +55,7 @@ echo "Run started"
 
 ### arguments
 # main arguments
-interface='VSC' # either VSC or HPC
+interface='HPC' # either VSC or HPC
 arm_setup='5,0,5,0,0' # number of segments per arm, specify for 5 arms
 reward_type='distance' # choose from 'distance', 'target' or 'light'
 
@@ -83,7 +83,8 @@ arm_setup_damage=$arm_setup # Will only be used if the $damage variable is set t
 
 
 # Run the Python script
-python 'Centralized_controller\centr_ctrl_biomimetic.py' \
+# python 'Centralized_controller/centr_ctrl_biomimetic.py' \
+python 'Centralized_controller/centr_ctrl_biomimetic.py' \
   $interface \
   $arm_setup \
   $reward_type \

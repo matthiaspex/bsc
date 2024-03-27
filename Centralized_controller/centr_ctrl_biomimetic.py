@@ -63,15 +63,6 @@ if interface == 'VSC':
     print('sys path insert enabled for VSC')
     sys.path.insert(0,'C:\\Users\\Matthias\\OneDrive - UGent\\Documents\\DOCUMENTEN\\3. Thesis\\BSC\\')
 
-if os.environ["TMP_DIR"]:
-    TMP_DIR = os.environ["TMP_DIR"]
-    print("TMP_DIR path: ", TMP_DIR)
-    video_path = TMP_DIR
-else:
-    video_path = "Videos\\"
-
-
-
 print(f"""
       damage = {damage}
       arm_setup = {arm_setup}
@@ -111,7 +102,13 @@ import subprocess
 import logging
 
 
-
+# if os.environ["TMP_DIR"]:
+#     TMP_DIR = os.environ["TMP_DIR"]
+#     print("TMP_DIR path: ", TMP_DIR)
+#     video_path = TMP_DIR
+# else:
+#     video_path = "Videos\\"
+    
 
 np.set_printoptions(precision=3, suppress=False, linewidth=100)
 jnp.set_printoptions(precision=3, suppress=False, linewidth=100)
