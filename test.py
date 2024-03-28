@@ -1,2 +1,6 @@
 import yaml
-print("yaml import succesful")
+
+with open("config\\test.yaml") as f:
+    cfg = yaml.load(f, Loader=yaml.FullLoader)
+
+print(cfg)

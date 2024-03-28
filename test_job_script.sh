@@ -15,8 +15,7 @@ ml load FFmpeg/4.3.2-GCCcore-11.2.0
 # ml load typing-extensions/3.10.0.2-GCCcore-11.2.0
 export MUJOCO_GL="osmesa"
 export XLA_FLAGS="--xla_gpu_triton_gemm_any=True"
-
-export TMP_DIR="$VSC_DATA/brittle_star/tmp"
+export TMP_DIR="$VSC_DATA/brittle_star/tmp/"
 
 
 # Setup wandb
@@ -70,6 +69,9 @@ damage='False'
 project='Switch_to_VSC' # no spaces
 notes='run_3' # no spaces
 
+json_path='trained_policy_params/'
+video_path='Videos/' # only used when working in local VSC
+
 # optional arguments: if not provided, default values can be found in the python script itself
 joint_control='position' # either position or torque
 sand_ground_color='False'
@@ -95,6 +97,8 @@ python 'Centralized_controller/centr_ctrl_biomimetic.py' \
   $damage \
   $project \
   $notes \
+  $json_path\
+  $video_path\
 #   --joint_control $actuator_control \
 #   --sand_ground_color $sand_ground_color \
 #   --num_physics_steps_per_control_step $num_physics_steps_per_control_step \
@@ -103,5 +107,7 @@ python 'Centralized_controller/centr_ctrl_biomimetic.py' \
 #   --light_perlin_noise_scale $light_perlin_noise_scale \
 #   --target_distance $target_distance \
 #   --arm_setup_damage $arm_setup_damage \
+
+rm $TMP_DIR*
 
 echo "Run finished"

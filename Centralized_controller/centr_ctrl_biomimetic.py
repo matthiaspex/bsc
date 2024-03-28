@@ -1,5 +1,12 @@
 import argparse
 
+# import yaml
+
+# with open("config\\test.yaml") as f:
+#     cfg = yaml.load(f, Loader=yaml.FullLoader)
+
+
+
 # load arguments
 parser = argparse.ArgumentParser(description='Centralized controller')
 
@@ -17,6 +24,9 @@ parser.add_argument('damage', type=str, help='whether a damage simulation is run
 
 parser.add_argument('project', type=str, help='project title wandb')
 parser.add_argument('notes', type=str, help='notes to pass on to wandb')
+
+parser.add_argument('json_path', type = str, help='location to store policy params of trained models as .json files')
+parser.add_argument('video_path', type = str, help='location to store videos of trained models when running in VSC')
 
 # optional arguments with default values
 parser.add_argument('--joint_control', choices = ['position', 'torque'], default = 'position', help='whether nn controls positions or torques of joints')
@@ -41,6 +51,8 @@ layers = [int(item) for item in args.layers.split(',')]
 damage = args.damage=='True'
 project = args.project
 notes = args.notes
+json_path = args.json_path
+video_path = args.video_path
 
 # readout the optional arguments or provide default value if not yet provided
 joint_control = args.joint_control
@@ -56,12 +68,20 @@ if args.arm_setup_damage:
 else:
     arm_setup_damage = arm_setup
 
+import os
+if interface == 'HPC':
+    TMP_DIR = os.environ["TMP_DIR"]
+    print("TMP_DIR path: ", TMP_DIR)
+    video_path = TMP_DIR
+
+
 
 import sys
 print("sys.executable: ", sys.executable)
 if interface == 'VSC':
     print('sys path insert enabled for VSC')
     sys.path.insert(0,'C:\\Users\\Matthias\\OneDrive - UGent\\Documents\\DOCUMENTEN\\3. Thesis\\BSC\\')
+
 
 print(f"""
       damage = {damage}
@@ -87,9 +107,8 @@ import time
 import matplotlib.pyplot as plt
 
 import wandb
-# query notes to save with the wandb run
-# notes = input("Notes to pass on to wandb initialisation: ")
 
+import json
 
 import moviepy
 import imageio
@@ -97,17 +116,14 @@ import plotly
 import cv2
 import mediapy as media
 
-import os
-import subprocess
-import logging
+from bsc_utils.miscallaneous import check_GPU_access
+
+check_GPU_access(interface = interface)
 
 
-# if os.environ["TMP_DIR"]:
-#     TMP_DIR = os.environ["TMP_DIR"]
-#     print("TMP_DIR path: ", TMP_DIR)
-#     video_path = TMP_DIR
-# else:
-#     video_path = "Videos\\"
+
+
+
     
 
 np.set_printoptions(precision=3, suppress=False, linewidth=100)
@@ -133,62 +149,7 @@ from biorobot.brittle_star.environment.undirected_locomotion.shared import \
 from biorobot.brittle_star.mjcf.arena.aquarium import AquariumArenaConfiguration, MJCFAquariumArena
 
 
-# GPU accessibility
 
-try:
-    if subprocess.run('nvidia-smi').returncode:
-        raise RuntimeError(
-                'Cannot communicate with GPU. '
-                'Make sure you are using a GPU Colab runtime. '
-                'Go to the Runtime menu and select Choose runtime type.'
-                )
-
-    # Add an ICD config so that glvnd can pick up the Nvidia EGL driver.
-    # This is usually installed as part of an Nvidia driver package, but the Colab
-    # kernel doesn't install its driver via APT, and as a result the ICD is missing.
-    # (https://github.com/NVIDIA/libglvnd/blob/master/src/EGL/icd_enumeration.md)
-    NVIDIA_ICD_CONFIG_PATH = '/usr/share/glvnd/egl_vendor.d/10_nvidia.json'
-    if not os.path.exists(NVIDIA_ICD_CONFIG_PATH):
-        with open(NVIDIA_ICD_CONFIG_PATH, 'w') as f:
-            f.write(
-                    """{
-                            "file_format_version" : "1.0.0",
-                            "ICD" : {
-                                "library_path" : "libEGL_nvidia.so.0"
-                            }
-                        }
-                        """
-                    )
-
-    # Configure MuJoCo to use the EGL rendering backend (requires GPU)
-    print('Setting environment variable to use GPU rendering:')
-    if interface != 'HPC': # otherwise these are defined in batch script used in hpc
-        os.environ["MUJOCO_GL"] = "egl"
-        xla_flags = os.environ.get('XLA_FLAGS', '')
-        xla_flags += ' --xla_gpu_triton_gemm_any=True'
-        os.environ['XLA_FLAGS'] = xla_flags
-
-    # Check if jax finds the GPU
-    import jax
-
-    print(jax.devices('gpu'))
-except Exception:
-    logging.warning("Failed to initialize GPU. Everything will run on the cpu.")
-
-try:
-    print('Checking that the mujoco installation succeeded:')
-    import mujoco
-
-    mujoco.MjModel.from_xml_string('<mujoco/>')
-except Exception as e:
-    raise e from RuntimeError(
-            'Something went wrong during installation. Check the shell output above '
-            'for more information.\n'
-            'If using a hosted Colab runtime, make sure you enable GPU acceleration '
-            'by going to the Runtime menu and selecting "Choose runtime type".'
-            )
-
-print('MuJoCo installation successful.')
 
 
 def rollout(policy_params_shaped, total_num_control_timesteps, sensor_selection, rng, NUM_MJX_ENVIRONMENTS):
@@ -623,7 +584,11 @@ print('Policy training finished!')
 # """)
 
 
-
+policy_dump = policy_params_to_render.json()
+file = json_path + "policy_params_test.json"
+with open(file, "w") as file:
+    json.dump(policy_dump, file)
+file.close()
 
 
 #####################################
