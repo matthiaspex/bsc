@@ -1,0 +1,37 @@
+ experiment:
+   interface: 'HPC' # HPC or VSC 
+   run_name_format: "{reward_type} arms {arm_setup} popsize {es_popsize} {notes}" # put an f in front in .py script
+ wandb:
+   project: "job_sub_test"
+   group: "energy_trials"
+   tags: ["something", "something_else"]
+   notes: "run 3"
+ morphology:
+   arm_setup: [ 5, 0, 5, 0, 0 ]
+   joint_control: 'position'
+ arena:
+   arena_size: !!python/tuple [ 10, 10 ]
+   sand_ground_color: False
+   attach_target: True
+ environment:
+   reward_type: 'target' # choose from distance, target or light
+   sensor_selection: !!python/tuple [ 'joint_position', 'joint_actuator_force', 'segment_contact']
+   num_physics_steps_per_control_step: 10
+   simulation_time: 5
+   joint_randomization_noise_scale: 0.0
+   light_perlin_noise_scale: 4
+   target_distance: 3
+   target_position: [ 3., 0., 0.]
+   color_contacts: False
+ damage:
+   damage: True
+   arm_setup_damage: [ 5, 0, 0, 0, 0]
+ evolution:
+   es_popsize: 20
+   num_generations: 20
+   fitness:
+   cost_expr: "torque*ang_vel" # choose from ["no_cost", "torque*ang_vel", "torque"]
+   fitness_expr: "reward/cost" # choose from ["reward", "reward/cost", "reward+reward/cost"]
+ controller:
+   hidden_layers: [ 128, 128 ]
+ 

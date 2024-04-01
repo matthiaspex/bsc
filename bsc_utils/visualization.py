@@ -8,6 +8,7 @@ from moojoco.mjcf.component import MJCFRootComponent
 import cv2
 import mujoco
 import logging
+import matplotlib.pyplot as plt
 
 
 def visualize_mjcf(
@@ -69,3 +70,27 @@ def create_video(
         writer.write(frame)
     writer.release()
 
+
+
+def plot_ip_oop_joint_angles(
+        joint_angles_ip: List,
+        joint_angles_oop: List
+        ):
+    joint_angles_ip = np.array(joint_angles_ip)
+    joint_angles_oop = np.array(joint_angles_oop)
+    # print(f"shape explanation: (t, number of arms, number of segment) = {joint_angles_ip.shape}")
+    t, num_arms, num_segments = joint_angles_ip.shape
+
+    plt.rcParams['figure.figsize'] = (5*num_arms,5*num_segments)
+
+    fig, axes = plt.subplots(num_segments,num_arms, squeeze = False)
+    # squeeze allows damaged morphologies with only 1 arm to also give 2D axes object
+
+    for i in range(num_segments):
+        for j in range(num_arms):
+            axes[i][j].plot(joint_angles_ip[:,j,i], joint_angles_oop[:,j,i])
+            axes[i][j].set_title(f"Joint angles for segment {i} in arm {j}")
+            axes[i][j].set_xlabel("In plane joint angle [rad]")
+            axes[i][j].set_ylabel("Out of plane joint angle [rad]")
+    plt.show()
+    return fig, axes
