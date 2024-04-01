@@ -2,6 +2,8 @@ import yaml
 import sys
 import os
 
+print(sys.executable)
+
 import numpy as np
 import jax
 from jax import numpy as jnp
@@ -90,7 +92,6 @@ joint_control = config["morphology"]["joint_control"]
 # arena
 arena_size = config["arena"]["arena_size"]
 sand_ground_color = config["arena"]["sand_ground_color"]
-attach_target = config["arena"]["attach_target"]
 # environment
 reward_type = config["environment"]["reward_type"]
 sensor_selection = config["environment"]["sensor_selection"]
@@ -123,17 +124,18 @@ for k, v in config.items():
         
 run_name = run_name_format.format(**config_flat)
 
-print(f"""
-      run_name: {run_name}
-      damage = {damage}
-      arm_setup = {arm_setup}
-      sensor_selection = {sensor_selection}
-      hidden_layers = {hidden_layers}
-      hidden_layers.append(5) = {hidden_layers + [5]}
-      target_distance = {target_distance}
-      notes = {notes}
-      sand_ground_color = {sand_ground_color}
-      """)
+print(f"run_name: {run_name}")
+
+# print(f"""
+#       damage = {damage}
+#       arm_setup = {arm_setup}
+#       sensor_selection = {sensor_selection}
+#       hidden_layers = {hidden_layers}
+#       hidden_layers.append(5) = {hidden_layers + [5]}
+#       target_distance = {target_distance}
+#       notes = {notes}
+#       sand_ground_color = {sand_ground_color}
+#       """)
 
 check_GPU_access(interface = interface)
 
@@ -146,12 +148,12 @@ visualize_mjcf(mjcf=morphology)
 arena = create_arena(arena_configuration=arena_configuration)
 visualize_mjcf(mjcf=arena)
 
-# useful environment configuration information
-print(f"[simulation_time] The total amount of time (in seconds) that one simulation episode takes: {environment_configuration.simulation_time}")
-print(f"[physics_timestep] The amount of time (in seconds) that one 'physics step' advances the physics: {environment_configuration.physics_timestep}")
-print(f"[control_timestep] The amount of time (in seconds) that one 'control step' advances the physics: {environment_configuration.control_timestep}")
-print(f"[total_num_physics_steps] The total amount of physics steps that happen during one simulation episode: {environment_configuration.total_num_physics_steps}")
-print(f"[total_num_control_steps] The total amount of control steps that happen during one simulation episode: {environment_configuration.total_num_control_steps}")
+# # useful environment configuration information
+# print(f"[simulation_time] The total amount of time (in seconds) that one simulation episode takes: {environment_configuration.simulation_time}")
+# print(f"[physics_timestep] The amount of time (in seconds) that one 'physics step' advances the physics: {environment_configuration.physics_timestep}")
+# print(f"[control_timestep] The amount of time (in seconds) that one 'control step' advances the physics: {environment_configuration.control_timestep}")
+# print(f"[total_num_physics_steps] The total amount of physics steps that happen during one simulation episode: {environment_configuration.total_num_physics_steps}")
+# print(f"[total_num_control_steps] The total amount of control steps that happen during one simulation episode: {environment_configuration.total_num_control_steps}")
 
 total_num_control_timesteps = environment_configuration.total_num_control_steps
 

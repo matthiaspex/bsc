@@ -1,4 +1,0 @@
-Traceback (most recent call last):
-  File "/kyukon/home/gent/457/vsc45787/bsc/Centralized_controller/centr_ctrl_biomimetic.py", line 9, in <module>
-    import numpy as np
-ModuleNotFoundError: No module named 'numpy'

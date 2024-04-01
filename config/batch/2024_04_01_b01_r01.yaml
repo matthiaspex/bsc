@@ -1,16 +1,16 @@
  experiment:
    interface: 'HPC' # HPC or VSC 
-   run_name_format: "{reward_type} arms {arm_setup} popsize {es_popsize} {notes}" # put an f in front in .py script
+   run_name_format: "{notes} {reward_type} arms {arm_setup} popsize {es_popsize} {cost_expr} {fitness_expr}" # put an f in front in .py script
  wandb:
-   project: "job_sub_test"
-   group: "Donphan"
-   tags: ["something", "something_else"]
-   notes: "run donphan 1"
+   project: "biomimicry"
+   group: "cost_fitness"
+   tags: ["no_cost", "reward"]
+   notes: "b01_r01"
  morphology:
-   arm_setup: [ 5, 0, 5, 0, 0 ]
+   arm_setup: [ 7, 7, 7, 7, 7 ]
    joint_control: 'position'
  arena:
-   arena_size: !!python/tuple [ 10, 5 ]
+   arena_size: !!python/tuple [ 10, 10 ]
    sand_ground_color: False
  environment:
    reward_type: 'distance' # choose from distance, target or light
@@ -23,14 +23,13 @@
    target_position: [ 8., 0., 0.]
    color_contacts: False
  damage:
-   damage: True
+   damage: False
    arm_setup_damage: [ 5, 0, 0, 0, 0]
  evolution:
-   es_popsize: 20
-   num_generations: 20
-   fitness:
-   cost_expr: "torque*ang_vel" # choose from ["no_cost", "torque*ang_vel", "torque"]
-   fitness_expr: "reward/cost" # choose from ["reward", "reward/cost", "reward+reward/cost"]
+   es_popsize: 6912
+   num_generations: 70
+   cost_expr: "no_cost" # choose from ["no_cost", "torque*ang_vel", "torque"]
+   fitness_expr: "reward" # choose from ["reward", "reward/cost", "reward+reward/cost"]
  controller:
    hidden_layers: [ 128, 128 ]
  

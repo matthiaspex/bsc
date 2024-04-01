@@ -1,9 +1,0 @@
-The following modules were not unloaded:
-  (Use "module --force purge" to unload all):
-
-  1) env/vsc/donphan     3) env/software/donphan
-  2) env/slurm/donphan   4) cluster/donphan
-Traceback (most recent call last):
-  File "/kyukon/home/gent/457/vsc45787/bsc/Centralized_controller/centr_ctrl_biomimetic.py", line 8, in <module>
-    import numpy as np
-ModuleNotFoundError: No module named 'numpy'
