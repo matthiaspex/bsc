@@ -10,7 +10,7 @@
    arm_setup: [ 5, 0, 5, 0, 0 ]
    joint_control: 'position'
  arena:
-   arena_size: !!python/tuple [ 10, 10 ]
+   arena_size: !!python/tuple [ 10, 5 ]
    sand_ground_color: False
    attach_target: True
  environment:
@@ -21,7 +21,7 @@
    joint_randomization_noise_scale: 0.0
    light_perlin_noise_scale: 4
    target_distance: 3
-   target_position: [ 3., 0., 0.]
+   target_position: [ 8., 0., 0.]
    color_contacts: False
  damage:
    damage: True
