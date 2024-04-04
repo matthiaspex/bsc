@@ -12,12 +12,6 @@ export VIDEO_DIR='C:\Users\Matthias\OneDrive - UGent\Documents\DOCUMENTEN\3. The
 export POLICY_PARAMS_DIR='C:\Users\Matthias\OneDrive - UGent\Documents\DOCUMENTEN\3. Thesis\BSC\trained_policy_params\'
 export PYTHONPATH='C:\Users\Matthias\OneDrive - UGent\Documents\DOCUMENTEN\3. Thesis\BSC\'
 
-# for file in config/*.txt
-# do
-#   cat $file
-#   echo 
-# done
-
 python 'Centralized_controller\centr_ctrl_biomimetic.py' 
 
 

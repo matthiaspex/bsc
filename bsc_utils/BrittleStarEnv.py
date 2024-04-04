@@ -115,7 +115,6 @@ def full_mjcf_configurations(
             time_scale=2,
             camera_ids=[0, 1],
             render_size=(480, 640),
-            # target_position=env_cfg["target_position"],
             color_contacts=env_cfg["color_contacts"]
             )
 

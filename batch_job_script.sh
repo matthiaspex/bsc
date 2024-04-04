@@ -1,8 +1,8 @@
 #!/bin/bash
 
-#PBS -N test_job
+#PBS -N batch_01_target
 #PBS -l nodes=1:ppn=2
-# #PBS -l gpus=1
+#PBS -l gpus=1
 #PBS -l mem=8gb
 #PBS -l walltime=12:00:00
 #PBS -e Job_scripts_logs/
@@ -54,10 +54,6 @@ do
   python 'Centralized_controller/centr_ctrl_biomimetic.py' 
   echo "Run finished"
 done
-
-
-# export CONFIG_FILE="$HOME/bsc/config/general_bsc.yaml"
-# python 'Centralized_controller/centr_ctrl_biomimetic.py'
 
 rm $VIDEO_DIR*
 

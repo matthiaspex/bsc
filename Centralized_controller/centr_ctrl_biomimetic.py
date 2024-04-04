@@ -2,7 +2,7 @@ import yaml
 import sys
 import os
 
-print(sys.executable)
+print(f"sys.executable: {sys.executable}")
 
 import numpy as np
 import jax
@@ -38,7 +38,7 @@ from bsc_utils.controller import ExplicitMLP
 from bsc_utils.BrittleStarEnv import create_morphology, create_arena, create_environment, full_mjcf_configurations
 from bsc_utils.damage import check_damage, pad_sensory_input, select_actuator_output
 from bsc_utils.simulation import rollout
-rollout = jax.jit(rollout, static_argnames=("mjx_vectorized_env", "nn_model",  "total_num_control_timesteps", "NUM_MJX_ENVIRONMENTS", "sensor_selection", "cost_expr"))
+rollout = jax.jit(rollout, static_argnames=("mjx_vectorized_env", "nn_model",  "total_num_control_timesteps", "NUM_MJX_ENVIRONMENTS", "sensor_selection", "cost_expr", "target_position"))
 from bsc_utils.miscallaneous import check_GPU_access
 from bsc_utils.evolution import reward_cost_to_fitness
 
@@ -126,16 +126,6 @@ run_name = run_name_format.format(**config_flat)
 
 print(f"run_name: {run_name}")
 
-# print(f"""
-#       damage = {damage}
-#       arm_setup = {arm_setup}
-#       sensor_selection = {sensor_selection}
-#       hidden_layers = {hidden_layers}
-#       hidden_layers.append(5) = {hidden_layers + [5]}
-#       target_distance = {target_distance}
-#       notes = {notes}
-#       sand_ground_color = {sand_ground_color}
-#       """)
 
 check_GPU_access(interface = interface)
 
@@ -147,13 +137,6 @@ visualize_mjcf(mjcf=morphology)
 
 arena = create_arena(arena_configuration=arena_configuration)
 visualize_mjcf(mjcf=arena)
-
-# # useful environment configuration information
-# print(f"[simulation_time] The total amount of time (in seconds) that one simulation episode takes: {environment_configuration.simulation_time}")
-# print(f"[physics_timestep] The amount of time (in seconds) that one 'physics step' advances the physics: {environment_configuration.physics_timestep}")
-# print(f"[control_timestep] The amount of time (in seconds) that one 'control step' advances the physics: {environment_configuration.control_timestep}")
-# print(f"[total_num_physics_steps] The total amount of physics steps that happen during one simulation episode: {environment_configuration.total_num_physics_steps}")
-# print(f"[total_num_control_steps] The total amount of control steps that happen during one simulation episode: {environment_configuration.total_num_control_steps}")
 
 total_num_control_timesteps = environment_configuration.total_num_control_steps
 
@@ -177,7 +160,7 @@ mjx_vectorized_step = jax.jit(jax.vmap(mjx_vectorized_env.step))
 mjx_vectorized_reset = jax.jit(jax.vmap(mjx_vectorized_env.reset))
 
 # reset the state of all parallel mjx environments
-mjx_vectorized_state = mjx_vectorized_reset(rng=mjx_vectorized_env_rng)
+mjx_vectorized_state = mjx_vectorized_reset(mjx_vectorized_env_rng)
 
 
 sensors = [key for key in mjx_vectorized_state.observations.keys()]
@@ -227,7 +210,6 @@ policy_params_init = nn_model.init(rng_init, jax.random.uniform(rng_input, (nn_i
 # vectorize the model.apply function
 vectorized_nn_model_apply = jax.jit(jax.vmap(nn_model.apply))
 
-
 # params is a PyTree --> see jax documentation
 # print(params)
 print(f"""nn features: {features}
@@ -244,8 +226,6 @@ print(f"""
 
 param_reshaper = ParameterReshaper(policy_params_init)
 num_params = param_reshaper.total_params # get from the weights and biases of the NN
-
-
 
 
 ###################################
@@ -280,27 +260,6 @@ print(f"""
 # RUNNING THE OPTIMISATION
 ##########################
 
-# Check some params:
-print(f"""
------Checking the setup for optimisation-----
-Total number of control timesteps per episode: {total_num_control_timesteps}
-Total simulation time [seconds]: {simulation_time}s
-Selected sensors: {sensor_selection}
-
-Neural network architecture: {[nn_input_dim] + features} with:
-\tSensory input layer dimension: {nn_input_dim}:
-\tActuator output dimension: {features[-1]}
-\tNumber of hidden layers / nodes per hidden layer: {features[:-1]}
-\tNumber of policy params: {num_params}
-
-Arm setup: {arm_setup}
-Joint control: {joint_control}
-Reward_type: {reward_type}
-
-Number of generations for updating policy parameters: {num_generations}
-Population size per generation of policy parameters: {es_popsize}
-Number of parallel MJX environments: {NUM_MJX_ENVIRONMENTS}
-""")
 
 # reset the search strategy state
 rng, rng_init = jax.random.split(rng, 2)
@@ -317,10 +276,14 @@ wandb.init(
     config={
     "nn_architecture": [nn_input_dim] + features,
     "arm_setup": arm_setup,
+    "joint_control": joint_control,
+    "reward_type": reward_type,
     "num_params": num_params,
-    "activation_function": "Tanh",
     "num_generations": num_generations,
     "es_popsize": es_popsize,
+    "sensor_selection": sensor_selection,
+    "simulation_time": simulation_time,
+    "total_num_control_steps": total_num_control_timesteps
     }
 )
 
@@ -362,8 +325,8 @@ for gen in range(num_generations):
                "max reward":jnp.max(total_reward),
                "mean cost": jnp.mean(total_cost),
                "min cost": jnp.min(total_cost),
-               f"mean fitness {fitness_expr}": jnp.mean(fitness),
-               f"max fitness {fitness_expr}": jnp.max(fitness)
+               "mean fitness": jnp.mean(fitness),
+               "max fitness": jnp.max(fitness)
               })
     
     # # Select certain training generations to render videos
@@ -559,9 +522,6 @@ if damage:
 
 else:
     print('no damage simulation has been run')
-
-
-
 
 
 wandb.finish()

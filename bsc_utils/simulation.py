@@ -3,6 +3,7 @@ import jax
 from jax import numpy as jnp
 from moojoco.environment.mjx_env import MJXEnv, MJXEnvState
 from bsc_utils.controller import ExplicitMLP
+from typing import Sequence
 
 def rollout(
         mjx_vectorized_env: MJXEnv,
@@ -12,7 +13,8 @@ def rollout(
         sensor_selection: tuple,
         rng: chex.PRNGKey,
         NUM_MJX_ENVIRONMENTS: int,
-        cost_expr: str = "no_cost"
+        cost_expr: str = "nocost",
+        target_position = None
         ):
     """
     Do a single episode rollout
@@ -23,7 +25,8 @@ def rollout(
     - sensor selection
     - rng
     - Total number of parallel MJX environments
-    - string describing the way costs are calculated
+    - cost_expr: string describing the way costs are calculated
+    - target_position: list of 3 numbers: XYZ coordinates of the target
     Outputs:
     - Final MJX environment state (vectorized)
     - Rewards: sum of all rewards of every timestep
@@ -35,7 +38,10 @@ def rollout(
     mjx_vectorized_reset = jax.jit(jax.vmap(mjx_vectorized_env.reset))
     rng, mjx_vectorized_env_rng = jax.random.split(rng, 2)
     mjx_vectorized_env_rng = jnp.array(jax.random.split(mjx_vectorized_env_rng, NUM_MJX_ENVIRONMENTS))
-    mjx_vectorized_state_reset = mjx_vectorized_reset(rng=mjx_vectorized_env_rng)
+    if target_position:
+        mjx_vectorized_state_reset = mjx_vectorized_reset(rng=mjx_vectorized_env_rng, target_position=target_position)
+    else:
+        mjx_vectorized_state_reset = mjx_vectorized_reset(rng=mjx_vectorized_env_rng)
 
 
     
@@ -76,9 +82,11 @@ def rollout(
 
         joint_velocities = _mjx_vectorized_state.observations['joint_velocity']
         torques = _mjx_vectorized_state.observations['joint_actuator_force']
-        if cost_expr == "no_cost":
+
+        assert cost_expr in ["nocost", "torque x angvel", "torque"], 'cost_expr must be chosen from ["nocost", "torque x angvel", "torque"]'
+        if cost_expr == "nocost":
             cost_step = 0
-        elif cost_expr == "torque*ang_vel":
+        elif cost_expr == "torque x angvel":
             cost_step = jnp.sum(jnp.abs(joint_velocities)*jnp.abs(torques), axis = 1)
         elif cost_expr == "torque":
             cost_step = jnp.sum(jnp.abs(torques), axis = 1)
