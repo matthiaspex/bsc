@@ -1,10 +1,10 @@
 #!/bin/bash
 
-#PBS -N batch_01_again
+#PBS -N batch_02
 #PBS -l nodes=1:ppn=2
 #PBS -l gpus=1
 #PBS -l mem=8gb
-#PBS -l walltime=12:00:00
+#PBS -l walltime=5:00:00
 #PBS -e Job_scripts_logs/
 #PBS -o Job_scripts_logs/
 #PBS -m abe
@@ -26,7 +26,6 @@ export WANDB_API_KEY=$wandb_api_key
 cd $PBS_O_WORKDIR
 
 echo $PBS_O_WORKDIR
-
 
 # Setup anaconda environment
 conda init

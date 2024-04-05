@@ -59,7 +59,6 @@ frames, joint_angles_ip, joint_angles_oop = generate_video_joint_angle_raw(
                                                                     )
 print("simulation of single episode finished")
 
-
 img = save_image_from_raw_frames(frames, 5, file_path=IMAGE_DIR + RUN_NAME + ".png", show_image=True)
 
 

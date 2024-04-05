@@ -1,17 +1,17 @@
  experiment:
    interface: 'HPC' # HPC or VSC 
-   run_name_format: "{notes} {reward_type} arms {arm_setup} popsize {es_popsize} {cost_expr} {fitness_expr}" # put an f in front in .py script
+   run_name_format: "{notes} {reward_type} arms {arm_setup} popsize {es_popsize} {penal_expr} {cost_expr} {efficiency_expr}" 
  wandb:
    project: "biomimicry"
-   group: "cost_fitness_again"
-   tags: ["torque", "reward/cost"]
-   notes: "b01_r03"
+   group: "penalty: body_stability"
+   tags: ["torque", "reward _ cost", "400"]
+   notes: "b02_r03"
  morphology:
-   arm_setup: [ 7, 7, 7, 7, 7 ]
+   arm_setup: [ 5, 5, 5, 5, 5 ]
    joint_control: 'position'
  arena:
-   arena_size: !!python/tuple [ 10, 10 ]
-   sand_ground_color: True
+   arena_size: !!python/tuple [ 10, 5 ]
+   sand_ground_color: False
  environment:
    reward_type: 'distance' # choose from distance, target or light
    sensor_selection: !!python/tuple [ 'joint_position', 'joint_actuator_force', 'segment_contact']
@@ -26,10 +26,11 @@
    damage: False
    arm_setup_damage: [ 5, 0, 0, 0, 0]
  evolution:
-   es_popsize: 20
-   num_generations: 2
+   es_popsize: 400
+   num_generations: 70
    cost_expr: "torque" # choose from ["nocost", "torque x angvel", "torque"]
-   fitness_expr: "reward _ cost" # choose from ["reward", "reward _ cost", "reward + reward _ cost"]
+   efficiency_expr: "reward _ cost" # choose from ["reward", "reward _ cost", "reward + reward _ cost"]
+   penal_expr: "body_stability" # choose from ["nopenal", "body_stability"]
  controller:
    hidden_layers: [ 128, 128 ]
  

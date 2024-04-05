@@ -17,6 +17,7 @@ def rollout(
         rng: chex.PRNGKey,
         NUM_MJX_ENVIRONMENTS: int,
         cost_expr: str = "nocost",
+        penal_expr: str = "nopenal",
         target_position = None
         ):
     """
@@ -83,22 +84,27 @@ def rollout(
         
         reward_step = _mjx_vectorized_state_updated.reward
 
-        joint_velocities = _mjx_vectorized_state.observations['joint_velocity']
-        torques = _mjx_vectorized_state.observations['joint_actuator_force']
 
-        assert cost_expr in ["nocost", "torque x angvel", "torque"], 'cost_expr must be chosen from ["nocost", "torque x angvel", "torque"]'
-        if cost_expr == "nocost":
-            cost_step = 0
-        elif cost_expr == "torque x angvel":
-            cost_step = jnp.sum(jnp.abs(joint_velocities)*jnp.abs(torques), axis = 1)
-        elif cost_expr == "torque":
-            cost_step = jnp.sum(jnp.abs(torques), axis = 1)
+        cost_step = cost_step_during_rollout(env_state_observations=_mjx_vectorized_state.observations, cost_expr=cost_expr)
+        penal_step = penal_step_during_rollout(env_state_observations=_mjx_vectorized_state.observations, penal_expr=penal_expr)
+
+
+        # joint_velocities = _mjx_vectorized_state.observations['joint_velocity']
+        # torques = _mjx_vectorized_state.observations['joint_actuator_force']
+
+        # assert cost_expr in ["nocost", "torque x angvel", "torque"], 'cost_expr must be chosen from ["nocost", "torque x angvel", "torque"]'
+        # if cost_expr == "nocost":
+        #     cost_step = 0
+        # elif cost_expr == "torque x angvel":
+        #     cost_step = jnp.sum(jnp.abs(joint_velocities)*jnp.abs(torques), axis = 1)
+        # elif cost_expr == "torque":
+        #     cost_step = jnp.sum(jnp.abs(torques), axis = 1)
         
         # above sum sums over all the segments of 1 single individual in the generation
         # summing this power over every time step results in the total work done (done outside of the rollout function)
 
         carry = [_mjx_vectorized_state_updated, _policy_params_shaped]
-        return carry, [reward_step, cost_step]
+        return carry, [reward_step, cost_step, penal_step]
 
     final_carry, stack = jax.lax.scan(
         step,
@@ -107,12 +113,52 @@ def rollout(
         total_num_control_timesteps
     )
 
-    rewards, costs = stack
+    rewards, costs, penal = stack
     
     mjx_vectorized_state_final = final_carry[0]
-    return mjx_vectorized_state_final, rewards, costs, rng
+    return mjx_vectorized_state_final, (rewards, costs, penal), rng
 
 
+
+
+def cost_step_during_rollout(
+        env_state_observations: dict,
+        cost_expr: str
+):
+    assert cost_expr in ["nocost", "torque x angvel", "torque"], 'cost_expr must be chosen from ["nocost", "torque x angvel", "torque"]'
+    torques = env_state_observations['joint_actuator_force']
+    joint_velocities = env_state_observations['joint_velocity']
+
+    if cost_expr == "nocost":
+        cost_step = 0
+    elif cost_expr == "torque x angvel":
+        cost_step = jnp.sum(jnp.abs(joint_velocities)*jnp.abs(torques), axis = 1)
+    elif cost_expr == "torque":
+        cost_step = jnp.sum(jnp.abs(torques), axis = 1)
+    else:
+        raise "No cost steps have been generated: check whether correct cost_expr has been supplied"
+
+    return cost_step
+
+def penal_step_during_rollout(
+        env_state_observations: dict,
+        penal_expr: str
+
+):
+    assert penal_expr in ["nopenal", "body_stability"], 'penal_expr must be chosen from ["nopenal", "body_stability", "torque"]'
+    if penal_expr == "nopenal":
+        penal_step = 0
+    elif penal_expr == "body_stability":
+        rx = env_state_observations["disk_rotation"][:,0]
+        ry = env_state_observations["disk_rotation"][:,1]
+        tz = env_state_observations["disk_position"][:,2]
+        norm = jnp.linalg.norm(jnp.array([rx, ry, tz]), axis = 0)
+        penal_step = jnp.exp(norm) # taking exponential makes sure that when penal comes in denominator of the fitness,
+        # the fitness still converges also for penal = 0
+    else:
+        raise "No penal steps have been generated: check whether correct penal_expr has been supplied"
+
+    return penal_step
 
 
 def generate_video_joint_angle_raw(

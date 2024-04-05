@@ -4,10 +4,10 @@
  wandb:
    project: "biomimicry"
    group: "cost_fitness_again"
-   tags: ["no_cost", "reward"]
-   notes: "b01_r01"
+   tags: ["torque", "reward + reward _ cost"]
+   notes: "b01_r05"
  morphology:
-   arm_setup: [ 7, 7, 7, 7, 7 ]
+   arm_setup: [ 5, 5, 5, 5, 5 ]
    joint_control: 'position'
  arena:
    arena_size: !!python/tuple [ 10, 10 ]
@@ -26,10 +26,10 @@
    damage: False
    arm_setup_damage: [ 5, 0, 0, 0, 0]
  evolution:
-   es_popsize: 20
-   num_generations: 2
-   cost_expr: "nocost" # choose from ["nocost", "torque x angvel", "torque"]
-   fitness_expr: "reward" # choose from ["reward", "reward _ cost", "reward + reward _ cost"]
+   es_popsize: 6912
+   num_generations: 70
+   cost_expr: "torque" # choose from ["nocost", "torque x angvel", "torque"]
+   fitness_expr: "reward + reward _ cost" # choose from ["reward", "reward _ cost", "reward + reward _ cost"]
  controller:
    hidden_layers: [ 128, 128 ]
  

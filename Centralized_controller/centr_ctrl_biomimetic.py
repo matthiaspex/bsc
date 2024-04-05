@@ -21,9 +21,9 @@ from bsc_utils.controller import ExplicitMLP
 from bsc_utils.BrittleStarEnv import create_morphology, create_arena, create_environment, full_mjcf_configurations
 from bsc_utils.damage import check_damage, pad_sensory_input, select_actuator_output
 from bsc_utils.simulation import rollout, generate_video_joint_angle_raw
-rollout = jax.jit(rollout, static_argnames=("mjx_vectorized_env", "nn_model",  "total_num_control_timesteps", "NUM_MJX_ENVIRONMENTS", "sensor_selection", "cost_expr", "target_position"))
+rollout = jax.jit(rollout, static_argnames=("mjx_vectorized_env", "nn_model",  "total_num_control_timesteps", "NUM_MJX_ENVIRONMENTS", "sensor_selection", "cost_expr", "penal_expr", "target_position"))
 from bsc_utils.miscellaneous import check_GPU_access, load_config_from_yaml, store_config_and_policy_params, get_run_name_from_config
-from bsc_utils.evolution import reward_cost_to_fitness
+from bsc_utils.evolution import efficiency_from_reward_cost, fitness_from_stacked_data
 
 
 # some specific inports from biorobot
@@ -82,7 +82,8 @@ arm_setup_damage = config["damage"]["arm_setup_damage"]
 es_popsize = config["evolution"]["es_popsize"]
 num_generations = config["evolution"]["num_generations"]
 cost_expr = config["evolution"]["cost_expr"]
-fitness_expr = config["evolution"]["fitness_expr"]
+penal_expr = config["evolution"]["penal_expr"]
+efficiency_expr = config["evolution"]["efficiency_expr"]
 # controller
 hidden_layers = config["controller"]["hidden_layers"]
 
@@ -235,19 +236,8 @@ wandb.init(
     name = run_name,
     tags = tags,
     notes = notes,
-    config={
-    "nn_architecture": [nn_input_dim] + features,
-    "arm_setup": arm_setup,
-    "joint_control": joint_control,
-    "reward_type": reward_type,
-    "num_params": num_params,
-    "num_generations": num_generations,
-    "es_popsize": es_popsize,
-    "sensor_selection": sensor_selection,
-    "simulation_time": simulation_time,
-    "total_num_control_steps": total_num_control_timesteps
-    }
-)
+    config = config
+    )
 
 # Run ask-eval-tell loop
 start_time = time.time()
@@ -263,20 +253,25 @@ for gen in range(num_generations):
     policy_params_shaped = param_reshaper.reshape(policy_params) # --> stacked pytree
 
 
-    final_state, rewards, costs, rng = rollout(mjx_vectorized_env = mjx_vectorized_env,
+    final_state, steps_stacked_data, rng = rollout(mjx_vectorized_env = mjx_vectorized_env,
                                                nn_model = nn_model,
                                                policy_params_shaped = policy_params_shaped,
                                                total_num_control_timesteps = total_num_control_timesteps,
                                                sensor_selection = sensor_selection,
                                                rng = rng,
                                                NUM_MJX_ENVIRONMENTS = NUM_MJX_ENVIRONMENTS,
-                                               cost_expr = cost_expr
+                                               cost_expr = cost_expr,
+                                               penal_expr = penal_expr
                                                )
+    
+    rewards, costs, penal = steps_stacked_data
 
     # rewards shape is: e.g. 300 parallel rewards per control step, an additional stack every control step --> sum over the control steps along axis = 0
     total_reward = jnp.sum(rewards, axis = 0)
     total_cost = jnp.sum(costs, axis = 0)
-    fitness = reward_cost_to_fitness(total_reward, total_cost, fitness_expr)
+    total_penal = jnp.sum(penal, axis = 0)
+    efficiency = efficiency_from_reward_cost(total_reward, total_cost, efficiency_expr)
+    fitness = fitness_from_stacked_data(stacked_data=steps_stacked_data, efficiency_expr=efficiency_expr)
 
     # fitness should be an array with population size as len (e.g. 100)
     fit_re = fit_shaper.apply(policy_params, fitness)
@@ -287,6 +282,10 @@ for gen in range(num_generations):
                "max reward":jnp.max(total_reward),
                "mean cost": jnp.mean(total_cost),
                "min cost": jnp.min(total_cost),
+               "mean penalty": jnp.mean(total_penal),
+               "min penalty": jnp.min(total_penal),
+               "mean efficiency": jnp.mean(efficiency),
+               "max efficiency": jnp.max(efficiency),
                "mean fitness": jnp.mean(fitness),
                "max fitness": jnp.max(fitness)
               })
