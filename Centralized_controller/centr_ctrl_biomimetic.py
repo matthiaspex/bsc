@@ -1,4 +1,3 @@
-import yaml
 import sys
 import os
 
@@ -7,9 +6,7 @@ print(f"sys.executable: {sys.executable}")
 import numpy as np
 import jax
 from jax import numpy as jnp
-import evosax
 from evosax import OpenES, ParameterReshaper, NetworkMapper, FitnessShaper
-import flax
 from flax import linen as nn
 from typing import Any, Callable, Sequence, Union, List
 import biorobot
@@ -18,28 +15,14 @@ import matplotlib.pyplot as plt
 
 import wandb
 
-import moviepy
-import imageio
-import plotly
-import cv2
-import mediapy as media
-
-
-
-
-
-
-rng = jax.random.PRNGKey(0) # make an rng right away and every split throughout the document should make a new rng
-# this new rng should only be used for the sole purpose of splitting in the future
-
 # custom modules import --> from bsc_utils directory
-from bsc_utils.visualization import visualize_mjcf, show_video, create_video, post_render, plot_ip_oop_joint_angles 
+from bsc_utils.visualization import visualize_mjcf, show_video, create_video, post_render, plot_ip_oop_joint_angles, save_video_from_raw_frames 
 from bsc_utils.controller import ExplicitMLP
 from bsc_utils.BrittleStarEnv import create_morphology, create_arena, create_environment, full_mjcf_configurations
 from bsc_utils.damage import check_damage, pad_sensory_input, select_actuator_output
-from bsc_utils.simulation import rollout
+from bsc_utils.simulation import rollout, generate_video_joint_angle_raw
 rollout = jax.jit(rollout, static_argnames=("mjx_vectorized_env", "nn_model",  "total_num_control_timesteps", "NUM_MJX_ENVIRONMENTS", "sensor_selection", "cost_expr", "target_position"))
-from bsc_utils.miscallaneous import check_GPU_access
+from bsc_utils.miscellaneous import check_GPU_access, load_config_from_yaml, store_config_and_policy_params, get_run_name_from_config
 from bsc_utils.evolution import reward_cost_to_fitness
 
 
@@ -53,8 +36,7 @@ from biorobot.brittle_star.environment.undirected_locomotion.shared import \
 from biorobot.brittle_star.mjcf.arena.aquarium import AquariumArenaConfiguration, MJCFAquariumArena
 
 
-
-
+rng = jax.random.PRNGKey(0)
 np.set_printoptions(precision=3, suppress=False, linewidth=100)
 jnp.set_printoptions(precision=3, suppress=False, linewidth=100)
 
@@ -66,16 +48,7 @@ VIDEO_DIR = os.environ["VIDEO_DIR"]
 POLICY_PARAMS_DIR = os.environ["POLICY_PARAMS_DIR"]
 CONFIG_FILE = os.environ["CONFIG_FILE"]
 
-
-print(f"""
-      CONFIG_FILE path: {CONFIG_FILE}
-      POLICY_PARAMS_DIR path: {POLICY_PARAMS_DIR}
-      VIDEO_DIR path: {VIDEO_DIR}
-""")
-
-with open(CONFIG_FILE, 'r') as f:
-    config = yaml.load(f, Loader=yaml.FullLoader)
-
+config = load_config_from_yaml(CONFIG_FILE)
 
 # readout the main arguments
 # experiment
@@ -113,22 +86,11 @@ fitness_expr = config["evolution"]["fitness_expr"]
 # controller
 hidden_layers = config["controller"]["hidden_layers"]
 
-config_flat = {}
-for k, v in config.items():
-    if not isinstance(v, dict):
-        config_flat[k] = v
-    else:
-        for l, w in v.items():
-            if not isinstance(w, dict):
-                config_flat[l] = w
-        
-run_name = run_name_format.format(**config_flat)
+run_name = get_run_name_from_config(config)
 
 print(f"run_name: {run_name}")
 
-
 check_GPU_access(interface = interface)
-
 
 morphology_specification, arena_configuration, environment_configuration = full_mjcf_configurations(config["morphology"], config["arena"], config["environment"])
 
@@ -342,89 +304,38 @@ policy_params_to_render.append(policy_params[jnp.argmax(fitness)])
 print('Policy training finished!')
 
 
-jnp.save(POLICY_PARAMS_DIR+run_name+".npy", policy_params_to_render)
+
+store_config_and_policy_params(file_name=POLICY_PARAMS_DIR+run_name, cfg=config, policy_params=policy_params_to_render)
+
 
 #####################################
 # Video and angle plots visualisation
 #####################################
 policy_params_to_render = jnp.array(policy_params_to_render)
-policy_params_solution_shaped = param_reshaper.reshape(policy_params_to_render)
-print(f"""
-Rendered policy params tree shape
-{jax.tree_util.tree_map(lambda x: x.shape, policy_params_solution_shaped)}
-""")
-
 fps = int(1/environment_configuration.control_timestep)
+file_path_video = VIDEO_DIR + run_name + ".mp4"
 
-NUM_MJX_ENVIRONMENTS_render = policy_params_to_render.shape[0]
+rng, rng_render = jax.random.split(rng, 2)
+frames, joint_angles_ip, joint_angles_oop = generate_video_joint_angle_raw(
+                                                                    policy_params_to_render=policy_params_to_render,
+                                                                    param_reshaper=param_reshaper,
+                                                                    rng=rng_render,
+                                                                    mjx_vectorized_env=mjx_vectorized_env,
+                                                                    sensor_selection=sensor_selection,
+                                                                    arm_setup=arm_setup,
+                                                                    nn_model=nn_model
+                                                                    )
 
-rng, mjx_vectorized_env_rng = jax.random.split(rng, 2)
-mjx_vectorized_env_rng = jnp.array(jax.random.split(mjx_vectorized_env_rng, NUM_MJX_ENVIRONMENTS_render))
-
-# vectorizing the functionalities
-mjx_vectorized_step = jax.jit(jax.vmap(mjx_vectorized_env.step))
-mjx_vectorized_reset = jax.jit(jax.vmap(mjx_vectorized_env.reset))
-
-mjx_vectorized_state = mjx_vectorized_reset(rng=mjx_vectorized_env_rng)
-
-mjx_frames = []
-
-# joint sensor observations order seg1ip, seg1oop, seg2ip, seg2oop, ...
-joint_angles_ip = []
-joint_angles_oop = []
-
-i = 0
-while not jnp.any(mjx_vectorized_state.terminated | mjx_vectorized_state.truncated):
-    if i%10 == 0:
-        print(i)
-    i += 1
-    
-    sensory_input = jnp.concatenate(
-        [mjx_vectorized_state.observations[label] for label in sensor_selection],
-        axis = 1
+save_video_from_raw_frames(
+    frames=frames,
+    fps=fps,
+    file_path=file_path_video
     )
-
-    joint_angles_ip_t = []
-    joint_angles_oop_t = []
-    j = 0
-    for n in arm_setup:
-        if n != 0:
-            joint_angles_ip_t.append(mjx_vectorized_state.observations["joint_position"][0][j*2*n:(j+1)*2*n:2])
-            joint_angles_oop_t.append(mjx_vectorized_state.observations["joint_position"][0][j*2*n+1:(j+1)*2*n+1:2])
-            j += 1
-
-    joint_angles_ip.append(joint_angles_ip_t)
-    joint_angles_oop.append(joint_angles_oop_t)
-
-    action = vectorized_nn_model_apply(policy_params_solution_shaped, sensory_input)
-    
-    mjx_vectorized_state = mjx_vectorized_step(state=mjx_vectorized_state, action=action)
-    
-    mjx_frames.append(
-            post_render(
-                mjx_vectorized_env.render(state=mjx_vectorized_state),
-                mjx_vectorized_env.environment_configuration
-                )
-            )
-
-imgio_kargs = {
-    'fps': fps, 'quality': 10, 'macro_block_size': None, 'codec': 'h264',
-    'ffmpeg_params': ['-vf', 'crop=trunc(iw/2)*2:trunc(ih/2)*2']
-    }
-writer = imageio.get_writer(VIDEO_DIR + run_name + ".mp4", **imgio_kargs)
-for frame in mjx_frames:
-    writer.append_data(frame)
-writer.close()
-
-wandb.log({"Video trained model": wandb.Video(VIDEO_DIR + run_name + ".mp4",
-                                              caption=run_name, fps=fps, format='mp4')})
-
-
+wandb.log({"Video trained model": wandb.Video(file_path_video, caption=run_name, fps=fps, format='mp4')})
 
 
 fig, axes = plot_ip_oop_joint_angles(joint_angles_ip, joint_angles_oop)
 wandb.log({"Joint Angles trained model": wandb.Image(fig)})
-
 
 
 #########################################################
@@ -433,12 +344,11 @@ wandb.log({"Joint Angles trained model": wandb.Image(fig)})
 
 if damage:
     check_damage(arm_setup = arm_setup, arm_setup_damage = arm_setup_damage)
-    # specifying morphology
-    morphology_specification_damage = default_brittle_star_morphology_specification(
-            num_arms=len(arm_setup_damage), num_segments_per_arm=arm_setup_damage, use_p_control=(joint_control == 'position'), use_torque_control=(joint_control == 'torque')
-            )
-    morphology_damage = create_morphology(morphology_specification=morphology_specification_damage)
-    visualize_mjcf(mjcf=morphology_damage)
+
+    morphology_specification_damage, arena_configuration, environment_configuration = full_mjcf_configurations(config["morphology"],
+                                                                                                        config["arena"],
+                                                                                                        config["environment"],
+                                                                                                        damage_cfg=config["damage"])
 
     mjx_vectorized_env = create_environment(
                     morphology_specification=morphology_specification_damage,
@@ -447,75 +357,27 @@ if damage:
                     backend="MJX"
                     )
 
+    rng, rng_render = jax.random.split(rng, 2)
+    frames, joint_angles_ip, joint_angles_oop = generate_video_joint_angle_raw(
+                                                                        policy_params_to_render=policy_params_to_render,
+                                                                        param_reshaper=param_reshaper,
+                                                                        rng=rng_render,
+                                                                        mjx_vectorized_env=mjx_vectorized_env,
+                                                                        sensor_selection=sensor_selection,
+                                                                        arm_setup=arm_setup,
+                                                                        nn_model=nn_model,
+                                                                        damage = damage,
+                                                                        arm_setup_damage = arm_setup_damage
+                                                                        )
 
-
-    NUM_MJX_ENVIRONMENTS_render = policy_params_to_render.shape[0]
-
-    rng, mjx_vectorized_env_rng = jax.random.split(rng, 2)
-    mjx_vectorized_env_rng = jnp.array(jax.random.split(mjx_vectorized_env_rng, NUM_MJX_ENVIRONMENTS_render))
-
-    # vectorizing the functionalities
-    mjx_vectorized_step = jax.jit(jax.vmap(mjx_vectorized_env.step))
-    mjx_vectorized_reset = jax.jit(jax.vmap(mjx_vectorized_env.reset))
-
-    mjx_vectorized_state = mjx_vectorized_reset(rng=mjx_vectorized_env_rng)
-
-
-
-    mjx_frames_damage = []
-
-    # joint sensor observations order seg1ip, seg1oop, seg2ip, seg2oop, ...
-    joint_angles_ip = []
-    joint_angles_oop = []
-
-    i = 0
-    while not jnp.any(mjx_vectorized_state.terminated | mjx_vectorized_state.truncated):
-        if i%10 == 0:
-            print(i)
-        i += 1
-        
-        sensory_input = jnp.concatenate(
-            [mjx_vectorized_state.observations[label] for label in sensor_selection],
-            axis = 1
+    file_path_video_damage = VIDEO_DIR + run_name + " DAMAGE.mp4"
+    save_video_from_raw_frames(
+        frames=frames,
+        fps=fps,
+        file_path=file_path_video_damage
         )
 
-        sensory_input_pad = pad_sensory_input(sensory_input, arm_setup, arm_setup_damage, sensor_selection)
-        
-        joint_angles_ip_t = []
-        joint_angles_oop_t = []
-        j = 0
-        for n in arm_setup_damage:
-            if n != 0:
-                joint_angles_ip_t.append(mjx_vectorized_state.observations["joint_position"][0][j*2*n:(j+1)*2*n:2])
-                joint_angles_oop_t.append(mjx_vectorized_state.observations["joint_position"][0][j*2*n+1:(j+1)*2*n+1:2])
-                j += 1
-
-        joint_angles_ip.append(joint_angles_ip_t)
-        joint_angles_oop.append(joint_angles_oop_t)
-
-        action = vectorized_nn_model_apply(policy_params_solution_shaped, sensory_input_pad)
-        action_selection = select_actuator_output(action, arm_setup, arm_setup_damage)
-        
-        mjx_vectorized_state = mjx_vectorized_step(state=mjx_vectorized_state, action=action_selection)
-        
-        mjx_frames_damage.append(
-                post_render(
-                    mjx_vectorized_env.render(state=mjx_vectorized_state),
-                    mjx_vectorized_env.environment_configuration
-                    )
-                )
-        
-    imgio_kargs = {
-        'fps': fps, 'quality': 10, 'macro_block_size': None, 'codec': 'h264',
-        'ffmpeg_params': ['-vf', 'crop=trunc(iw/2)*2:trunc(ih/2)*2']
-        }
-    writer = imageio.get_writer(VIDEO_DIR + run_name + " DAMAGE.mp4", **imgio_kargs)
-    for frame in mjx_frames_damage:
-        writer.append_data(frame)
-    writer.close()
-
-    wandb.log({"Video damaged morphology": wandb.Video(VIDEO_DIR + run_name + " DAMAGE.mp4",
-                                                       caption=run_name+" DAMAGE", fps=fps, format='mp4')})
+    wandb.log({"Video damaged morphology": wandb.Video(file_path_video_damage, caption=run_name+" DAMAGE", fps=fps, format='mp4')})
     
     fig, axes = plot_ip_oop_joint_angles(joint_angles_ip, joint_angles_oop)
     wandb.log({"Joint Angles damaged morophology": wandb.Image(fig)})

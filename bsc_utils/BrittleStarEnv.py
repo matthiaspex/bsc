@@ -1,4 +1,9 @@
 import gymnasium
+import chex
+import jax
+from jax import numpy as jnp
+from typing import Sequence
+
 # morphology imports
 from biorobot.brittle_star.mjcf.morphology.specification.default import default_brittle_star_morphology_specification
 from biorobot.brittle_star.mjcf.morphology.morphology import MJCFBrittleStarMorphology
@@ -20,6 +25,7 @@ from biorobot.brittle_star.environment.directed_locomotion.dual import BrittleSt
 from biorobot.brittle_star.environment.light_escape.dual import BrittleStarLightEscapeEnvironment
 from moojoco.environment.dual import DualMuJoCoEnvironment
 from moojoco.environment.base import MuJoCoEnvironmentConfiguration
+from moojoco.environment.mjx_env import MJXEnv
 
 
 
@@ -69,15 +75,29 @@ def create_environment(
 def full_mjcf_configurations(
         morph_cfg,
         arena_cfg,
-        env_cfg
+        env_cfg,
+        damage_cfg = None
         ):
     # specifying morphology
-    morphology_specification = default_brittle_star_morphology_specification(
-            num_arms=len(morph_cfg["arm_setup"]),
-            num_segments_per_arm=morph_cfg["arm_setup"],
-            use_p_control=(morph_cfg["joint_control"] == 'position'),
-            use_torque_control=(morph_cfg["joint_control"] == 'torque')
-            )
+    if damage_cfg:
+        damage = damage_cfg["damage"]
+    else:
+        damage = False
+
+    if damage == True:
+        morphology_specification = default_brittle_star_morphology_specification(
+                        num_arms=len(damage_cfg["arm_setup_damage"]),
+                        num_segments_per_arm=damage_cfg["arm_setup_damage"],
+                        use_p_control=(morph_cfg["joint_control"] == 'position'),
+                        use_torque_control=(morph_cfg["joint_control"] == 'torque')
+                        )
+    else:
+        morphology_specification = default_brittle_star_morphology_specification(
+                num_arms=len(morph_cfg["arm_setup"]),
+                num_segments_per_arm=morph_cfg["arm_setup"],
+                use_p_control=(morph_cfg["joint_control"] == 'position'),
+                use_torque_control=(morph_cfg["joint_control"] == 'torque')
+                )
 
     # specifying arena
     arena_configuration = AquariumArenaConfiguration(
@@ -136,6 +156,14 @@ def full_mjcf_configurations(
     return morphology_specification, arena_configuration, environment_configuration
 
 
+def get_observation_space_dim_from_vectorized_env(
+        mjx_vectorized_env: MJXEnv,
+        rng: chex.PRNGKey,
+        sensor_selection: Sequence[str]
+):
 
-
+    mjx_vectorized_reset = jax.jit(jax.vmap(mjx_vectorized_env.reset))
+    mjx_vectorized_state = mjx_vectorized_reset(jnp.array([rng])) # to be compatible with multiple parallel envs, the rng needs to have an iterable dimension
+    observation_space_dim = sum([mjx_vectorized_state.observations[sensor].shape[-1] for sensor in sensor_selection])
+    return observation_space_dim
 

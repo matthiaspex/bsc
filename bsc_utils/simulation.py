@@ -4,6 +4,9 @@ from jax import numpy as jnp
 from moojoco.environment.mjx_env import MJXEnv, MJXEnvState
 from bsc_utils.controller import ExplicitMLP
 from typing import Sequence
+from evosax import ParameterReshaper
+from bsc_utils.visualization import post_render
+from bsc_utils.damage import pad_sensory_input, select_actuator_output, check_damage
 
 def rollout(
         mjx_vectorized_env: MJXEnv,
@@ -108,3 +111,82 @@ def rollout(
     
     mjx_vectorized_state_final = final_carry[0]
     return mjx_vectorized_state_final, rewards, costs, rng
+
+
+
+
+def generate_video_joint_angle_raw(
+        policy_params_to_render,
+        param_reshaper: ParameterReshaper,
+        rng: chex.PRNGKey,
+        mjx_vectorized_env: MJXEnv,
+        sensor_selection: Sequence[str],
+        arm_setup: Sequence[int],
+        nn_model: ExplicitMLP,
+        damage: bool = False,
+        arm_setup_damage: Sequence[int] = None
+):
+    if damage == True:
+        assert arm_setup_damage, "provide an arm_setup_damage"
+        check_damage(arm_setup, arm_setup_damage)
+
+    policy_params_solution_shaped = param_reshaper.reshape(policy_params_to_render)
+    NUM_MJX_ENVIRONMENTS_render = policy_params_to_render.shape[0]
+
+    rng, mjx_vectorized_env_rng = jax.random.split(rng, 2)
+    mjx_vectorized_env_rng = jnp.array(jax.random.split(mjx_vectorized_env_rng, NUM_MJX_ENVIRONMENTS_render))
+
+    mjx_vectorized_step = jax.jit(jax.vmap(mjx_vectorized_env.step))
+    mjx_vectorized_reset = jax.jit(jax.vmap(mjx_vectorized_env.reset))
+
+    vectorized_nn_model_apply = jax.jit(jax.vmap(nn_model.apply))
+
+    mjx_vectorized_state = mjx_vectorized_reset(rng=mjx_vectorized_env_rng)
+
+    frames = []
+    joint_angles_ip = []
+    joint_angles_oop = []
+
+
+    while not jnp.any(mjx_vectorized_state.terminated | mjx_vectorized_state.truncated):
+        
+        sensory_input = jnp.concatenate(
+            [mjx_vectorized_state.observations[label] for label in sensor_selection],
+            axis = 1
+        )
+
+        if damage:
+            sensory_input = pad_sensory_input(sensory_input, arm_setup, arm_setup_damage, sensor_selection)
+
+        joint_angles_ip_t = []
+        joint_angles_oop_t = []
+        j = 0
+
+        if damage:
+            arms = arm_setup_damage
+        else:
+            arms = arm_setup
+
+        for n in arms:
+            if n != 0:
+                joint_angles_ip_t.append(mjx_vectorized_state.observations["joint_position"][0][j*2*n:(j+1)*2*n:2])
+                joint_angles_oop_t.append(mjx_vectorized_state.observations["joint_position"][0][j*2*n+1:(j+1)*2*n+1:2])
+                j += 1
+
+        joint_angles_ip.append(joint_angles_ip_t)
+        joint_angles_oop.append(joint_angles_oop_t)
+
+        action = vectorized_nn_model_apply(policy_params_solution_shaped, sensory_input)
+        if damage:
+            action = select_actuator_output(action, arm_setup, arm_setup_damage)
+        
+        mjx_vectorized_state = mjx_vectorized_step(state=mjx_vectorized_state, action=action)
+        
+        frames.append(
+            post_render(
+                mjx_vectorized_env.render(state=mjx_vectorized_state),
+                mjx_vectorized_env.environment_configuration
+                )
+            )
+    
+    return frames, joint_angles_ip, joint_angles_oop

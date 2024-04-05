@@ -12,8 +12,13 @@ bsc/
 
 # ignore Videos folder
 Videos/
+
+# ignore trained policies params folder
+trained_policy_params/
+
 # ignore wandb API key file
 *wandb_key.txt
 
 # ignore Job_script_logs folder
 Job_scripts_logs/
+

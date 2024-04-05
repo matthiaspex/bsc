@@ -9,6 +9,8 @@ import cv2
 import mujoco
 import logging
 import matplotlib.pyplot as plt
+import imageio
+from PIL import Image
 
 
 def visualize_mjcf(
@@ -94,3 +96,36 @@ def plot_ip_oop_joint_angles(
             axes[i][j].set_ylabel("Out of plane joint angle [rad]")
     plt.show()
     return fig, axes
+
+def save_video_from_raw_frames(
+        frames,
+        fps: int,
+        file_path: str
+):
+    imgio_kargs = {
+        'fps': fps, 'quality': 10, 'macro_block_size': None, 'codec': 'h264',
+        'ffmpeg_params': ['-vf', 'crop=trunc(iw/2)*2:trunc(ih/2)*2']
+        }
+    writer = imageio.get_writer(file_path, **imgio_kargs)
+    for frame in frames:
+        writer.append_data(frame)
+    writer.close()
+
+
+def save_image_from_raw_frames(
+        frames,
+        number_of_frames: int,
+        file_path: str = None,
+        show_image: bool = False
+) -> Image:
+    frames_sel = frames[::len(frames)//number_of_frames]
+    img = Image.fromarray(frames_sel[0], 'RGB')
+    for frame in frames_sel[1:]:
+        img_add = Image.fromarray(frame, 'RGB')
+        img = Image.blend(img, img_add, 0.5)
+
+    if file_path:
+        img.save(file_path)
+    if show_image:
+        img.show()
+        

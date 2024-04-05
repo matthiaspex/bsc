@@ -63,3 +63,20 @@ class ExplicitMLP(nn.Module):
     
 
 
+class nn_controller():
+    def __init__(
+            self,
+            cfg: dict,
+            output_dim: int
+            ):
+        self.cfg = cfg
+        self.output_dim = output_dim
+
+
+    def model_from_config(
+            self,
+    ):
+        self.features = tuple(self.cfg["controller"]["hidden_layers"] + [self.output_dim])
+        self.model = ExplicitMLP(features = self.features, joint_control = self.cfg["morphology"]["joint_control"])
+        
+
