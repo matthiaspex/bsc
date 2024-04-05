@@ -3,7 +3,7 @@
    run_name_format: "{notes} {reward_type} arms {arm_setup} popsize {es_popsize} {cost_expr} {fitness_expr}" # put an f in front in .py script
  wandb:
    project: "biomimicry"
-   group: "cost_fitness_target"
+   group: "cost_fitness_again"
    tags: ["torque*ang_vel", "reward+reward/cost"]
    notes: "b01_r04"
  morphology:
@@ -11,9 +11,9 @@
    joint_control: 'position'
  arena:
    arena_size: !!python/tuple [ 10, 10 ]
-   sand_ground_color: False
+   sand_ground_color: True
  environment:
-   reward_type: 'target' # choose from distance, target or light
+   reward_type: 'distance' # choose from distance, target or light
    sensor_selection: !!python/tuple [ 'joint_position', 'joint_actuator_force', 'segment_contact']
    num_physics_steps_per_control_step: 10
    simulation_time: 5
@@ -26,8 +26,8 @@
    damage: False
    arm_setup_damage: [ 5, 0, 0, 0, 0]
  evolution:
-   es_popsize: 6912
-   num_generations: 70
+   es_popsize: 20
+   num_generations: 2
    cost_expr: "torque x angvel" # choose from ["nocost", "torque x angvel", "torque"]
    fitness_expr: "reward + reward _ cost" # choose from ["reward", "reward _ cost", "reward + reward _ cost"]
  controller:

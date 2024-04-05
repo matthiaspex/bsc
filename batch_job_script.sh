@@ -1,6 +1,6 @@
 #!/bin/bash
 
-#PBS -N batch_01_target
+#PBS -N batch_01_again
 #PBS -l nodes=1:ppn=2
 #PBS -l gpus=1
 #PBS -l mem=8gb
