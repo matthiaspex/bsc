@@ -1,11 +1,15 @@
 import chex
+from typing import Sequence
+import numpy as np
+
 import jax
 from jax import numpy as jnp
-from moojoco.environment.mjx_env import MJXEnv, MJXEnvState
-from bsc_utils.controller import ExplicitMLP
-from typing import Sequence
 from evosax import ParameterReshaper
-from bsc_utils.visualization import post_render
+
+from moojoco.environment.mjx_env import MJXEnv, MJXEnvState
+
+from bsc_utils.controller import ExplicitMLP
+from bsc_utils.visualization import post_render, change_alpha, move_camera
 from bsc_utils.damage import pad_sensory_input, select_actuator_output, check_damage
 
 def rollout(
@@ -117,7 +121,8 @@ def rollout(
     
     mjx_vectorized_state_final = final_carry[0]
     return mjx_vectorized_state_final, (rewards, costs, penal), rng
-
+# jit the rollout function
+rollout = jax.jit(rollout, static_argnames=("mjx_vectorized_env", "nn_model",  "total_num_control_timesteps", "NUM_MJX_ENVIRONMENTS", "sensor_selection", "cost_expr", "penal_expr", "target_position"))
 
 
 
@@ -128,9 +133,10 @@ def cost_step_during_rollout(
     assert cost_expr in ["nocost", "torque x angvel", "torque"], 'cost_expr must be chosen from ["nocost", "torque x angvel", "torque"]'
     torques = env_state_observations['joint_actuator_force']
     joint_velocities = env_state_observations['joint_velocity']
-
+    # torques or joint_velocities dim can be (popsize, 2*num_segments) or (popsize, 2*num_segments, timesteps) depending on whether it is an observation stack or not
+        
     if cost_expr == "nocost":
-        cost_step = 0
+        cost_step = jnp.zeros_like(jnp.sum(jnp.abs(torques), axis = 1)) # we know jnp.sum(jnp.abs(torques), axis = 1) has good dims so make zeros array like it
     elif cost_expr == "torque x angvel":
         cost_step = jnp.sum(jnp.abs(joint_velocities)*jnp.abs(torques), axis = 1)
     elif cost_expr == "torque":
@@ -147,11 +153,12 @@ def penal_step_during_rollout(
 ):
     assert penal_expr in ["nopenal", "body_stability"], 'penal_expr must be chosen from ["nopenal", "body_stability", "torque"]'
     if penal_expr == "nopenal":
-        penal_step = 0
+        penal_step = jnp.zeros_like(jnp.sum(jnp.abs(env_state_observations['joint_actuator_force']), axis = 1)) # we know jnp.sum(jnp.abs(torques), axis = 1) has good dims so make zeros array like it
     elif penal_expr == "body_stability":
-        rx = env_state_observations["disk_rotation"][:,0]
-        ry = env_state_observations["disk_rotation"][:,1]
-        tz = env_state_observations["disk_position"][:,2]
+        # env_state_observations["disk_rotation"] dim can be (popsize, 3) or (popsize, 3, timesteps) depending on whether it is an observation stack or not
+        rx = jnp.take(env_state_observations["disk_rotation"], 0, axis = 1)  # slicing env_state_observations["disk_rotation"][:,0] but without nowing how many dims there are in total
+        ry = jnp.take(env_state_observations["disk_rotation"], 1, axis = 1) 
+        tz = jnp.take(env_state_observations["disk_rotation"], 2, axis = 1)
         norm = jnp.linalg.norm(jnp.array([rx, ry, tz]), axis = 0)
         penal_step = jnp.exp(norm) # taking exponential makes sure that when penal comes in denominator of the fitness,
         # the fitness still converges also for penal = 0
@@ -170,8 +177,14 @@ def generate_video_joint_angle_raw(
         arm_setup: Sequence[int],
         nn_model: ExplicitMLP,
         damage: bool = False,
-        arm_setup_damage: Sequence[int] = None
+        arm_setup_damage: Sequence[int] = None,
+        visualise_increasing_opacity: bool = False
 ):
+    """
+    if visualise_increasing_opacity = True: 2 additional arrays returned:
+    - background_frame: numpy array of an image of the fully opaque background
+    - brittle_star_frames: list of numpy arrays of only the brittle stars
+    """
     if damage == True:
         assert arm_setup_damage, "provide an arm_setup_damage"
         check_damage(arm_setup, arm_setup_damage)
@@ -192,8 +205,15 @@ def generate_video_joint_angle_raw(
     frames = []
     joint_angles_ip = []
     joint_angles_oop = []
-
-
+    if visualise_increasing_opacity:
+        brittle_star_frames = []
+        env_state_background = move_camera(state=mjx_vectorized_state)
+        env_state_background = change_alpha(state = env_state_background, brittle_star_alpha=0.0, background_alpha=1.0)
+        background_frame = post_render(
+            mjx_vectorized_env.render(state=env_state_background),
+            mjx_vectorized_env.environment_configuration
+            )
+        
     while not jnp.any(mjx_vectorized_state.terminated | mjx_vectorized_state.truncated):
         
         sensory_input = jnp.concatenate(
@@ -234,5 +254,20 @@ def generate_video_joint_angle_raw(
                 mjx_vectorized_env.environment_configuration
                 )
             )
+        
+        if visualise_increasing_opacity:
+            env_state_brittle_star = move_camera(state=mjx_vectorized_state)
+            env_state_brittle_star = change_alpha(state = env_state_brittle_star, brittle_star_alpha=1.0, background_alpha=0.0)
+            brittle_star_frames.append(
+                post_render(
+                mjx_vectorized_env.render(state=env_state_brittle_star),
+                mjx_vectorized_env.environment_configuration
+                )
+            )
     
-    return frames, joint_angles_ip, joint_angles_oop
+    if visualise_increasing_opacity:
+        return frames, joint_angles_ip, joint_angles_oop, background_frame, brittle_star_frames
+    else:
+        return frames, joint_angles_ip, joint_angles_oop
+
+

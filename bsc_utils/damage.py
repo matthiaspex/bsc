@@ -4,6 +4,7 @@ from jax import numpy as jnp
 
 
 def check_damage(arm_setup, arm_setup_damage):
+    # checks whether a morphology has been damaged
     damage = False
     no_added_segments = True
     for i in range(len(arm_setup)):

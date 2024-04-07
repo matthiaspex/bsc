@@ -10,8 +10,9 @@ bsc/
 # ignore all .jpg files
 *.jpg
 
-# ignore Videos folder
+# ignore Videos and Images folder
 Videos/
+Images/
 
 # ignore trained policies params folder
 trained_policy_params/

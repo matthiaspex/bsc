@@ -1,18 +1,18 @@
  experiment:
-   interface: 'VSC' # HPC or VSC 
-   run_name_format: "{notes} {reward_type} arms {arm_setup} popsize {es_popsize} {cost_expr} {penal_expr} {efficiency_expr}"
+   interface: 'HPC' # HPC or VSC 
+   run_name_format: "{notes} {reward_type} arms {arm_setup} popsize {es_popsize} {cost_expr} {efficiency_expr}"
    seed: 0
  wandb:
-   project: "job_sub_test"
-   group: "Local_VSC"
-   tags: ["something", "something_else"]
-   notes: "clean modules 2"
+   project: "biomimicry"
+   group: "Efficiency: 400 popsize"
+   tags: [ "torque", "reward _ cost", "400" ]
+   notes: "b03_r01"
  morphology:
-   arm_setup: [ 5, 0, 5, 0, 0 ]
+   arm_setup: [ 5, 5, 5, 5, 5 ]
    joint_control: 'position'
  arena:
-   arena_size: !!python/tuple [ 10, 5 ]
-   sand_ground_color: False
+   arena_size: !!python/tuple [ 10, 10 ]
+   sand_ground_color: True
  environment:
    reward_type: 'distance' # choose from distance, target or light
    sensor_selection: !!python/tuple [ 'joint_position', 'joint_actuator_force', 'segment_contact']
@@ -27,13 +27,13 @@
      camera_ids: [ 0, 1 ]
      render_size: [ 480, 640 ] # choose ratio 3:4 --> [ 480, 640  ], [ 720, 960 ], [ 960, 1280 ] (720p), [ 1440, 1920 ] (1080p), [ 3072, 4069 ] (HDTV 4k)
  damage:
-   damage: True
-   arm_setup_damage: [ 5, 0, 0, 0, 0]
+   damage: False
+   arm_setup_damage: [ 5, 0, 5, 5, 5 ]
  evolution:
-   es_popsize: 2
-   num_generations: 10
+   es_popsize: 400
+   num_generations: 100
    cost_expr: "torque" # choose from ["nocost", "torque x angvel", "torque"]
-   penal_expr: "body_stability" # choose from ["nopenal", "body_stability"]
+   penal_expr: "nopenal" # choose from ["nopenal", "body_stability"]
    efficiency_expr: "reward _ cost" # choose from ["reward", "reward _ cost", "reward + reward _ cost"]
  controller:
    hidden_layers: [ 128, 128 ]

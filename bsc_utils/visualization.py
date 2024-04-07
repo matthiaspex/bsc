@@ -1,16 +1,18 @@
 # Visualisation module
-import biorobot
 import numpy as np
 import mediapy as media
-from typing import Any, Callable, Sequence, Union, List
-from moojoco.environment.base import MuJoCoEnvironmentConfiguration
+from typing import List
+from moojoco.environment.base import MuJoCoEnvironmentConfiguration, BaseEnvState
 from moojoco.mjcf.component import MJCFRootComponent
+from moojoco.environment.mjx_env import MJXEnv, MJXEnvState
 import cv2
 import mujoco
 import logging
 import matplotlib.pyplot as plt
 import imageio
 from PIL import Image
+import copy
+from jax import numpy as jnp
 
 
 def visualize_mjcf(
@@ -73,11 +75,27 @@ def create_video(
     writer.release()
 
 
+def generate_timestep_joint_angle_plot_data(
+        arms,
+        vectorized_env_state: BaseEnvState
+):
+    joint_angles_ip_t = []
+    joint_angles_oop_t = []
+    j = 0
+
+    for n in arms:
+        if n != 0:
+            joint_angles_ip_t.append(vectorized_env_state.observations["joint_position"][0][j*2*n:(j+1)*2*n:2])
+            joint_angles_oop_t.append(vectorized_env_state.observations["joint_position"][0][j*2*n+1:(j+1)*2*n+1:2])
+            j += 1
+    return joint_angles_ip_t, joint_angles_oop_t
+
 
 def plot_ip_oop_joint_angles(
         joint_angles_ip: List,
-        joint_angles_oop: List
-        ):
+        joint_angles_oop: List,
+        show_plot: bool=False
+):
     joint_angles_ip = np.array(joint_angles_ip)
     joint_angles_oop = np.array(joint_angles_oop)
     # print(f"shape explanation: (t, number of arms, number of segment) = {joint_angles_ip.shape}")
@@ -92,9 +110,10 @@ def plot_ip_oop_joint_angles(
         for j in range(num_arms):
             axes[i][j].plot(joint_angles_ip[:,j,i], joint_angles_oop[:,j,i])
             axes[i][j].set_title(f"Joint angles for segment {i} in arm {j}")
-            axes[i][j].set_xlabel("In plane joint angle [rad]")
-            axes[i][j].set_ylabel("Out of plane joint angle [rad]")
-    plt.show()
+            axes[i][j].set_xlabel("IP joint angle [rad]")
+            axes[i][j].set_ylabel("OOP joint angle [rad]")
+    if show_plot:
+        plt.show()
     return fig, axes
 
 def save_video_from_raw_frames(
@@ -112,20 +131,38 @@ def save_video_from_raw_frames(
     writer.close()
 
 
-def save_image_from_raw_frames(
-        frames,
-        number_of_frames: int,
-        file_path: str = None,
-        show_image: bool = False
-) -> Image:
-    frames_sel = frames[::len(frames)//number_of_frames]
-    img = Image.fromarray(frames_sel[0], 'RGB')
-    for frame in frames_sel[1:]:
-        img_add = Image.fromarray(frame, 'RGB')
-        img = Image.blend(img, img_add, 0.5)
+def move_camera(state: MJXEnvState) -> MJXEnvState:
+    # Move the top down camera down
+    new_mjx_model = state.mjx_model.replace(
+            cam_pos=state.mjx_model.cam_pos.at[0, 2].set(6)
+            )
+    return state.replace(mjx_model=new_mjx_model)
 
-    if file_path:
-        img.save(file_path)
-    if show_image:
-        img.show()
+
+def change_alpha(
+        state: MJXEnvState,
+        brittle_star_alpha: float,
+        background_alpha: float
+        ) -> MJXEnvState:
+    """
+    Used to vary opacity of background and brittle star.
+    """
+    brittle_star_geom_ids = jnp.array(
+            [geom_id for geom_id in range(state.mj_model.ngeom) if
+             "BrittleStarMorphology" in state.mj_model.geom(geom_id).name]
+            )
+    background_geom_ids = jnp.array(
+            [geom_id for geom_id in range(state.mj_model.ngeom) if
+             "BrittleStarMorphology" not in state.mj_model.geom(geom_id).name]
+            )
+
+    geom_rgba = copy.deepcopy(state.mjx_model.geom_rgba)
+    geom_rgba[brittle_star_geom_ids, 3] = brittle_star_alpha
+    geom_rgba[background_geom_ids, 3] = background_alpha
+    new_mjx_model = state.mjx_model.replace(geom_rgba=geom_rgba)
+    # noinspection PyUnresolvedReferences
+    state = state.replace(mjx_model=new_mjx_model)
+    return state
+
+
         

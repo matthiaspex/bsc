@@ -1,10 +1,12 @@
 # controller
-import numpy as np
+import chex
 import jax
 from jax import numpy as jnp
-import flax
 from flax import linen as nn
-from typing import Any, Callable, Sequence, Union, List
+from typing import Callable, Sequence
+from evosax import ParameterReshaper
+
+from bsc_utils.BrittleStarEnv import EnvContainer
 
 
 
@@ -34,8 +36,6 @@ class ExplicitMLP(nn.Module):
         """
         self.layers = [nn.Dense(feat) for feat in self.features]
 
-
-
     def __call__(
         self,
         inputs,
@@ -63,20 +63,39 @@ class ExplicitMLP(nn.Module):
     
 
 
-class nn_controller():
+class NNController():
     def __init__(
             self,
-            cfg: dict,
-            output_dim: int
+            env_container: EnvContainer # hence also classes inheriting from EnvContainer are fine
             ):
-        self.cfg = cfg
-        self.output_dim = output_dim
+        self.config = env_container.config
+        self.env_container = env_container
 
 
-    def model_from_config(
+    def update_model(
             self,
     ):
-        self.features = tuple(self.cfg["controller"]["hidden_layers"] + [self.output_dim])
-        self.model = ExplicitMLP(features = self.features, joint_control = self.cfg["morphology"]["joint_control"])
+        assert self.env_container.env, "Model must be build based on undamaged configurations, but no non-damaged env was instatiated"
+        nn_input_dim, nn_output_dim = self.env_container.get_observation_action_space_info()
+        self.layers = [nn_input_dim] + self.config["controller"]["hidden_layers"] + [nn_output_dim]
+        _features = tuple(self.layers[1:])
+        self.model = ExplicitMLP(features = _features, joint_control = self.config["morphology"]["joint_control"])
+    
+    def get_policy_params_example(
+            self
+    ) -> dict:
+        """
+        models are based on flax, so policy_params are characterized by pytrees
+        """
+        assert self.model, "No model has been instantiated yet. Use method update_model"
+        policy_params_example = self.model.init(
+                                    jax.random.PRNGKey(0),          # model initialiser PRNGKey
+                                    jax.random.uniform(             # generate a random input vector
+                                        jax.random.PRNGKey(2024),   # seed for random input
+                                        (self.layers[0],)           # (iterable) dimension of the input
+                                    )
+                                )
+        return policy_params_example
+
         
 

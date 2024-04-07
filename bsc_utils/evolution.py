@@ -4,16 +4,16 @@ from jax import numpy as jnp
 def efficiency_from_reward_cost(
         total_reward: Sequence[float],
         total_cost: Sequence[float],
-        fitness_expr: str
+        efficiency_expr: str
         ):
-    assert fitness_expr in ["reward", "reward _ cost", "reward + reward _ cost"], 'fitness_expr must be chosen from ["reward", "reward _ cost", "reward + reward _ cost"]'
-    if fitness_expr == "reward" or jnp.all(total_cost == 0):
-        fitness = total_reward
-    if fitness_expr == "reward _ cost":
-        fitness = total_reward/total_cost
-    elif fitness_expr == "reward + reward _ cost":
-        fitness = total_reward + total_reward/total_cost
-    return fitness
+    assert efficiency_expr in ["reward", "reward _ cost", "reward + reward _ cost"], 'efficiency_expr must be chosen from ["reward", "reward _ cost", "reward + reward _ cost"]'
+    if efficiency_expr == "reward" or jnp.all(total_cost == 0):
+        efficiency = total_reward
+    if efficiency_expr == "reward _ cost":
+        efficiency = total_reward/total_cost
+    elif efficiency_expr == "reward + reward _ cost":
+        efficiency = total_reward + total_reward/total_cost
+    return efficiency
 
 
 def fitness_from_stacked_data(
