@@ -132,12 +132,12 @@ class Simulator(EnvContainer):
         merged_frame = self.background_frame
         selected_frames = self.brittle_star_frames[::len(self.brittle_star_frames)//number_of_frames]
         for i, brittle_star_frame in enumerate(selected_frames):
-            # # selecting specific frames to get only the brittle star
-            # ####################################################
-            # if i == 2:
-            #     tmp_img = Image.fromarray(brittle_star_frame, 'RGB')
-            #     tmp_img.save("C:\\Users\\Matthias\\OneDrive - UGent\\Documents\\DOCUMENTEN\\3. Thesis\\BSC\\Images\\tmp\\2.png")
-            # ####################################################
+            # selecting specific frames to get only the brittle star
+            ####################################################
+            if i == 0:
+                tmp_img = Image.fromarray(brittle_star_frame, 'RGB')
+                tmp_img.save("C:\\Users\\Matthias\\OneDrive - UGent\\Documents\\DOCUMENTEN\\3. Thesis\\BSC\\Images\\tmp\\3.png")
+            ####################################################
             alpha = i / len(selected_frames)
 
             # Boolean mask with only the brittle star

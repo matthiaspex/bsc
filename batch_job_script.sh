@@ -2,7 +2,7 @@
 
 #PBS -N batch_02
 #PBS -l nodes=1:ppn=2
-#PBS -l gpus=1
+#PBS -l gpus=1 # not necessary to specify on donphan, but DON'T FORGET on ACCELGOR
 #PBS -l mem=8gb
 #PBS -l walltime=5:00:00
 #PBS -e Job_scripts_logs/
