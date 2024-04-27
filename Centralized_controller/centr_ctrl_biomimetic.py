@@ -12,7 +12,7 @@ import wandb
 
 # custom modules import --> from bsc_utils directory
 from bsc_utils.visualization import visualize_mjcf, plot_ip_oop_joint_angles, save_video_from_raw_frames 
-from bsc_utils.controller import ExplicitMLP
+from bsc_utils.controller.base import ExplicitMLP
 from bsc_utils.BrittleStarEnv import EnvContainer, create_morphology, create_arena, create_environment, full_mjcf_configurations
 from bsc_utils.damage import check_damage
 from bsc_utils.simulation import rollout, generate_video_joint_angle_raw
@@ -131,9 +131,9 @@ param_reshaper = ParameterReshaper(policy_params_init)
 num_params = param_reshaper.total_params # get from the weights and biases of the NN
 
 
-###################################
-# Instantiating the search strategy
-###################################
+#####################################
+# Instantiating the search strategy #
+#####################################
 rng, rng_ask, rng_init = jax.random.split(rng, 3)
 strategy  = OpenES(popsize = config["evolution"]["es_popsize"], num_dims = num_params)
 # still parameters that can be finetuned, like optimisation method, lrate, lrate decay, ...

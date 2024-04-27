@@ -1,4 +1,7 @@
+import jax
 from jax import numpy as jnp
+
+
 
 print(jnp.zeros(5))
 
@@ -12,13 +15,17 @@ print(c)
 d = jnp.stack([c,c,c])
 print(d.shape)
 print(d)
+print(jnp.size(d))
 
+e = (d, a, b)
 
-e = d[:,1,:]
+sizes = []
 print(e)
+jax.tree_util.tree_map(lambda x: sizes.append(jnp.size(x[0])), e)
+print(sum(sizes))
 
-f = jnp.take(d, 1, axis = 1)
 
-print(f)
-
-print(e-f)
+try:
+    print(a)
+except NameError:
+    print("variable is not defined")

@@ -8,7 +8,7 @@ from evosax import ParameterReshaper
 
 from moojoco.environment.mjx_env import MJXEnv, MJXEnvState
 
-from bsc_utils.controller import ExplicitMLP
+from bsc_utils.controller.base import ExplicitMLP
 from bsc_utils.visualization import post_render, change_alpha, move_camera
 from bsc_utils.damage import pad_sensory_input, select_actuator_output, check_damage
 

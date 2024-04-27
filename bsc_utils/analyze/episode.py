@@ -9,7 +9,7 @@ import matplotlib.pyplot as plt
 from evosax import ParameterReshaper
 
 from bsc_utils.BrittleStarEnv import EnvContainer
-from bsc_utils.controller import NNController
+from bsc_utils.controller.base import NNController
 from bsc_utils.visualization import post_render, change_alpha, move_camera, generate_timestep_joint_angle_plot_data, \
     plot_ip_oop_joint_angles, save_video_from_raw_frames
 from bsc_utils.damage import pad_sensory_input, select_actuator_output, check_damage
@@ -18,26 +18,35 @@ from bsc_utils.evolution import efficiency_from_reward_cost, fitness_from_stacke
 
 
 class Simulator(EnvContainer):
-    def __init__(self, config):
+    def __init__(self,
+                 config: dict
+    ):
         super().__init__(config)
 
+    
     def update_policy_params_flat(self, policy_params_flat):
         """
         Provide in a simple numpy array format (not the ParamReshaped version)
         Multiple policy params can be rendered in parallel
+        These can be the policy params of a Hebbian network (Learning Rules) or from a static network (Synapse strengths)
         """
         self.policy_params_flat = policy_params_flat
 
-    def update_param_reshaper(
-            self,
-            param_reshaper: ParameterReshaper
-    ):
-        self.param_reshaper = param_reshaper
+    # # functionality moved to NNController class --> parameter reshaper is more relevant for the functioning of the nn_controller
+    # def update_param_reshaper(
+    #         self,
+    #         param_reshaper: ParameterReshaper
+    # ):
+    #     self.param_reshaper = param_reshaper
 
     def update_nn_controller(
             self,
             nn_controller: NNController
     ):
+        """
+        Before updating nn_controller, try to make sure that it has a model attribute (method update_model)
+        and parameter_reshaper attribute (method update_parameter_reshaper)
+        """
         self.nn_controller = nn_controller
 
 
@@ -136,7 +145,7 @@ class Simulator(EnvContainer):
             ####################################################
             if i == 0:
                 tmp_img = Image.fromarray(brittle_star_frame, 'RGB')
-                tmp_img.save("C:\\Users\\Matthias\\OneDrive - UGent\\Documents\\DOCUMENTEN\\3. Thesis\\BSC\\Images\\tmp\\3.png")
+                tmp_img.save("C:\\Users\\Matthias\\OneDrive - UGent\\Documents\\DOCUMENTEN\\3. Thesis\\BSC\\Images\\tmp\\singular frame undamaged.png")
             ####################################################
             alpha = i / len(selected_frames)
 
@@ -171,15 +180,14 @@ class Simulator(EnvContainer):
         - stacked_observations: trees with leaf dims: [n, m, t]: n = parallel envs, m = sensor dim, t = timesteps during rollout
         - stacked rewards: array with dims [n, t]: n = parallel envs, t = timesteps during rollout
         """
-        assert np.any(self.policy_params_flat), "No policy params have been provided yet using the update_policy_params_flat method"
-        assert self.param_reshaper, "No param_reshaper has been provided yet using the update_param_reshaper method"
         assert self.nn_controller, "No nn_controller has been provided yet using the update_nn_controller method"
+        assert jnp.any(self.policy_params_flat), "No policy_params_flat has been provided yet using the update_nn_controller method"
+
         if damage:
             _env = self.env_damage
         else:
             _env = self.env
 
-        _policy_params_shaped = self.param_reshaper.reshape(self.policy_params_flat)
         _NUM_MJX_ENVIRONMENTS = self.policy_params_flat.shape[0]
 
         rng, _vectorized_env_rng = jax.random.split(rng, 2)
@@ -188,7 +196,7 @@ class Simulator(EnvContainer):
         _vectorized_env_step = jax.jit(jax.vmap(_env.step))
         _vectorized_env_reset = jax.jit(jax.vmap(_env.reset))
 
-        _vectorized_nn_model_apply = jax.jit(jax.vmap(self.nn_controller.model.apply))
+        # _vectorized_nn_model_apply = jax.jit(jax.vmap(self.nn_controller.apply))
 
         _vectorized_env_state = _vectorized_env_reset(rng=_vectorized_env_rng)
 
@@ -230,7 +238,7 @@ class Simulator(EnvContainer):
             _joint_angles_ip.append(_joint_angles_ip_t)
             _joint_angles_oop.append(_joint_angles_oop_t)
 
-            _action = _vectorized_nn_model_apply(_policy_params_shaped, _sensory_input)
+            _action = self.nn_controller.apply(_sensory_input, self.policy_params_flat)
             if damage:
                 _action = select_actuator_output(_action, self.config["morphology"]["arm_setup"], self.config["damage"]["arm_setup_damage"])
             
@@ -292,9 +300,11 @@ if __name__ == "__main__":
 
     from bsc_utils.miscellaneous import load_config_from_yaml
     from bsc_utils.analyze.episode import Simulator
-    from bsc_utils.controller import NNController
+    from bsc_utils.controller.base import NNController, ExplicitMLP
 
     rng = jax.random.PRNGKey(0)
+
+    # NOTICE: RUNNING BOTH SIMULATIONS ON LARGE MEMORY GIVES PROBLEMS SAVING THE IMAGES     
 
     VIDEO_DIR = os.environ["VIDEO_DIR"]
     IMAGE_DIR = os.environ["IMAGE_DIR"]
@@ -304,10 +314,19 @@ if __name__ == "__main__":
     trained_policy_params_flat = jnp.load(POLICY_PARAMS_DIR + RUN_NAME + ".npy")
     config = load_config_from_yaml(POLICY_PARAMS_DIR + RUN_NAME + ".yaml")
 
-    config["damage"]["arm_setup_damage"] = [0,5,5,5,5]
-    config["environment"]["render"] = {"render_size": [ 3072, 4069 ], "camera_ids": [ 0 ]} # only top down camera
-    config["evolution"]["penal_expr"] = "nopenal"
-    config["evolution"]["efficiency_expr"] = config["evolution"]["fitness_expr"]
+    ####################################################################################
+    # finutune episode simulation
+    simulate_undamaged = False
+    simulate_damaged = True
+    config["damage"]["arm_setup_damage"] = [5,0,5,5,5]
+    config["arena"]["sand_ground_color"] = True
+    config["environment"]["render"] = {"render_size": [ 480, 640 ], "camera_ids": [ 0, 1 ]} # only static aquarium camera camera [ 0 ], otherwise: "camera_ids": [ 0, 1 ]
+                                # choose ratio 3:4 --> [ 480, 640 ], [ 720, 960 ], [ 960, 1280 ] (720p), [ 1440, 1920 ] (1080p), [ 3072, 4069 ] (HDTV 4k)
+    # config["evolution"]["penal_expr"] = "nopenal"
+    # config["evolution"]["efficiency_expr"] = config["evolution"]["fitness_expr"]
+    ####################################################################################
+
+
 
     simulator = Simulator(config)
     simulator.generate_env()
@@ -319,58 +338,71 @@ if __name__ == "__main__":
     """)
 
     nn_controller = NNController(simulator)
-    nn_controller.update_model()
-    policy_params_example = nn_controller.get_policy_params_example()
-
-    param_reshaper = ParameterReshaper(policy_params_example) # takes example pytree to know how to reshape pytrees
+    nn_controller.update_model(ExplicitMLP)
+    nn_controller.update_parameter_reshaper() # as the model is already defined and the environmetns are available from the environment container and config files in simulator in the simulator
+    # param_reshaper = nn_controller.get_parameter_reshaper() # --> if you would want to do stuff with this parameter_reshaper.
 
     simulator.update_policy_params_flat(trained_policy_params_flat)
-    simulator.update_param_reshaper(param_reshaper)
     simulator.update_nn_controller(nn_controller)
 
-    print("simulation of single episode started: Undamaged")
-    rng, rng_episode = jax.random.split(rng, 2)
-    simulator.generate_episode_data_undamaged(rng_episode)
-    print("simulation of single episode finished: Undamaged")
 
-    reward = simulator.get_episode_reward()
-    cost  = simulator.get_episode_cost()
-    penalty = simulator.get_episode_penalty()
-    efficiency = simulator.get_episode_efficiency()
-    fitness = simulator.get_episode_fitness
-    simulator.get_ip_oop_joint_angles_plot(file_path = IMAGE_DIR + "test joint" + RUN_NAME + ".png")
-    simulator.get_episode_video(file_path = VIDEO_DIR + "test" + RUN_NAME + ".mp4", playback_speed=0.5)
-    simulator.get_increasing_opacity_image(number_of_frames=8, file_path=IMAGE_DIR + "test opacity" + RUN_NAME + ".png")
+    if simulate_undamaged:
+        print("simulation of single episode started: Undamaged")
+        rng, rng_episode = jax.random.split(rng, 2)
+        simulator.generate_episode_data_undamaged(rng_episode)
+        print("simulation of single episode finished: Undamaged")
 
-    print(f"""
-    reward = {reward}
-    cost = {cost}
-    penalty = {penalty}
-    efficiency = {efficiency}
-    fitness = {fitness}
-    """)
+        reward = simulator.get_episode_reward()
+        cost  = simulator.get_episode_cost()
+        penalty = simulator.get_episode_penalty()
+        efficiency = simulator.get_episode_efficiency()
+        fitness = simulator.get_episode_fitness()
+        simulator.get_ip_oop_joint_angles_plot(file_path = IMAGE_DIR + RUN_NAME + ".png")
+        simulator.get_increasing_opacity_image(number_of_frames=8, file_path=IMAGE_DIR + RUN_NAME + " OPACITY.png")
+        simulator.get_episode_video(file_path = VIDEO_DIR + RUN_NAME + ".mp4", playback_speed=0.5)
 
-    print("simulation of single episode started: Damaged")
-    rng, rng_episode = jax.random.split(rng, 2)
-    simulator.generate_episode_data_damaged(rng_episode)
-    print("simulation of single episode started: Damaged")
 
-    reward_damage = simulator.get_episode_reward()
-    cost_damage  = simulator.get_episode_cost()
-    penalty_damage = simulator.get_episode_penalty()
-    efficiency_damage = simulator.get_episode_efficiency()
-    fitness_damage = simulator.get_episode_fitness
-    simulator.get_ip_oop_joint_angles_plot(file_path = IMAGE_DIR + "test joint DAMAGE" + RUN_NAME + ".png")
-    simulator.get_episode_video(file_path = VIDEO_DIR + "test DAMAGE" + RUN_NAME + ".mp4", playback_speed=0.5)
-    simulator.get_increasing_opacity_image(number_of_frames=8, file_path=IMAGE_DIR + "test opacity DAMAGE" + RUN_NAME + ".png")
+        print(f"""
+        reward = {reward}
+        cost = {cost}
+        penalty = {penalty}
+        efficiency = {efficiency}
+        fitness = {fitness}
+        """)
 
-    print(f"""
-    reward = {reward} - reward_damage = {reward_damage}
-    cost = {cost} - cost_damage = {cost_damage}
-    penalty = {penalty} - penalty_damage = {penalty_damage}
-    efficiency = {efficiency} - efficiency_damage = {efficiency_damage}
-    fitness = {fitness} - fitness_damage = {fitness_damage}
-    """)
+    if simulate_damaged:
+        print("simulation of single episode started: Damaged")
+        rng, rng_episode = jax.random.split(rng, 2)
+        simulator.generate_episode_data_damaged(rng_episode)
+        print("simulation of single episode finished: Damaged")
+
+        reward_damage = simulator.get_episode_reward()
+        cost_damage  = simulator.get_episode_cost()
+        penalty_damage = simulator.get_episode_penalty()
+        efficiency_damage = simulator.get_episode_efficiency()
+        fitness_damage = simulator.get_episode_fitness()
+        simulator.get_ip_oop_joint_angles_plot(file_path = IMAGE_DIR + RUN_NAME + " DAMAGE.png")
+        simulator.get_increasing_opacity_image(number_of_frames=8, file_path=IMAGE_DIR + RUN_NAME + "OPACITY DAMAGE.png")
+        simulator.get_episode_video(file_path = VIDEO_DIR + RUN_NAME + " DAMAGE.mp4", playback_speed=0.5)
+
+
+        print(f"""
+        reward_damage = {reward_damage}
+        cost_damage = {cost_damage}
+        penalty_damage = {penalty_damage}
+        efficiency_damage = {efficiency_damage}
+        fitness_damage = {fitness_damage}
+        """)
+
+    if simulate_undamaged and simulate_damaged:
+        print(f"""
+        reward = {reward} - reward_damage = {reward_damage}
+        cost = {cost} - cost_damage = {cost_damage}
+        penalty = {penalty} - penalty_damage = {penalty_damage}
+        efficiency = {efficiency} - efficiency_damage = {efficiency_damage}
+        fitness = {fitness} - fitness_damage = {fitness_damage}
+        """)
 
 
     simulator.clear_envs()
+

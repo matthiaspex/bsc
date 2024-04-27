@@ -17,7 +17,7 @@ import wandb
 
 # custom modules import --> from bsc_utils directory
 from bsc_utils.visualization import visualize_mjcf, show_video, create_video, post_render, plot_ip_oop_joint_angles, save_video_from_raw_frames 
-from bsc_utils.controller import ExplicitMLP
+from bsc_utils.controller.base import ExplicitMLP
 from bsc_utils.BrittleStarEnv import create_morphology, create_arena, create_environment, full_mjcf_configurations
 from bsc_utils.damage import check_damage, pad_sensory_input, select_actuator_output
 from bsc_utils.simulation import rollout, generate_video_joint_angle_raw

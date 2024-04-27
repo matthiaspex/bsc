@@ -1,4 +1,6 @@
 import os
+import sys
+
 import jax
 from jax import numpy as jnp
 
@@ -6,7 +8,7 @@ from evosax import ParameterReshaper
 
 from bsc_utils.miscellaneous import load_config_from_yaml
 from bsc_utils.analyze.episode import Simulator
-from bsc_utils.controller import NNController
+from bsc_utils.controller.base import NNController, ExplicitMLP
 
 rng = jax.random.PRNGKey(0)
 
@@ -17,18 +19,23 @@ IMAGE_DIR = os.environ["IMAGE_DIR"]
 POLICY_PARAMS_DIR = os.environ["POLICY_PARAMS_DIR"]
 RUN_NAME = os.environ["RUN_NAME"]
 
+
 trained_policy_params_flat = jnp.load(POLICY_PARAMS_DIR + RUN_NAME + ".npy")
 config = load_config_from_yaml(POLICY_PARAMS_DIR + RUN_NAME + ".yaml")
 
 ####################################################################################
 # finutune episode simulation
-simulate_undamaged = False
+simulate_undamaged = True
 simulate_damaged = True
 config["damage"]["arm_setup_damage"] = [5,0,5,5,5]
 config["arena"]["sand_ground_color"] = True
-config["environment"]["render"] = {"render_size": [ 3072, 4069 ], "camera_ids": [ 0 ]} # only static aquarium camera camera, otherwise: "camera_ids": [ 0, 1 ]
-# config["evolution"]["penal_expr"] = "nopenal"
-# config["evolution"]["efficiency_expr"] = config["evolution"]["fitness_expr"]
+config["environment"]["render"] = {"render_size": [ 480, 640 ], "camera_ids": [ 0, 1 ]} # only static aquarium camera camera [ 0 ], otherwise: "camera_ids": [ 0, 1 ]
+                            # choose ratio 3:4 --> [ 480, 640 ], [ 720, 960 ], [ 960, 1280 ] (720p), [ 1440, 1920 ] (1080p), [ 3072, 4069 ] (HDTV 4k)
+config["evolution"]["penal_expr"] = "nopenal"
+config["evolution"]["efficiency_expr"] = config["evolution"]["fitness_expr"]
+
+run_name_addition = " AIRO presentation"
+playback_speed = 1
 ####################################################################################
 
 
@@ -43,13 +50,11 @@ actuator_space_dim = {actuator_space_dim}
 """)
 
 nn_controller = NNController(simulator)
-nn_controller.update_model()
-policy_params_example = nn_controller.get_policy_params_example()
-
-param_reshaper = ParameterReshaper(policy_params_example) # takes example pytree to know how to reshape pytrees
+nn_controller.update_model(ExplicitMLP)
+nn_controller.update_parameter_reshaper() # as the model is already defined and the environmetns are available from the environment container and config files in simulator in the simulator
+# param_reshaper = nn_controller.get_parameter_reshaper() # --> if you would want to do stuff with this parameter_reshaper.
 
 simulator.update_policy_params_flat(trained_policy_params_flat)
-simulator.update_param_reshaper(param_reshaper)
 simulator.update_nn_controller(nn_controller)
 
 
@@ -64,9 +69,9 @@ if simulate_undamaged:
     penalty = simulator.get_episode_penalty()
     efficiency = simulator.get_episode_efficiency()
     fitness = simulator.get_episode_fitness()
-    simulator.get_ip_oop_joint_angles_plot(file_path = IMAGE_DIR + RUN_NAME + ".png")
-    simulator.get_increasing_opacity_image(number_of_frames=8, file_path=IMAGE_DIR + RUN_NAME + " OPACITY.png")
-    simulator.get_episode_video(file_path = VIDEO_DIR + RUN_NAME + ".mp4", playback_speed=0.5)
+    simulator.get_ip_oop_joint_angles_plot(file_path = IMAGE_DIR + RUN_NAME + run_name_addition + "PLOTS.png")
+    simulator.get_increasing_opacity_image(number_of_frames=8, file_path=IMAGE_DIR + RUN_NAME + run_name_addition + " OPACITY.png")
+    simulator.get_episode_video(file_path = VIDEO_DIR + RUN_NAME + run_name_addition + ".mp4", playback_speed=playback_speed)
 
 
     print(f"""
@@ -88,9 +93,9 @@ if simulate_damaged:
     penalty_damage = simulator.get_episode_penalty()
     efficiency_damage = simulator.get_episode_efficiency()
     fitness_damage = simulator.get_episode_fitness()
-    simulator.get_ip_oop_joint_angles_plot(file_path = IMAGE_DIR + RUN_NAME + " DAMAGE.png")
-    simulator.get_increasing_opacity_image(number_of_frames=8, file_path=IMAGE_DIR + RUN_NAME + "OPACITY DAMAGE.png")
-    simulator.get_episode_video(file_path = VIDEO_DIR + RUN_NAME + " DAMAGE.mp4", playback_speed=0.5)
+    simulator.get_ip_oop_joint_angles_plot(file_path = IMAGE_DIR + RUN_NAME + run_name_addition + " PLOTS DAMAGE.png")
+    simulator.get_increasing_opacity_image(number_of_frames=8, file_path=IMAGE_DIR + RUN_NAME + run_name_addition + "OPACITY DAMAGE.png")
+    simulator.get_episode_video(file_path = VIDEO_DIR + RUN_NAME + run_name_addition + " DAMAGE.mp4", playback_speed=playback_speed)
 
 
     print(f"""
