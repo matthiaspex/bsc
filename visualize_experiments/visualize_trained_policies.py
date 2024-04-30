@@ -7,12 +7,12 @@ from jax import numpy as jnp
 from evosax import ParameterReshaper
 
 from bsc_utils.miscellaneous import load_config_from_yaml
-from bsc_utils.analyze.episode import Simulator
+from bsc_utils.simulate.analyze import Simulator
 from bsc_utils.controller.base import NNController, ExplicitMLP
 
 rng = jax.random.PRNGKey(0)
 
-# NOTICE: RUNNING BOTH SIMULATIONS ON LARGE MEMORY GIVES PROBLEMS SAVING THE IMAGES     
+# NOTICE: RUNNING BOTH SIMULATIONS ON HIGH RESOLUTION GIVES PROBLEMS SAVING THE IMAGES AND VIDEOS     
 
 VIDEO_DIR = os.environ["VIDEO_DIR"]
 IMAGE_DIR = os.environ["IMAGE_DIR"]

@@ -2,7 +2,7 @@ import pickle
 import jax
 from jax import numpy as jnp
 
-from bsc_utils.simulation import cost_step_during_rollout
+from bsc_utils.simulate.base import cost_step_during_rollout
 
 with open('test_obs.pkl', 'rb') as fp:
     obs = pickle.load(fp)

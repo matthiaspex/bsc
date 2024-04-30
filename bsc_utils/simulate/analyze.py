@@ -1,6 +1,6 @@
 import chex
 import numpy as np
-from typing import List
+from typing import Union
 import jax
 from jax import numpy as jnp
 from PIL import Image
@@ -10,10 +10,11 @@ from evosax import ParameterReshaper
 
 from bsc_utils.BrittleStarEnv import EnvContainer
 from bsc_utils.controller.base import NNController
+from bsc_utils.controller.hebbian import HebbianController
 from bsc_utils.visualization import post_render, change_alpha, move_camera, generate_timestep_joint_angle_plot_data, \
     plot_ip_oop_joint_angles, save_video_from_raw_frames
 from bsc_utils.damage import pad_sensory_input, select_actuator_output, check_damage
-from bsc_utils.simulation import cost_step_during_rollout, penal_step_during_rollout
+from bsc_utils.simulate.base import cost_step_during_rollout, penal_step_during_rollout
 from bsc_utils.evolution import efficiency_from_reward_cost, fitness_from_stacked_data
 
 
@@ -32,16 +33,9 @@ class Simulator(EnvContainer):
         """
         self.policy_params_flat = policy_params_flat
 
-    # # functionality moved to NNController class --> parameter reshaper is more relevant for the functioning of the nn_controller
-    # def update_param_reshaper(
-    #         self,
-    #         param_reshaper: ParameterReshaper
-    # ):
-    #     self.param_reshaper = param_reshaper
-
     def update_nn_controller(
             self,
-            nn_controller: NNController
+            nn_controller: Union[NNController, HebbianController]
     ):
         """
         Before updating nn_controller, try to make sure that it has a model attribute (method update_model)
@@ -181,14 +175,14 @@ class Simulator(EnvContainer):
         - stacked rewards: array with dims [n, t]: n = parallel envs, t = timesteps during rollout
         """
         assert self.nn_controller, "No nn_controller has been provided yet using the update_nn_controller method"
-        assert jnp.any(self.policy_params_flat), "No policy_params_flat has been provided yet using the update_nn_controller method"
 
         if damage:
             _env = self.env_damage
         else:
             _env = self.env
 
-        _NUM_MJX_ENVIRONMENTS = self.policy_params_flat.shape[0]
+        _policy_params = self.nn_controller.get_policy_params()
+        _NUM_MJX_ENVIRONMENTS = _policy_params["params"]["layers_0"]["kernel"].shape[0]
 
         rng, _vectorized_env_rng = jax.random.split(rng, 2)
         _vectorized_env_rng = jnp.array(jax.random.split(_vectorized_env_rng, _NUM_MJX_ENVIRONMENTS))
@@ -196,10 +190,19 @@ class Simulator(EnvContainer):
         _vectorized_env_step = jax.jit(jax.vmap(_env.step))
         _vectorized_env_reset = jax.jit(jax.vmap(_env.reset))
 
-        # _vectorized_nn_model_apply = jax.jit(jax.vmap(self.nn_controller.apply))
+        _vectorized_controller_apply = jax.jit(jax.vmap(self.nn_controller.apply))
 
         _vectorized_env_state = _vectorized_env_reset(rng=_vectorized_env_rng)
 
+        # reset for Hebbian learning:
+        if self.config["controller"]["hebbian"]:
+            rng, _rng_ss_reset = jax.random.split(rng, 2)
+            self.nn_controller.reset_synapse_strengths_unif(_rng_ss_reset, parallel_dim=_NUM_MJX_ENVIRONMENTS)
+            self.nn_controller.reset_neuron_activities(parallel_dim=_NUM_MJX_ENVIRONMENTS)
+            _synapse_strengths = self.nn_controller.get_synapse_strengths()
+            _neuron_activities = self.nn_controller.get_neuron_activities()
+
+        # visualisation
         _frames = []
         _joint_angles_ip = []
         _joint_angles_oop = []
@@ -238,7 +241,24 @@ class Simulator(EnvContainer):
             _joint_angles_ip.append(_joint_angles_ip_t)
             _joint_angles_oop.append(_joint_angles_oop_t)
 
-            _action = self.nn_controller.apply(_sensory_input, self.policy_params_flat)
+
+            # action hebbian plastic nn or static nn:
+            if self.config["controller"]["hebbian"]:
+                # apply a Hebbian control: updates synapse strengths using learning rules, yields action and neuron activities
+                _action, _synapse_strengths, _neuron_activities = _vectorized_controller_apply(
+                                                                        sensory_input=_sensory_input,
+                                                                        synapse_strengths=_synapse_strengths,
+                                                                        learning_rules=_policy_params, # learning rules in case of hebbian
+                                                                        neuron_activities=_neuron_activities
+                                                                        )
+
+            else:
+                # apply a static control: just yields action and neuron activities
+                _action, _neuron_activities = _vectorized_controller_apply(
+                                                                        sensory_input=_sensory_input,
+                                                                        synapse_strengths=_policy_params # synapse strengths in case of not hebbian
+                                                                        )
+
             if damage:
                 _action = select_actuator_output(_action, self.config["morphology"]["arm_setup"], self.config["damage"]["arm_setup_damage"])
             
@@ -299,7 +319,7 @@ if __name__ == "__main__":
     from evosax import ParameterReshaper
 
     from bsc_utils.miscellaneous import load_config_from_yaml
-    from bsc_utils.analyze.episode import Simulator
+    from bsc_utils.simulate.analyze import Simulator
     from bsc_utils.controller.base import NNController, ExplicitMLP
 
     rng = jax.random.PRNGKey(0)

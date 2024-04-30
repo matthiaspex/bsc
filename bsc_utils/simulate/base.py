@@ -1,5 +1,5 @@
 import chex
-from typing import Sequence
+from typing import Sequence, Union
 import numpy as np
 
 import jax
@@ -8,11 +8,122 @@ from evosax import ParameterReshaper
 
 from moojoco.environment.mjx_env import MJXEnv, MJXEnvState
 
-from bsc_utils.controller.base import ExplicitMLP
+from bsc_utils.controller.base import ExplicitMLP, NNController
+from bsc_utils.controller.hebbian import HebbianController
 from bsc_utils.visualization import post_render, change_alpha, move_camera
 from bsc_utils.damage import pad_sensory_input, select_actuator_output, check_damage
 
 def rollout(
+        rng: chex.PRNGKey,
+        env: MJXEnv,
+        controller: Union[HebbianController, NNController],
+        parallel_dim: int
+        ):
+    """
+    Do a single episode rollout
+    Inputs:
+    - rng: jax rng key
+    - mjx_env: Mujoco Environment as generated in the EnvContainer class:
+        Can be damaged or non-damaged
+        Is still parallelised within the rollout function
+    - controller: NNController (of HebbianController which inherits from NNController)
+        Should contain policy parameters already
+        Initialised with EnvContainer so already has config information
+    - parallel_dim: Total number of parallel MJX environments
+    Outputs:
+    - Final MJX environment state (vectorized)
+    - Rewards: sum of all rewards of every timestep
+    - rng
+    """
+    config = controller.config
+    vectorized_controller_apply = jax.jit(jax.vmap(controller.apply))
+    vectorized_env_step = jax.jit(jax.vmap(env.step))
+    vectorized_env_reset = jax.jit(jax.vmap(env.reset))
+    rng, vectorized_env_rng = jax.random.split(rng, 2)
+    vectorized_env_rng = jnp.array(jax.random.split(vectorized_env_rng, parallel_dim))
+    if config["environment"]["reward_type"] == 'target':
+        vectorized_env_state_reset = vectorized_env_reset(rng=vectorized_env_rng, target_position=config["environment"]["target_position"])
+    else:
+        vectorized_env_state_reset = vectorized_env_reset(rng=vectorized_env_rng)
+
+    if config["controller"]["hebbian"] == True:
+        policy_params = controller.get_policy_params()
+        rng, rng_ss_reset = jax.random.split(rng, 2)
+        controller.reset_synapse_strengths_unif(rng_ss_reset, parallel_dim=parallel_dim)
+        controller.reset_neuron_activities(parallel_dim=parallel_dim)
+        synapse_strengths_init = controller.get_synapse_strengths()
+        neuron_activities_init = controller.get_neuron_activities()
+    else:
+        policy_params = controller.get_policy_params()
+        synapse_strengths_init = controller.get_policy_params() # can be shaped or in flat evosax format
+        controller.reset_neuron_activities(parallel_dim=parallel_dim)
+        neuron_activities_init = controller.get_neuron_activities()
+
+    carry_init = [vectorized_env_state_reset, synapse_strengths_init, policy_params, neuron_activities_init]
+
+    def step(carry, _):
+        """
+        Carry: any information required in the carryover:
+        - vectorized state array for the mujoco steps
+        - synapse_strengths_init: shaped pytree or flat array with initial synapse_strengths
+        - policy_params (remains static throughout steps, is not updated)
+        - initial neuron activities (mainly necessary for Hebbian Learning)
+        -----
+        "_" placeholder for xs: is not required for this purpose, but put in the arguments as a placeholder for jax.lax.scan to function.
+        -----
+        output:
+        - Carry: updated state, synapse strengths and neuron activities
+        - stack: rewards and work costs are tracked for every step
+        """    
+
+        _vectorized_env_state, _synapse_strengths, _policy_params, _neuron_activities = carry
+
+        _sensory_input_nn = jnp.concatenate(
+            [_vectorized_env_state.observations[label] for label in config["environment"]["sensor_selection"]],
+            axis = 1
+        )     
+        
+        if config["controller"]["hebbian"] == True:
+            # apply a Hebbian control: updates synapse strengths using learning rules, yields action and neuron activities
+            _action, _synapse_strengths, _neuron_activities = vectorized_controller_apply(
+                                                                    _sensory_input_nn,
+                                                                    _synapse_strengths,
+                                                                    _policy_params,
+                                                                    _neuron_activities
+                                                                    )
+        else:
+            # apply a static control: just yields action and neuron activities
+            _action, _neuron_activities = vectorized_controller_apply(
+                                                                    _sensory_input_nn,
+                                                                    _synapse_strengths
+                                                                    )
+        
+        _vectorized_env_state_updated = vectorized_env_step(state=_vectorized_env_state, action=_action)
+        
+        reward_step = _vectorized_env_state_updated.reward
+        cost_step = cost_step_during_rollout(env_state_observations=_vectorized_env_state_updated.observations, cost_expr=config["evolution"]["cost_expr"])
+        penal_step = penal_step_during_rollout(env_state_observations=_vectorized_env_state_updated.observations, penal_expr=config["evolution"]["penal_expr"])
+
+        carry = [_vectorized_env_state_updated, _synapse_strengths, _policy_params, _neuron_activities]
+        return carry, [reward_step, cost_step, penal_step]
+
+    final_carry, stack = jax.lax.scan(
+        step,
+        carry_init,
+        None,
+        controller.env_container.environment_configuration.total_num_control_steps,
+    )
+
+    rewards, costs, penal = stack
+    
+    vectorized_env_state_final = final_carry[0]
+    return vectorized_env_state_final, (rewards, costs, penal), rng
+# jit the rollout function
+rollout = jax.jit(rollout, static_argnames=("env", "controller",  "parallel_dim"))
+
+
+
+def rollout_old(
         mjx_vectorized_env: MJXEnv,
         nn_model: ExplicitMLP,
         policy_params_shaped: dict,
@@ -122,7 +233,7 @@ def rollout(
     mjx_vectorized_state_final = final_carry[0]
     return mjx_vectorized_state_final, (rewards, costs, penal), rng
 # jit the rollout function
-rollout = jax.jit(rollout, static_argnames=("mjx_vectorized_env", "nn_model",  "total_num_control_timesteps", "NUM_MJX_ENVIRONMENTS", "sensor_selection", "cost_expr", "penal_expr", "target_position"))
+rollout_old = jax.jit(rollout_old, static_argnames=("mjx_vectorized_env", "nn_model",  "total_num_control_timesteps", "NUM_MJX_ENVIRONMENTS", "sensor_selection", "cost_expr", "penal_expr", "target_position"))
 
 
 

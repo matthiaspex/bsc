@@ -50,6 +50,7 @@ class ExplicitMLP(nn.Module):
         -----
         
         """
+        neuron_activities = [inputs]
         x = inputs
         for i, lyr in enumerate(self.layers):
             x = lyr(x)
@@ -61,7 +62,8 @@ class ExplicitMLP(nn.Module):
                     x = 30*jnp.pi/180 * act_output(x) # the action space range for positions is -0.5236..0.5236
                 elif self.joint_control == 'control':
                     x = act_output(x) # the action space range for torques is -1..1
-        return x
+            neuron_activities.append(x)
+        return x, neuron_activities
     
 
 
@@ -69,6 +71,7 @@ class NNController():
     def __init__(
             self,
             env_container: EnvContainer # hence also classes inheriting from EnvContainer are fine, like Simulator
+            # A similator is an EnvContainer because it contains everything necessary for environment
             ):
         self.config = env_container.config
         self.env_container = env_container
@@ -82,7 +85,7 @@ class NNController():
         Model updated based on env_container (input and output dimensions) and the configuration file (hidden layers)
         Model must be supported by evosax, built based on Flax. Stuff like Parameter reshaper must still work
         """
-        assert self.env_container.env, "Model must be built based on undamaged configurations, but no non-damaged env was instatiated"
+        assert self.env_container.env, "Model must be built based on undamaged configurations, but no non-damaged env was instantiated"
         if model_class == ExplicitMLP:
             nn_input_dim, nn_output_dim = self.env_container.get_observation_action_space_info()
             self.layers = [nn_input_dim] + self.config["controller"]["hidden_layers"] + [nn_output_dim]
@@ -96,6 +99,8 @@ class NNController():
     ) -> dict:
         """
         models are based on flax, so policy_params are characterized by pytrees
+        Return: dict: pytree of Layers: kernels, biases --> only parallel pytree, no popsize or anything
+        Useful as hidden method for update_parameter_reshaper
         """
         assert self.model, "No model has been instantiated yet. Use method update_model"
         policy_params_example = self.model.init(
@@ -106,36 +111,61 @@ class NNController():
                                     )
                                 )
         return policy_params_example
+
+
+    def reset_neuron_activities(
+            self,
+            parallel_dim: int
+    ):
+        """
+        Generate a sequence of neuron activities.
+        Note: when vmap: sequence is treated as a tree, elements in the sequence (being arrays) are leafs
+        When vmapped, it is by default the first dim of the leafs that is considered as mappable dimension
+        """
+        neuron_activities = []
+        for nodes in self.layers:
+            neuron_activities.append(jnp.zeros((parallel_dim, nodes)))
+        self.neuron_activities = neuron_activities
+
+    def get_neuron_activities(
+            self,
+    ) -> Sequence[chex.Array]:
+        return self.neuron_activities
     
     def update_parameter_reshaper(self):
+        """
+        Instantiates attribute self.parameter_reshaper (as an object of evosax.ParameterReshaper class)
+        """
         assert self.model, "No model has been instantiated yet. Use method update_model"
         policy_params_example = self.get_policy_params_example()
         self.parameter_reshaper = ParameterReshaper(policy_params_example)
     
     def get_parameter_reshaper(self) -> ParameterReshaper:
+        """
+        Explicitly define this function to make clear that it is possible to query the parameter_reshaper
+        """
         assert self.parameter_reshaper, "first instantiate the self.parameter_reshaper attribute by calling update_parameter_reshaper method"
         return self.parameter_reshaper
     
-
-    def apply(
+    def update_policy_params(
             self,
-            sensory_input: chex.Array,
-            synapse_strengths: Union[dict, chex.Array] # takes flat inputs from evosax format or the reshaped formats in pytree shape
+            policy_params: Union[dict, chex.Array]
     ):
         """
-        Still needs to be vectorized when it is being applied: this allows providing inputs with first dim popsize
+        Stores a dict, but can take evosax array as flat input
         """
-        assert self.model, "First provide a model by using the update_model method"
+        if isinstance(policy_params, dict):
+            self.policy_params = policy_params
+        if isinstance(policy_params, chex.Array):
+            self.policy_params = self.parameter_reshaper.reshape(policy_params)
 
-        vectorized_model_apply = jax.jit(jax.vmap(self.model.apply))
+    def get_policy_params(
+            self,
+    ) -> dict:
+        assert self.policy_params, "first provide policy params using the method update_policy_params"
+        return self.policy_params
 
-        self._update_synapse_strengths(synapse_strengths) # synapse_strengths with popsize dimension
-
-        actuator_output = vectorized_model_apply(self.synapse_strengths, sensory_input)
-        return actuator_output
-    
-
-    def _update_synapse_strengths(
+    def update_synapse_strengths(
             self,
             synapse_strengths: Union[dict, chex.Array] # takes flat inputs from evosax format or the reshaped formats
     ):
@@ -146,6 +176,7 @@ class NNController():
 
             sizes = []
             jax.tree_util.tree_map(lambda x: sizes.append(jnp.size(x[0])), synapse_strengths) # select only 1 parallel evolution parameter: x[0]
+            # jnp.size checks the number of parameters in the kernels
             actual_num_params = sum(sizes)
 
 
@@ -156,5 +187,31 @@ class NNController():
             
         elif isinstance(synapse_strengths, chex.Array): # flat evosax format with dim (popsize, parameter.total_params)
             self.synapse_strengths = self.parameter_reshaper.reshape(synapse_strengths)
+
+
+    def apply(
+            self,
+            sensory_input: chex.Array,
+            synapse_strengths: dict # just provide self.synapse_strengths, can't be in here because of vmapping power
+    ):
+        """
+        Still needs to be vectorized when it is being applied to pytrees of synaptic strengths with first dim = popsize
+        For example: synapse_strenghts are dict with leave shapes:
+        {Params: Layer0: Kernel: (1,125,128)} -> jax.vmappable, even though the axis to map has len 1
+        {Params: Layer0: Kernel: (6912,125,128)} -> jax.vmap will map over 6912 parallel candidate policy params
+
+        synapse_strengths must already be a dict
+        """
+        assert self.model, "First provide a model by using the update_model method"
+
+        # vectorized_model_apply = jax.jit(jax.vmap(self.model.apply))
+        # actuator_output, neuron_activities = vectorized_model_apply(synapse_strengths, sensory_input)
+
+        actuator_output, neuron_activities = self.model.apply(synapse_strengths, sensory_input)
+
+        return actuator_output, neuron_activities
+    
+
+
         
 

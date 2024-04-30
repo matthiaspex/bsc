@@ -20,7 +20,7 @@ from bsc_utils.visualization import visualize_mjcf, show_video, create_video, po
 from bsc_utils.controller.base import ExplicitMLP
 from bsc_utils.BrittleStarEnv import create_morphology, create_arena, create_environment, full_mjcf_configurations
 from bsc_utils.damage import check_damage, pad_sensory_input, select_actuator_output
-from bsc_utils.simulation import rollout, generate_video_joint_angle_raw
+from bsc_utils.simulate.base import rollout, generate_video_joint_angle_raw
 rollout = jax.jit(rollout, static_argnames=("mjx_vectorized_env", "nn_model",  "total_num_control_timesteps", "NUM_MJX_ENVIRONMENTS", "sensor_selection", "cost_expr", "penal_expr", "target_position"))
 from bsc_utils.miscellaneous import check_GPU_access, load_config_from_yaml, store_config_and_policy_params, get_run_name_from_config
 from bsc_utils.evolution import efficiency_from_reward_cost, fitness_from_stacked_data

@@ -2,7 +2,7 @@
 import jax
 from jax import numpy as jnp
 import sys
-from bsc_utils.analyze.episode import Simulator
+from bsc_utils.simulate.analyze import Simulator
 from bsc_utils.miscellaneous import load_config_from_yaml
 import pickle
 

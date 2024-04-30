@@ -35,13 +35,13 @@ class EnvContainer():
         self.config = config
     
     def generate_env(self):
-        morph_spec, arena_conf, env_conf = full_mjcf_configurations(config=self.config)
+        morph_spec, arena_conf, env_conf = _full_mjcf_configurations(config=self.config)
 
         self.morphology_specification = morph_spec
         self.arena_configuration = arena_conf
         self.environment_configuration = env_conf
 
-        self.env = create_environment(
+        self.env = _create_environment(
             morphology_specification=morph_spec,
             arena_configuration=arena_conf,
             environment_configuration=env_conf,
@@ -50,13 +50,13 @@ class EnvContainer():
         
     def generate_env_damaged(self):
         check_damage(arm_setup = self.config["morphology"]["arm_setup"], arm_setup_damage = self.config["damage"]["arm_setup_damage"])
-        morph_spec_damage, arena_conf, env_conf = full_mjcf_configurations(config=self.config, damage=True)
+        morph_spec_damage, arena_conf, env_conf = _full_mjcf_configurations(config=self.config, damage=True)
 
         self.morphology_specification_damage = morph_spec_damage
         self.arena_configuration = arena_conf
         self.environment_configuration = env_conf
 
-        self.env_damage = create_environment(
+        self.env_damage = _create_environment(
             morphology_specification=morph_spec_damage,
             arena_configuration=arena_conf,
             environment_configuration=env_conf,
@@ -64,10 +64,14 @@ class EnvContainer():
             )
     
     def clear_envs(self):
-        if self.env:
+        try:
             self.env.close()
-        if self.env_damage:
+        except:
+            pass
+        try:
             self.env_damage.close()
+        except:
+            pass
         self.morphology_specification = None
         self.morphology_specification_damage = None
         self.arena_configuration = None
@@ -77,12 +81,12 @@ class EnvContainer():
 
     def visualize_morphology(self):
         assert self.morphology_specification, "No moprhology specification is defined yet"
-        morphology = create_morphology(morphology_specification=self.morphology_specification)
+        morphology = _create_morphology(morphology_specification=self.morphology_specification)
         visualize_mjcf(mjc=morphology)
 
     def visualize_arena(self):
         assert self.arena_configuration, "No arena configuration is defined yet"
-        arena = create_arena(arena_configuration=self.arena_configuration)
+        arena = _create_arena(arena_configuration=self.arena_configuration)
         visualize_mjcf(mjc=arena)
 
     def get_observation_action_space_info(self):
@@ -95,7 +99,7 @@ class EnvContainer():
         return observation_space_dim, actuator_space_dim
 
 
-def create_morphology(
+def _create_morphology(
         morphology_specification: BrittleStarMorphologySpecification
         ) -> MJCFBrittleStarMorphology:
     morphology = MJCFBrittleStarMorphology(
@@ -103,7 +107,7 @@ def create_morphology(
             )
     return morphology
 
-def create_arena(
+def _create_arena(
         arena_configuration: AquariumArenaConfiguration
         ) -> MJCFAquariumArena:
     arena = MJCFAquariumArena(
@@ -111,7 +115,7 @@ def create_arena(
             )
     return arena
 
-def create_environment(
+def _create_environment(
         morphology_specification: BrittleStarMorphologySpecification,
         arena_configuration: AquariumArenaConfiguration,
         environment_configuration: MuJoCoEnvironmentConfiguration,
@@ -119,10 +123,10 @@ def create_environment(
         ) -> DualMuJoCoEnvironment:
     assert backend in ["MJC", "MJX"], "Please specify a valid backend; Either 'MJC' or 'MJX'"
 
-    morphology = create_morphology(
+    morphology = _create_morphology(
             morphology_specification=morphology_specification
             )
-    arena = create_arena(
+    arena = _create_arena(
             arena_configuration=arena_configuration
             )
     if isinstance(environment_configuration, BrittleStarUndirectedLocomotionEnvironmentConfiguration):
@@ -138,7 +142,7 @@ def create_environment(
     return env
 
 
-def full_mjcf_configurations(
+def _full_mjcf_configurations(
         config: dict,
         damage: bool=False
         ):

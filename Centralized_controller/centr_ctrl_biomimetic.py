@@ -13,9 +13,9 @@ import wandb
 # custom modules import --> from bsc_utils directory
 from bsc_utils.visualization import visualize_mjcf, plot_ip_oop_joint_angles, save_video_from_raw_frames 
 from bsc_utils.controller.base import ExplicitMLP
-from bsc_utils.BrittleStarEnv import EnvContainer, create_morphology, create_arena, create_environment, full_mjcf_configurations
+from bsc_utils.BrittleStarEnv import EnvContainer
 from bsc_utils.damage import check_damage
-from bsc_utils.simulation import rollout, generate_video_joint_angle_raw
+from bsc_utils.simulate.base import rollout_old, generate_video_joint_angle_raw
 from bsc_utils.miscellaneous import check_GPU_access, load_config_from_yaml, store_config_and_policy_params, get_run_name_from_config
 from bsc_utils.evolution import efficiency_from_reward_cost, fitness_from_stacked_data
 
@@ -193,7 +193,7 @@ for gen in range(config["evolution"]["num_generations"]):
     policy_params_shaped = param_reshaper.reshape(policy_params) # --> stacked pytree
 
 
-    final_state, steps_stacked_data, rng = rollout(mjx_vectorized_env = env_container.env,
+    final_state, steps_stacked_data, rng = rollout_old(mjx_vectorized_env = env_container.env,
                                                nn_model = nn_model,
                                                policy_params_shaped = policy_params_shaped,
                                                total_num_control_timesteps = total_num_control_timesteps,
