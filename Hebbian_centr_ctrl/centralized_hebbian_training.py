@@ -118,9 +118,10 @@ wandb.init(
 
 # run one ask-eval-tell loop (iterate over generations)
 start_time = time.time()
-
 for gen in range(config["evolution"]["num_generations"]):
     start_time_gen = time.time()
+
+    print(f"generations: {gen}")
     # track runtimes
     if gen%10 == 0:
         print('generation: ', gen, '\ntime since start: ', start_time_gen-start_time)
@@ -128,9 +129,9 @@ for gen in range(config["evolution"]["num_generations"]):
     rng, rng_gen, rng_eval = jax.random.split(rng,3)
 
     policy_params_evosax, es_state = strategy.ask(rng_gen, es_state, es_params) # can be with learning rule dim (hebbian) or not
-    controller.update_policy_params(policy_params=policy_params_evosax)
 
     vectorized_env_state_final, steps_stacked_data, rng = rollout(rng=rng,
+                                                                  policy_params_evosax=policy_params_evosax,
                                                                   env=trainer.env,
                                                                   controller=controller,
                                                                   parallel_dim=NUM_MJX_ENVIRONMENTS
@@ -174,7 +175,6 @@ policy_params_to_render.append(policy_params_evosax[jnp.argmax(fitness)])
 print('Policy training finished!')
 
 store_config_and_policy_params(file_name=POLICY_PARAMS_DIR+run_name, cfg=config, policy_params=policy_params_to_render)
-
 
 #####################################
 # Video and angle plots visualisation

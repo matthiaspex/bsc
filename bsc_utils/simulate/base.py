@@ -15,6 +15,7 @@ from bsc_utils.damage import pad_sensory_input, select_actuator_output, check_da
 
 def rollout(
         rng: chex.PRNGKey,
+        policy_params_evosax: chex.Array,
         env: MJXEnv,
         controller: Union[HebbianController, NNController],
         parallel_dim: int
@@ -46,15 +47,15 @@ def rollout(
     else:
         vectorized_env_state_reset = vectorized_env_reset(rng=vectorized_env_rng)
 
+    controller.update_policy_params(policy_params=policy_params_evosax)
+    policy_params = controller.get_policy_params()
     if config["controller"]["hebbian"] == True:
-        policy_params = controller.get_policy_params()
         rng, rng_ss_reset = jax.random.split(rng, 2)
         controller.reset_synapse_strengths_unif(rng_ss_reset, parallel_dim=parallel_dim)
         controller.reset_neuron_activities(parallel_dim=parallel_dim)
         synapse_strengths_init = controller.get_synapse_strengths()
         neuron_activities_init = controller.get_neuron_activities()
     else:
-        policy_params = controller.get_policy_params()
         synapse_strengths_init = controller.get_policy_params() # can be shaped or in flat evosax format
         controller.reset_neuron_activities(parallel_dim=parallel_dim)
         neuron_activities_init = controller.get_neuron_activities()
@@ -115,11 +116,10 @@ def rollout(
     )
 
     rewards, costs, penal = stack
-    
     vectorized_env_state_final = final_carry[0]
     return vectorized_env_state_final, (rewards, costs, penal), rng
 # jit the rollout function
-rollout = jax.jit(rollout, static_argnames=("env", "controller",  "parallel_dim"))
+rollout = jax.jit(rollout, static_argnames=("env", "controller", "parallel_dim"))
 
 
 

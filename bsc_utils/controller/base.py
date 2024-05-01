@@ -204,9 +204,6 @@ class NNController():
         """
         assert self.model, "First provide a model by using the update_model method"
 
-        # vectorized_model_apply = jax.jit(jax.vmap(self.model.apply))
-        # actuator_output, neuron_activities = vectorized_model_apply(synapse_strengths, sensory_input)
-
         actuator_output, neuron_activities = self.model.apply(synapse_strengths, sensory_input)
 
         return actuator_output, neuron_activities

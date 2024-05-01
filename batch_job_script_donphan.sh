@@ -1,8 +1,8 @@
 #!/bin/bash
 
-#PBS -N batch_11
+#PBS -N batch_12
 #PBS -l nodes=1:ppn=2
-#PBS -l gpus=1 # not necessary to specify on donphan, but DON'T FORGET on ACCELGOR
+# #PBS -l gpus=1 # not necessary to specify on donphan, but DON'T FORGET on ACCELGOR
 #PBS -l mem=12gb
 #PBS -l walltime=7:00:00
 #PBS -e Job_scripts_logs/
@@ -45,7 +45,7 @@ git pull --recurse-submodules
 
 
 
-for file in $HOME/bsc/config/batch/*.yaml
+for file in $HOME/bsc/config/batch_donphan/*.yaml
 do
   echo "Run started"
   echo $file

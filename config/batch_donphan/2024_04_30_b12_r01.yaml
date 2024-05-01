@@ -1,14 +1,14 @@
  experiment:
-   interface: 'VSC' # HPC or VSC 
-   run_name_format: "{notes} {reward_type} {arm_setup} popsize {es_popsize} {cost_expr} {efficiency_expr}"
+   interface: 'HPC' # HPC or VSC 
+   run_name_format: "{notes} {reward_type} arms {arm_setup} popsize {es_popsize} {cost_expr} {efficiency_expr} hebbian {hebbian}"
    seed: 2024
  wandb:
-   project: "job_sub_test"
-   group: "Local_VSC"
-   tags: ["hebbian", "cost_efficiency"]
-   notes: "hebbian_9"
+   project: "hebbian"
+   group: "hebbian: 400 popsize"
+   tags: [ "hebbian", "400_popsize", "distance" ]
+   notes: "b12_r01"
  morphology:
-   arm_setup: [ 5, 0, 5, 0, 0 ]
+   arm_setup: [ 5, 5, 5, 5, 5 ]
    joint_control: 'position'
  arena:
    arena_size: !!python/tuple [ 10, 5 ]
@@ -28,14 +28,14 @@
      render_size: [ 480, 640 ] # choose ratio 3:4 --> [ 480, 640  ], [ 720, 960 ], [ 960, 1280 ] (720p), [ 1440, 1920 ] (1080p), [ 3072, 4069 ] (HDTV 4k)
  damage:
    damage: True # try to write code indepent of this argument
-   arm_setup_damage: [ 5, 0, 0, 0, 0]
+   arm_setup_damage: [ 5, 0, 5, 5, 5]
  evolution:
-   es_popsize: 2
-   num_generations: 10
+   es_popsize: 400
+   num_generations: 100
    cost_expr: "torque" # choose from ["nocost", "torque x angvel", "torque"]
    penal_expr: "nopenal" # choose from ["nopenal", "body_stability"]
    efficiency_expr: "reward _ cost" # choose from ["reward", "reward _ cost", "reward + reward _ cost"]
  controller:
-   hebbian: False
+   hebbian: True
    hidden_layers: [ 128, 128 ]
  
