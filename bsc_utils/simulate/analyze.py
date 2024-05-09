@@ -25,7 +25,8 @@ class Simulator(EnvContainer):
         super().__init__(config)
 
     
-    def update_policy_params_flat(self, policy_params_flat):
+    def update_policy_params_flat(self, policy_params_flat): # This function is probably obsolete, as this functionality moved
+        # to the NNController class as the method "update_policy_params"
         """
         Provide in a simple numpy array format (not the ParamReshaped version)
         Multiple policy params can be rendered in parallel

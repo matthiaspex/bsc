@@ -27,7 +27,9 @@ from moojoco.environment.base import MuJoCoEnvironmentConfiguration
 from moojoco.environment.mjx_env import MJXEnv
 
 from bsc_utils.damage import check_damage
-from bsc_utils.visualization import visualize_mjcf
+from bsc_utils.visualization import visualize_mjcf, post_render
+
+import mediapy as media
 
 
 class EnvContainer():
@@ -82,12 +84,21 @@ class EnvContainer():
     def visualize_morphology(self):
         assert self.morphology_specification, "No moprhology specification is defined yet"
         morphology = _create_morphology(morphology_specification=self.morphology_specification)
-        visualize_mjcf(mjc=morphology)
+        visualize_mjcf(mjcf=morphology)
 
     def visualize_arena(self):
         assert self.arena_configuration, "No arena configuration is defined yet"
         arena = _create_arena(arena_configuration=self.arena_configuration)
-        visualize_mjcf(mjc=arena)
+        visualize_mjcf(mjcf=arena)
+
+    def generate_dummy_state(self, rng):
+        "generates object dummy_state"
+        self.dummy_state = self.env.reset(rng=rng)
+
+    def visualize_dummy_state(self):
+        "Visualize state, no need to explicitly call method generate_dummy_state"
+        frame = self.env.render(state=self.dummy_state)
+        media.show_image(post_render(render_output=frame, environment_configuration=self.environment_configuration))
 
     def get_observation_action_space_info(self):
         # method to get e.g. dimensions from sensor and actuator space for this specific morphology

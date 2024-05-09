@@ -9,6 +9,7 @@ from evosax import ParameterReshaper
 from bsc_utils.miscellaneous import load_config_from_yaml
 from bsc_utils.simulate.analyze import Simulator
 from bsc_utils.controller.base import NNController, ExplicitMLP
+from bsc_utils.controller.hebbian import HebbianController
 
 rng = jax.random.PRNGKey(0)
 
@@ -25,16 +26,17 @@ config = load_config_from_yaml(POLICY_PARAMS_DIR + RUN_NAME + ".yaml")
 
 ####################################################################################
 # finutune episode simulation
-simulate_undamaged = True
+simulate_undamaged = False
 simulate_damaged = True
-config["damage"]["arm_setup_damage"] = [5,0,5,5,5]
-config["arena"]["sand_ground_color"] = True
+arm_setup_damage = [0,5,0,5,5]
+config["damage"]["arm_setup_damage"] = arm_setup_damage
+# config["arena"]["sand_ground_color"] = True
 config["environment"]["render"] = {"render_size": [ 480, 640 ], "camera_ids": [ 0, 1 ]} # only static aquarium camera camera [ 0 ], otherwise: "camera_ids": [ 0, 1 ]
                             # choose ratio 3:4 --> [ 480, 640 ], [ 720, 960 ], [ 960, 1280 ] (720p), [ 1440, 1920 ] (1080p), [ 3072, 4069 ] (HDTV 4k)
-config["evolution"]["penal_expr"] = "nopenal"
-config["evolution"]["efficiency_expr"] = config["evolution"]["fitness_expr"]
+# config["evolution"]["penal_expr"] = "nopenal"
+# config["evolution"]["efficiency_expr"] = config["evolution"]["fitness_expr"]
 
-run_name_addition = " AIRO presentation"
+run_name_addition = f"{arm_setup_damage}"
 playback_speed = 1
 ####################################################################################
 
@@ -49,12 +51,15 @@ observation_space_dim = {observation_space_dim}
 actuator_space_dim = {actuator_space_dim}
 """)
 
-nn_controller = NNController(simulator)
+if config["controller"]["hebbian"] == True:
+    nn_controller = HebbianController(simulator)
+else:
+    nn_controller = NNController(simulator)
 nn_controller.update_model(ExplicitMLP)
 nn_controller.update_parameter_reshaper() # as the model is already defined and the environmetns are available from the environment container and config files in simulator in the simulator
 # param_reshaper = nn_controller.get_parameter_reshaper() # --> if you would want to do stuff with this parameter_reshaper.
 
-simulator.update_policy_params_flat(trained_policy_params_flat)
+nn_controller.update_policy_params(trained_policy_params_flat)
 simulator.update_nn_controller(nn_controller)
 
 
@@ -70,7 +75,7 @@ if simulate_undamaged:
     efficiency = simulator.get_episode_efficiency()
     fitness = simulator.get_episode_fitness()
     simulator.get_ip_oop_joint_angles_plot(file_path = IMAGE_DIR + RUN_NAME + run_name_addition + "PLOTS.png")
-    simulator.get_increasing_opacity_image(number_of_frames=8, file_path=IMAGE_DIR + RUN_NAME + run_name_addition + " OPACITY.png")
+    # simulator.get_increasing_opacity_image(number_of_frames=8, file_path=IMAGE_DIR + RUN_NAME + run_name_addition + " OPACITY.png")
     simulator.get_episode_video(file_path = VIDEO_DIR + RUN_NAME + run_name_addition + ".mp4", playback_speed=playback_speed)
 
 
@@ -94,7 +99,7 @@ if simulate_damaged:
     efficiency_damage = simulator.get_episode_efficiency()
     fitness_damage = simulator.get_episode_fitness()
     simulator.get_ip_oop_joint_angles_plot(file_path = IMAGE_DIR + RUN_NAME + run_name_addition + " PLOTS DAMAGE.png")
-    simulator.get_increasing_opacity_image(number_of_frames=8, file_path=IMAGE_DIR + RUN_NAME + run_name_addition + "OPACITY DAMAGE.png")
+    # simulator.get_increasing_opacity_image(number_of_frames=8, file_path=IMAGE_DIR + RUN_NAME + run_name_addition + "OPACITY DAMAGE.png")
     simulator.get_episode_video(file_path = VIDEO_DIR + RUN_NAME + run_name_addition + " DAMAGE.mp4", playback_speed=playback_speed)
 
 

@@ -1,64 +1,37 @@
-import pickle
+from bsc_utils.miscellaneous import get_target_positions
+import jax.numpy as jnp
 import jax
-from jax import numpy as jnp
+import matplotlib.pyplot as plt
 
-from bsc_utils.simulate.base import cost_step_during_rollout
-
-with open('test_obs.pkl', 'rb') as fp:
-    obs = pickle.load(fp)
+rng = jax.random.PRNGKey(2)
+parallel_dim = 2
 
 
-# with open('test_rewards.pkl', 'rb') as fp:
-#     rewards = pickle.load(fp)
-
-# print(rewards.shape)
-# print(rewards)
-
-# rewards_exp = jnp.expand_dims(rewards, axis = -1)
-
-# for i in range(5):
-#     rewards_exp = jnp.concatenate(
-#         [rewards_exp, jnp.expand_dims(rewards, axis = -1)],
-#         axis = -1)
-
-# print(rewards_exp.shape)
-# print(rewards_exp)
-
-print(obs.keys())
+target_positions = get_target_positions(rng,
+                                             distance=5.0, 
+                                             num_rowing=5,
+                                             num_reverse_rowing=5,
+                                             num_random_positions=0,
+                                             parallel_dim=2,
+                                             parallel_constant=True)
 
 
-print(jax.tree_util.tree_map(lambda x: x.shape, obs))
-
-obs_merge = jax.tree_util.tree_map(lambda x: jnp.expand_dims(x, axis = -1), obs)
-
-
-
-for i in range(3):
-    obs_merge = jax.tree_util.tree_map(
-        lambda x, y: jnp.concatenate(
-            [x, jnp.expand_dims(y, axis = -1)],
-            axis=-1),
-        obs_merge, obs)
+print(len(target_positions))
+print(target_positions[0])
+print(target_positions[0].shape)
 
 
-print(obs_merge["disk_angular_velocity"])
+x_targets =[]
+y_targets = []
+for target in target_positions:
+    x_targets.append(target[0,0])
+    y_targets.append(target[0,1])
 
-print(jax.tree_util.tree_map(lambda x: x.shape, obs_merge))
+x = jnp.linspace(-5.,5.,1001)
+y1 = jnp.sqrt(25-x**2)
+y2 = -jnp.sqrt(25-x**2)
 
-
-cost_step = cost_step_during_rollout(obs_merge, "torque x angvel")
-
-print(cost_step)
-print(cost_step.shape)
-
-
-
-
-
-
-
-
-
-
-
-
+plt.scatter(x_targets, y_targets)
+plt.plot(x,y1, 'r')
+plt.plot(x,y2, 'r')
+plt.show()

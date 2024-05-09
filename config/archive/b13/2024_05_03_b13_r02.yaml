@@ -1,27 +1,26 @@
  experiment:
-   interface: 'VSC' # HPC or VSC 
-   run_name_format: "{notes} {reward_type} {arm_setup} popsize {es_popsize} {cost_expr} {efficiency_expr}"
+   interface: 'HPC' # HPC or VSC 
+   run_name_format: "{notes} {reward_type} arms {arm_setup} popsize {es_popsize} {cost_expr} {efficiency_expr} hebbian {hebbian}"
    seed: 2024
  wandb:
-   project: "job_sub_test"
-   group: "Local_VSC"
-   tags: ["hebbian", "cost_efficiency"]
-   notes: "hebbian_9"
+   project: "hebbian"
+   group: "hebbian: 2 arms"
+   tags: [ "hebbian", "1200_popsize", "2 arms", "efficiency" ]
+   notes: "b13_r02"
  morphology:
    arm_setup: [ 5, 0, 5, 0, 0 ]
    joint_control: 'position'
  arena:
-   arena_size: !!python/tuple [ 7, 7 ]
-   sand_ground_color: False # must be true for light escape environment
+   arena_size: !!python/tuple [ 10, 5 ]
+   sand_ground_color: False
  environment:
-   reward_type: 'target' # choose from distance, target or light
+   reward_type: 'distance' # choose from distance, target or light
    sensor_selection: !!python/tuple [ 'joint_position', 'joint_actuator_force', 'segment_contact']
-   sensor_reward_feedback: True
    num_physics_steps_per_control_step: 10
-   simulation_time: 5 # use 10 for Hebbian and 5 for static
+   simulation_time: 10 # use 10 for Hebbian and 5 for static
    joint_randomization_noise_scale: 0.0
    light_perlin_noise_scale: 4
-   target_distance: 5
+   target_distance: 9
    target_position: [ 9., 0., 0.] # must fit in the arena
    color_contacts: False
    render:
@@ -31,13 +30,12 @@
    damage: True # try to write code indepent of this argument
    arm_setup_damage: [ 5, 0, 0, 0, 0]
  evolution:
-   es_popsize: 2
-   num_generations: 10
+   es_popsize: 1200
+   num_generations: 100
    cost_expr: "torque" # choose from ["nocost", "torque x angvel", "torque"]
    penal_expr: "nopenal" # choose from ["nopenal", "body_stability"]
    efficiency_expr: "reward _ cost" # choose from ["reward", "reward _ cost", "reward + reward _ cost"]
  controller:
-   hebbian: False
-   num_hebbian_steps_per_control_step: 1
+   hebbian: True
    hidden_layers: [ 128, 128 ]
  

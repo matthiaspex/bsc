@@ -1,8 +1,12 @@
 import os
 import subprocess
 import logging
+from typing import Sequence
 import yaml
+
+import jax
 from jax import numpy as jnp
+import chex
 
 def check_GPU_access(
         interface = None
@@ -106,3 +110,94 @@ def get_run_name_from_config(
 
     run_name = cfg["experiment"]["run_name_format"].format(**config_flat)
     return run_name
+
+
+
+def get_target_positions(
+        rng: chex.PRNGKey,
+        distance: float,
+        num_rowing: int,
+        num_reverse_rowing: int,
+        num_random_positions: int=0,
+        parallel_dim: int=1,
+        parallel_constant: bool=False
+)->Sequence:
+    """
+    Returns array with cartesian positions of targets on a circle with a certain radius
+    for rowing and reverse rowing positions based on starting position.
+    parallel_dim: can provide popsizes for parallelized environment resets.
+    parallel_constant: same target positions for all parallel environments or not.
+    --------------
+    returns: list[array(parallel_dim, 3)]
+    --> iterate over list: each list element is a parallelised vector of 3D-target positions which can be vmapped
+    --> in case parallel_constant = True: everything should be constant along parallel_dim dimension.
+    """
+    # angles target location
+    rng, rng_rowing, rng_reverse_rowing = jax.random.split(rng, 3)
+    vectorized_permutation = jax.vmap(jax.random.permutation)
+
+    rowing_angles = jnp.arange(0,359, 360//5)
+    rowing_angles = jnp.expand_dims(rowing_angles, axis = 0)
+    rowing_angles = jnp.repeat(rowing_angles, parallel_dim, axis = 0)
+    if parallel_constant == False:
+        rng_rowing_vect = jax.random.split(rng_rowing, (parallel_dim,))
+        rowing_angles = vectorized_permutation(rng_rowing_vect, rowing_angles)
+
+    reverse_rowing_angles = jnp.arange(360//10,359,360//5)
+    reverse_rowing_angles = jnp.expand_dims(reverse_rowing_angles, axis = 0) 
+    reverse_rowing_angles = jnp.repeat(reverse_rowing_angles, parallel_dim, axis = 0)
+    if parallel_constant == False:
+        rng_reverse_rowing_vect = jax.random.split(rng_reverse_rowing, (parallel_dim,))
+        reverse_rowing_angles = vectorized_permutation(rng_reverse_rowing_vect, reverse_rowing_angles)
+
+    rng, rng_rowing, rng_reverse_rowing, rng_random = jax.random.split(rng, 4)
+    rowing_angles_sel = jax.random.choice(rng_rowing, rowing_angles, shape=(num_rowing,), replace=False, axis = 1)
+    reverse_rowing_angles_sel = jax.random.choice(rng_reverse_rowing, reverse_rowing_angles, shape=(num_reverse_rowing,), replace=False, axis = 1)
+    if parallel_constant == False:
+        random_angles = jax.random.uniform(rng_random, shape=(parallel_dim, num_random_positions), minval=0, maxval=360)
+    elif parallel_constant == True:
+        random_angles = jax.random.uniform(rng_random, shape=(num_random_positions,), minval=0, maxval=360)
+        random_angles = jnp.expand_dims(random_angles, axis = 0)
+        random_angles = jnp.repeat(random_angles, parallel_dim, axis = 0)
+
+    if num_reverse_rowing == 0 and num_rowing == 0:
+        angles = random_angles
+    elif num_rowing == 0:
+        angles = jnp.concatenate([reverse_rowing_angles_sel, random_angles], axis = -1)
+    elif num_reverse_rowing == 0:
+        angles = jnp.concatenate([rowing_angles_sel, random_angles], axis = -1)
+    else:
+        angles = jnp.concatenate([rowing_angles_sel, reverse_rowing_angles_sel, random_angles], axis = -1)
+    angles = jnp.radians(angles)
+
+    target_positions = []
+    for j in range(angles.shape[-1]):
+        x = distance*jnp.cos(angles[:,j])
+        y = distance*jnp.sin(angles[:,j])
+        z = jnp.zeros(parallel_dim)
+        positions = jnp.array([x,y,z]).T # this way, the parallelized dimension to vmap is the first dim
+        target_positions.append(positions)
+
+
+    return target_positions 
+
+
+
+def complete_sensor_selection(config):
+    """
+    In config files, the target or light information does not need to be specified in the sensor_selection tuple.
+    You can call this and when the reward_type is target or light, the appropriate observations will be added to the list.
+    """
+    # Complete sensor selection with information about target location and light sensing
+    sensor_selection_new = list(config["environment"]["sensor_selection"])
+    if config["environment"]["reward_type"] == "target":
+        sensor_selection_new.append("unit_xy_direction_to_target")
+        sensor_selection_new.append("xy_distance_to_target")
+        sensor_selection_new.append("disk_rotation")
+    if config["environment"]["reward_type"] == "light":
+        sensor_selection_new.append("segment_light_intake")
+
+
+    
+    sensor_selection_new = tuple(sensor_selection_new)
+    return sensor_selection_new
