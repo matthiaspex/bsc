@@ -1,32 +1,19 @@
-
+from bsc_utils.miscellaneous import get_target_positions
 import jax
-from jax import numpy as jnp
-import sys
-from bsc_utils.simulate.analyze import Simulator
-from bsc_utils.miscellaneous import load_config_from_yaml
-import pickle
+
+
+a = [5,4,1,9,626,6,3,0.2]
+print(min(a))
+print(max(a))
 
 rng = jax.random.PRNGKey(0)
-
-config = load_config_from_yaml("trained_policy_params/b01/b01_r03 distance arms [5, 5, 5, 5, 5] popsize 6912 torque reward _ cost.yaml")
-
-simulator = Simulator(config)
-simulator.generate_env()
-simulator.generate_episode_data_undamaged(jax.random.PRNGKey(0))
-
-sys.exit()
-rng, vectorized_env_rng = jax.random.split(rng, 2)
-vectorized_env_rng = jnp.array(jax.random.split(vectorized_env_rng, 2))
-vectorized_env_reset = jax.jit(jax.vmap(simulator.env.reset))
-vectorized_env_state = vectorized_env_reset(rng=vectorized_env_rng)
-
-# observations = vectorized_env_state.observations
-# reward = vectorized_env_state.reward
-
-# with open('test_rewards.pkl', 'wb') as fp:
-#     pickle.dump(reward, fp)
-
-
-
-
-
+rng, rng_targets_simulator = jax.random.split(rng, 2)
+targets_simulator = get_target_positions(rng=rng_targets_simulator,
+                                distance=7,
+                                num_rowing=0,
+                                num_reverse_rowing=0,
+                                num_random_positions=1,
+                                parallel_dim=1,
+                                parallel_constant=True)
+print(targets_simulator)
+print(targets_simulator[0].shape)

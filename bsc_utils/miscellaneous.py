@@ -191,13 +191,16 @@ def complete_sensor_selection(config):
     # Complete sensor selection with information about target location and light sensing
     sensor_selection_new = list(config["environment"]["sensor_selection"])
     if config["environment"]["reward_type"] == "target":
-        sensor_selection_new.append("unit_xy_direction_to_target")
-        sensor_selection_new.append("xy_distance_to_target")
-        sensor_selection_new.append("disk_rotation")
+        if not "unit_xy_direction_to_target" in sensor_selection_new:
+            sensor_selection_new.append("unit_xy_direction_to_target")
+        if not "xy_distance_to_target" in sensor_selection_new:
+            sensor_selection_new.append("xy_distance_to_target")
+        if not "disk_rotation" in sensor_selection_new:
+            sensor_selection_new.append("disk_rotation")
     if config["environment"]["reward_type"] == "light":
-        sensor_selection_new.append("segment_light_intake")
+        if not "segment_light_intake" in sensor_selection_new:
+            sensor_selection_new.append("segment_light_intake")
 
-
-    
     sensor_selection_new = tuple(sensor_selection_new)
-    return sensor_selection_new
+    config["environment"]["sensor_selection"] = sensor_selection_new
+    return config

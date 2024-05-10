@@ -19,7 +19,8 @@ from bsc_utils.simulate.train import Trainer
 from bsc_utils.simulate.analyze import Simulator
 from bsc_utils.simulate.base import rollout
 from bsc_utils.miscellaneous import check_GPU_access, load_config_from_yaml, \
-    store_config_and_policy_params, get_run_name_from_config
+    store_config_and_policy_params, get_run_name_from_config, complete_sensor_selection, \
+    get_target_positions
 from bsc_utils.evolution import efficiency_from_reward_cost, fitness_from_stacked_data
 
 jnp.set_printoptions(precision=3, suppress=False, linewidth=100)
@@ -34,6 +35,10 @@ POLICY_PARAMS_DIR = os.environ["POLICY_PARAMS_DIR"] # where to store trained pol
 CONFIG_FILE = os.environ["CONFIG_FILE"]
 
 config = load_config_from_yaml(CONFIG_FILE)
+
+# in case of target/light reward: add those relevant inputs to the sensor_selection
+config = complete_sensor_selection(config)
+
 rng = jax.random.PRNGKey(config["experiment"]["seed"])
 run_name = get_run_name_from_config(config)
 
@@ -130,21 +135,58 @@ for gen in range(config["evolution"]["num_generations"]):
 
     policy_params_evosax, es_state = strategy.ask(rng_gen, es_state, es_params) # can be with learning rule dim (hebbian) or not
 
-    vectorized_env_state_final, steps_stacked_data, rng = rollout(rng=rng,
-                                                                  policy_params_evosax=policy_params_evosax,
-                                                                  env=trainer.env,
-                                                                  controller=controller,
-                                                                  parallel_dim=NUM_MJX_ENVIRONMENTS
-                                                                  )
-    
-    rewards, costs, penal = steps_stacked_data
+    if config["environment"]["reward_type"] == "target":
+        rng, rng_targets = jax.random.split(rng, 2)
+        targets = get_target_positions(rng=rng_targets,
+                                        distance=config["training"]["target"]["distance"],
+                                        num_rowing=config["training"]["target"]["num_rowing"],
+                                        num_reverse_rowing=config["training"]["target"]["num_reverse_rowing"],
+                                        num_random_positions=config["training"]["target"]["num_random_positions"],
+                                        parallel_dim=NUM_MJX_ENVIRONMENTS,
+                                        parallel_constant=config["training"]["target"]["parallel_constant"])
+        total_reward_list = []
+        total_cost_list = []
+        total_penal_list = []
+        efficiency_list = []
+        fitness_list = []
+        for i in range(len(targets)):
+            vectorized_env_state_final, steps_stacked_data, rng = rollout(rng=rng,
+                                                policy_params_evosax=policy_params_evosax,
+                                                env=trainer.env,
+                                                controller=controller,
+                                                parallel_dim=NUM_MJX_ENVIRONMENTS,
+                                                targets=targets[i]
+                                                )
+            rewards, costs, penal = steps_stacked_data
+            total_reward_list.append(jnp.sum(rewards, axis = 0))
+            total_cost_list.append(jnp.sum(costs, axis = 0))
+            total_penal_list.append(jnp.sum(penal, axis = 0))
+            efficiency_list.append(efficiency_from_reward_cost(total_reward_list[-1], total_cost_list[-1], config["evolution"]["efficiency_expr"]))
+            fitness_list.append(fitness_from_stacked_data(stacked_data=steps_stacked_data, efficiency_expr=config["evolution"]["efficiency_expr"]))
+        
+        # list of number of targets (e.g. 4) arrays of popsize (e.g. 6912) rewards. take min/max along the targets dimension (axis = 0)
+        total_reward = jnp.min(jnp.array(total_reward_list), axis = 0)
+        total_cost = jnp.max(jnp.array(total_cost_list), axis = 0)
+        total_penal = jnp.max(jnp.array(total_penal_list), axis = 0)
+        efficiency = jnp.min(jnp.array(efficiency_list), axis = 0)
+        fitness = jnp.min(jnp.array(fitness_list), axis = 0)
 
-    # rewards shape is: e.g. 6912 parallel rewards per control step, an additional stack every control step --> sum over the control steps along axis = 0
-    total_reward = jnp.sum(rewards, axis = 0)
-    total_cost = jnp.sum(costs, axis = 0)
-    total_penal = jnp.sum(penal, axis = 0)
-    efficiency = efficiency_from_reward_cost(total_reward, total_cost, config["evolution"]["efficiency_expr"])
-    fitness = fitness_from_stacked_data(stacked_data=steps_stacked_data, efficiency_expr=config["evolution"]["efficiency_expr"])
+    else:
+        vectorized_env_state_final, steps_stacked_data, rng = rollout(rng=rng,
+                                            policy_params_evosax=policy_params_evosax,
+                                            env=trainer.env,
+                                            controller=controller,
+                                            parallel_dim=NUM_MJX_ENVIRONMENTS
+                                            )
+    
+        rewards, costs, penal = steps_stacked_data
+        
+        # rewards shape is: e.g. 6912 parallel rewards per control step, an additional stack every control step --> sum over the control steps along axis = 0
+        total_reward = jnp.sum(rewards, axis = 0)
+        total_cost = jnp.sum(costs, axis = 0)
+        total_penal = jnp.sum(penal, axis = 0)
+        efficiency = efficiency_from_reward_cost(total_reward, total_cost, config["evolution"]["efficiency_expr"])
+        fitness = fitness_from_stacked_data(stacked_data=steps_stacked_data, efficiency_expr=config["evolution"]["efficiency_expr"])
 
 
     # fitness should be an array with population size as len (e.g. 6912)
@@ -186,6 +228,16 @@ simulator.generate_env()
 simulator.generate_env_damaged()
 
 controller.update_policy_params(policy_params=policy_params_to_render)
+
+rng, rng_targets_simulator = jax.random.split(rng, 2)
+targets_simulator = get_target_positions(rng=rng_targets_simulator,
+                                distance=config["environment"]["target_distance"],
+                                num_rowing=0,
+                                num_reverse_rowing=0,
+                                num_random_positions=1,
+                                parallel_dim=policy_params_to_render.shape[0],
+                                parallel_constant=True)
+simulator.update_targets(targets_simulator[0])
 
 simulator.update_nn_controller(controller)
 

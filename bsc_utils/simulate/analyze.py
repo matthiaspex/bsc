@@ -44,10 +44,24 @@ class Simulator(EnvContainer):
         """
         self.nn_controller = nn_controller
 
+    def update_targets(
+            self,
+            targets: chex.Array
+    ):
+        """
+        Should only be used in case of directed locomotion.
+        Make sure that number of targets is the same as the number of policy_params to evaluate in parallel
+        target dim: (num_parallel_dims, 3), so at least (1,3)
+        """
+        if self.config["environment"]["reward_type"] == 'target':
+            self.targets = targets
+        else:
+            raise Exception("targets were provided, but the environment is not 'DirectedLocomotion'")
+
 
     def generate_episode_data_undamaged(
             self,
-            rng: chex.PRNGKey
+            rng: chex.PRNGKey,
     ):
         assert self.env, "First instantiate an undamaged environment using the generate_env method"
         self._generate_episode_data(rng, damage = False)
@@ -177,6 +191,8 @@ class Simulator(EnvContainer):
         """
         assert self.nn_controller, "No nn_controller has been provided yet using the update_nn_controller method"
 
+
+
         if damage:
             _env = self.env_damage
         else:
@@ -184,7 +200,7 @@ class Simulator(EnvContainer):
 
         _policy_params = self.nn_controller.get_policy_params()
         _NUM_MJX_ENVIRONMENTS = _policy_params["params"]["layers_0"]["kernel"].shape[0]
-
+               
         rng, _vectorized_env_rng = jax.random.split(rng, 2)
         _vectorized_env_rng = jnp.array(jax.random.split(_vectorized_env_rng, _NUM_MJX_ENVIRONMENTS))
 
@@ -193,7 +209,18 @@ class Simulator(EnvContainer):
 
         _vectorized_controller_apply = jax.jit(jax.vmap(self.nn_controller.apply))
 
-        _vectorized_env_state = _vectorized_env_reset(rng=_vectorized_env_rng)
+
+        if self.config["environment"]["reward_type"] == 'target':
+            try:
+                self.targets
+            except AttributeError:
+                raise Exception("first call the update_targets method")
+            assert self.targets.shape == (_NUM_MJX_ENVIRONMENTS, 3), "the targets provided don't have the correct dimension (parallel_envs, 3)"
+            _vectorized_env_state = _vectorized_env_reset(rng=_vectorized_env_rng, target_position = self.targets)
+        else:
+            _vectorized_env_state = _vectorized_env_reset(rng=_vectorized_env_rng)
+
+        
 
         # reset for Hebbian learning:
         if self.config["controller"]["hebbian"]:

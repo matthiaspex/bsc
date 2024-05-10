@@ -23,8 +23,10 @@ def pad_sensory_input(sensory_input, arm_setup, arm_setup_damage, sensor_selecti
     sensory_input_pad = sensory_input
     check_damage(arm_setup, arm_setup_damage)
     segm_sensors_2 = ['joint_position', 'joint_velocity', 'joint_actuator_force'] # every segment has 2 sensors: ip and oop
-    segm_sensors_1 = ['segment_contact'] # every segment has 1 sensor
-    body_sensors = ['disk_position', 'disk_rotation', 'disk_linear_velocity', 'disk_angular_velocity'] # sensors are related to body
+    segm_sensors_1 = ['segment_contact', 'segment_light_intake'] # every segment has 1 sensor
+    body_sensors_3D = ['disk_position', 'disk_rotation', 'disk_linear_velocity', 'disk_angular_velocity'] # sensors are related to body
+    body_sensors_2D = ['unit_xy_direction_to_target']
+    body_sensors_1D = ['xy_distance_to_target']
 
     track_pos = 0
 
@@ -33,7 +35,7 @@ def pad_sensory_input(sensory_input, arm_setup, arm_setup_damage, sensor_selecti
             padding_per_segment = 2
         elif type in segm_sensors_1:
             padding_per_segment = 1
-        elif type in body_sensors:
+        elif type in body_sensors_3D or type in body_sensors_2D or type in body_sensors_1D:
             padding_per_segment = 0
         else:
             raise Warning("New sensory inputs not specified in: ['joint_position', 'joint_velocity', 'joint_actuator_force', 'segment_contact', 'disk_position', 'disk_rotation', 'disk_linear_velocity', 'disk_angular_velocity']")
@@ -43,7 +45,12 @@ def pad_sensory_input(sensory_input, arm_setup, arm_setup_damage, sensor_selecti
             if padding_per_segment != 0:
                 track_pos += arm_setup_damage[arm] * padding_per_segment
             elif padding_per_segment == 0:
-                track_pos += 3
+                if type in body_sensors_3D:
+                    track_pos += 3
+                elif type in body_sensors_2D:
+                    track_pos += 2
+                elif type in body_sensors_1D:
+                    track_pos += 1
                 
             num_segm_rm = arm_setup[arm] - arm_setup_damage[arm]
             if num_segm_rm != 0:

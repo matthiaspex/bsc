@@ -9,12 +9,14 @@ parallel_dim = 2
 
 target_positions = get_target_positions(rng,
                                              distance=5.0, 
-                                             num_rowing=5,
-                                             num_reverse_rowing=5,
-                                             num_random_positions=0,
-                                             parallel_dim=2,
+                                             num_rowing=0,
+                                             num_reverse_rowing=0,
+                                             num_random_positions=1,
+                                             parallel_dim=parallel_dim,
                                              parallel_constant=True)
 
+
+assert target_positions[0].shape == (parallel_dim, 3), "targets input is wrong dimension. Make sure it has dim (parallel_dim, 3)"
 
 print(len(target_positions))
 print(target_positions[0])

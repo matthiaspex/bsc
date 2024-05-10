@@ -1,26 +1,8 @@
-import jax
-from jax import numpy as jnp
+from bsc_utils.miscellaneous import load_config_from_yaml, complete_sensor_selection
 
-def powers(x):
-    seq = []
-    for i in range(4):
-        seq.append(x**i)
-    return seq
+config = load_config_from_yaml("config\\general_bsc.yaml")
 
-powers_vect = jax.jit(jax.vmap(powers))
+print(config["environment"]["sensor_selection"])
+config = complete_sensor_selection(config)
 
-x = jnp.array([1,2,3])
-
-x_2d = jnp.array([[1,2,3],[4,5,6]])
-
-x_vect = jnp.stack([x_2d, x_2d, x_2d])
-
-print(x)
-print(x_vect)
-print(x_vect.shape)
-
-print(powers(x))
-print(powers(x_vect)[0])
-print(powers_vect(x_vect)[0])
-
-
+print(config["environment"]["sensor_selection"])

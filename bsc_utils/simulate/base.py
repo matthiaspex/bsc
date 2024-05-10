@@ -18,7 +18,8 @@ def rollout(
         policy_params_evosax: chex.Array,
         env: MJXEnv,
         controller: Union[HebbianController, NNController],
-        parallel_dim: int
+        parallel_dim: int,
+        targets = None # array met dimensie [parallel_dim, 3] --> a target for every parallel brittle star env
         ):
     """
     Do a single episode rollout
@@ -43,7 +44,9 @@ def rollout(
     rng, vectorized_env_rng = jax.random.split(rng, 2)
     vectorized_env_rng = jnp.array(jax.random.split(vectorized_env_rng, parallel_dim))
     if config["environment"]["reward_type"] == 'target':
-        vectorized_env_state_reset = vectorized_env_reset(rng=vectorized_env_rng, target_position=config["environment"]["target_position"])
+        assert targets.shape == (parallel_dim, 3), \
+        "targets input is wrong dimension. Make sure it has dim (parallel_dim, 3). Or no targets have been provided."
+        vectorized_env_state_reset = vectorized_env_reset(rng=vectorized_env_rng, target_position=targets)
     else:
         vectorized_env_state_reset = vectorized_env_reset(rng=vectorized_env_rng)
 
@@ -122,7 +125,7 @@ def rollout(
 rollout = jax.jit(rollout, static_argnames=("env", "controller", "parallel_dim"))
 
 
-
+# only exists to keep certain files runable, don't use this functions in new implementations anymore
 def rollout_old(
         mjx_vectorized_env: MJXEnv,
         nn_model: ExplicitMLP,
