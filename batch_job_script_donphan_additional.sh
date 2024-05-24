@@ -1,10 +1,10 @@
 #!/bin/bash
 
-#PBS -N batch_16
+#PBS -N batch_03_reward
 #PBS -l nodes=1:ppn=2
-#PBS -l gpus=1 # not necessary to specify on donphan, but DON'T FORGET on ACCELGOR
+# #PBS -l gpus=1 # not necessary to specify on donphan, but DON'T FORGET on ACCELGOR
 #PBS -l mem=8gb
-#PBS -l walltime=11:00:00
+#PBS -l walltime=10:00:00
 #PBS -e Job_scripts_logs/
 #PBS -o Job_scripts_logs/
 #PBS -m abe
@@ -15,8 +15,6 @@ ml load FFmpeg/4.3.2-GCCcore-11.2.0
 # ml load typing-extensions/3.10.0.2-GCCcore-11.2.0
 export MUJOCO_GL="osmesa"
 export XLA_FLAGS="--xla_gpu_triton_gemm_any=True"
-
-
 
 # Setup wandb
 wandb_api_key=`cat $HOME/wandb_key.txt`
@@ -45,7 +43,7 @@ export IMAGE_DIR="$VSC_DATA/brittle_star/tmp/"
 
 
 
-for file in $HOME/bsc/config/batch/*.yaml
+for file in $HOME/bsc/config/batch_donphan_additional/*.yaml
 do
   echo "Run started"
   echo $file

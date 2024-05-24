@@ -1,26 +1,26 @@
  experiment:
-   interface: 'VSC' # HPC or VSC 
+   interface: 'HPC' # HPC or VSC 
    run_name_format: "{notes} {reward_type} {arm_setup} popsize {es_popsize} {cost_expr} {efficiency_expr} hebbian {hebbian}"
    seed: 2024
  wandb:
-   project: "job_sub_test"
-   group: "Local_VSC"
-   tags: ["hebbian", "cost_efficiency"]
-   notes: "directed_2"
+   project: "hebbian"
+   group: "hebbian: directed donphan"
+   tags: [ "static", "6912_popsize", "5 arms", "reward" , "400 generations" , "directed" ]
+   notes: "b15_r03"
  morphology:
    arm_setup: [ 5, 5, 5, 5, 5 ]
    joint_control: 'position'
  arena:
-   arena_size: !!python/tuple [ 4, 4 ]
-   sand_ground_color: True # must be true for light escape environment
+   arena_size: !!python/tuple [ 8, 8 ]
+   sand_ground_color: False # must be true for light escape environment
  environment:
-   reward_type: 'distance' # choose from distance, target or light
+   reward_type: 'target' # choose from distance, target or light
    sensor_selection: !!python/tuple [ 'joint_position', 'joint_actuator_force', 'segment_contact']
    num_physics_steps_per_control_step: 10
    simulation_time: 5 # also for hebbian, 5 suffices
    joint_randomization_noise_scale: 0.0
    light_perlin_noise_scale: 4
-   target_distance: 7
+   target_distance: 7 # rather use the target_distance from the training part
    target_position: [ 7., 0., 0.] # must fit in the arena
    color_contacts: False
    render:
@@ -28,20 +28,20 @@
      render_size: [ 480, 640 ] # choose ratio 3:4 --> [ 480, 640  ], [ 720, 960 ], [ 960, 1280 ] (720p), [ 1440, 1920 ] (1080p), [ 3072, 4069 ] (HDTV 4k)
  damage:
    damage: True # try to write code indepent of this argument
-   arm_setup_damage: [ 5, 0, 0, 0, 0]
+   arm_setup_damage: [ 5, 0, 5, 5, 5]
  evolution:
-   es_popsize: 2
-   num_generations: 10
+   es_popsize: 6912
+   num_generations: 400
    cost_expr: "nocost" # choose from ["nocost", "torque x angvel", "torque"]
    penal_expr: "nopenal" # choose from ["nopenal", "body_stability"]
    efficiency_expr: "reward" # choose from ["reward", "reward _ cost", "reward + reward _ cost"]
  controller:
-   hebbian: True
+   hebbian: False
    num_hebbian_steps_per_control_step: 1
    hidden_layers: [ 128, 128 ]
  training:
    target:
-     distance: 6
+     distance: 7
      num_rowing: 2 # max 5, only 5 different rowing positions possible
      num_reverse_rowing: 2 # max 5, only 5 different rowing positions possible
      num_random_positions: 0

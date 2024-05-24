@@ -204,3 +204,31 @@ def complete_sensor_selection(config):
     sensor_selection_new = tuple(sensor_selection_new)
     config["environment"]["sensor_selection"] = sensor_selection_new
     return config
+
+
+
+def complete_config_with_defaults(config):
+    """
+    For visualising older experiments with incomplete config files: complete them with default values
+    """
+    try:
+        config["evolution"]["penal_expr"]
+    except:
+        config["evolution"]["penal_expr"] = "nopenal"
+
+    try:
+        config["evolution"]["efficiency_expr"]
+    except:
+        config["evolution"]["efficiency_expr"] = config["evolution"]["fitness_expr"]
+
+    try:
+        config["controller"]["hebbian"]
+    except:
+        config["controller"]["hebbian"] = False
+
+    try:
+        config["controller"]["num_hebbian_steps_per_control_step"]
+    except:
+        config["controller"]["num_hebbian_steps_per_control_step"] = 1
+
+    return config

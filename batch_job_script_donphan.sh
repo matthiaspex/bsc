@@ -4,7 +4,7 @@
 #PBS -l nodes=1:ppn=2
 # #PBS -l gpus=1 # not necessary to specify on donphan, but DON'T FORGET on ACCELGOR
 #PBS -l mem=12gb
-#PBS -l walltime=7:00:00
+#PBS -l walltime=72:00:00
 #PBS -e Job_scripts_logs/
 #PBS -o Job_scripts_logs/
 #PBS -m abe
@@ -40,8 +40,8 @@ export POLICY_PARAMS_DIR="$HOME/bsc/trained_policy_params/"
 export VIDEO_DIR="$VSC_DATA/brittle_star/tmp/"
 export IMAGE_DIR="$VSC_DATA/brittle_star/tmp/"
 
-# Update code
-git pull --recurse-submodules
+# # Update code
+# git pull --recurse-submodules
 
 
 

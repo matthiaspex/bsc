@@ -6,7 +6,7 @@ from jax import numpy as jnp
 
 from evosax import ParameterReshaper
 
-from bsc_utils.miscellaneous import load_config_from_yaml
+from bsc_utils.miscellaneous import load_config_from_yaml, complete_config_with_defaults
 from bsc_utils.simulate.analyze import Simulator
 from bsc_utils.controller.base import NNController, ExplicitMLP
 from bsc_utils.controller.hebbian import HebbianController
@@ -24,19 +24,21 @@ RUN_NAME = os.environ["RUN_NAME"]
 trained_policy_params_flat = jnp.load(POLICY_PARAMS_DIR + RUN_NAME + ".npy")
 config = load_config_from_yaml(POLICY_PARAMS_DIR + RUN_NAME + ".yaml")
 
+# especially relevant when running older experiments that might not have certain required arguments in their setup
+config = complete_config_with_defaults(config)
+
 ####################################################################################
 # finutune episode simulation
-simulate_undamaged = False
+simulate_undamaged = True
 simulate_damaged = True
-arm_setup_damage = [0,5,0,5,5]
+arm_setup_damage = [5,0,5,5,5]
 config["damage"]["arm_setup_damage"] = arm_setup_damage
-# config["arena"]["sand_ground_color"] = True
+config["arena"]["sand_ground_color"] = False
 config["environment"]["render"] = {"render_size": [ 480, 640 ], "camera_ids": [ 0, 1 ]} # only static aquarium camera camera [ 0 ], otherwise: "camera_ids": [ 0, 1 ]
                             # choose ratio 3:4 --> [ 480, 640 ], [ 720, 960 ], [ 960, 1280 ] (720p), [ 1440, 1920 ] (1080p), [ 3072, 4069 ] (HDTV 4k)
-# config["evolution"]["penal_expr"] = "nopenal"
-# config["evolution"]["efficiency_expr"] = config["evolution"]["fitness_expr"]
 
-run_name_addition = f"{arm_setup_damage}"
+run_name_addition = " no sand"
+# run_name_addition = f"{arm_setup_damage}"
 playback_speed = 1
 ####################################################################################
 
@@ -74,9 +76,9 @@ if simulate_undamaged:
     penalty = simulator.get_episode_penalty()
     efficiency = simulator.get_episode_efficiency()
     fitness = simulator.get_episode_fitness()
-    simulator.get_ip_oop_joint_angles_plot(file_path = IMAGE_DIR + RUN_NAME + run_name_addition + "PLOTS.png")
-    # simulator.get_increasing_opacity_image(number_of_frames=8, file_path=IMAGE_DIR + RUN_NAME + run_name_addition + " OPACITY.png")
-    simulator.get_episode_video(file_path = VIDEO_DIR + RUN_NAME + run_name_addition + ".mp4", playback_speed=playback_speed)
+    # simulator.get_ip_oop_joint_angles_plot(file_path = IMAGE_DIR + RUN_NAME + run_name_addition + "PLOTS.png")
+    simulator.get_increasing_opacity_image(number_of_frames=8, file_path=IMAGE_DIR + RUN_NAME + run_name_addition + " OPACITY.png")
+    # simulator.get_episode_video(file_path = VIDEO_DIR + RUN_NAME + run_name_addition + ".mp4", playback_speed=playback_speed)
 
 
     print(f"""
@@ -98,9 +100,9 @@ if simulate_damaged:
     penalty_damage = simulator.get_episode_penalty()
     efficiency_damage = simulator.get_episode_efficiency()
     fitness_damage = simulator.get_episode_fitness()
-    simulator.get_ip_oop_joint_angles_plot(file_path = IMAGE_DIR + RUN_NAME + run_name_addition + " PLOTS DAMAGE.png")
-    # simulator.get_increasing_opacity_image(number_of_frames=8, file_path=IMAGE_DIR + RUN_NAME + run_name_addition + "OPACITY DAMAGE.png")
-    simulator.get_episode_video(file_path = VIDEO_DIR + RUN_NAME + run_name_addition + " DAMAGE.mp4", playback_speed=playback_speed)
+    # simulator.get_ip_oop_joint_angles_plot(file_path = IMAGE_DIR + RUN_NAME + run_name_addition + " PLOTS DAMAGE.png")
+    simulator.get_increasing_opacity_image(number_of_frames=8, file_path=IMAGE_DIR + RUN_NAME + run_name_addition + "OPACITY DAMAGE.png")
+    # simulator.get_episode_video(file_path = VIDEO_DIR + RUN_NAME + run_name_addition + " DAMAGE.mp4", playback_speed=playback_speed)
 
 
     print(f"""
