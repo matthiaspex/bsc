@@ -1,2 +1,2 @@
-# Thesis
-Repository to keep track of all the files I will be using throughout my thesis.
+# Brittle Star Control (BSC)
+Repository with all the modules and code developed for the thesis "Bio-inspired Control of a Brittle Star Robot: Towards Enhanced Resilience to Damage"
