@@ -1,5 +1,7 @@
 # ignore the wandb directory
 wandb/
+# ignore the __pychache__ directory
+__pychache__
 # ignore .ipynb_checkpoints directories
 .ipynb_checkpoints/
 *ipynb_checkpoints/
@@ -14,8 +16,8 @@ bsc/
 Videos/
 Images/
 
-# ignore trained policies params folder
-trained_policy_params/
+# # ignore trained policies params folder
+# trained_policy_params/
 
 # ignore wandb API key file
 *wandb_key.txt

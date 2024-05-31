@@ -211,7 +211,10 @@ for gen in range(config["evolution"]["num_generations"]):
     #     policy_params_to_render.append(es_state.best_member)
 
     es_state = strategy.tell(policy_params_evosax, fit_re, es_state, es_params)
-
+    if gen%150 == 0 and gen != 0:
+        policy_params_to_render.append(policy_params_evosax[jnp.argmax(fitness)])
+        store_config_and_policy_params(file_name=POLICY_PARAMS_DIR+run_name+f" {gen}", cfg=config, policy_params=policy_params_to_render)
+        
 # Get best overall population member
 policy_params_to_render.append(policy_params_evosax[jnp.argmax(fitness)])
 print('Policy training finished!')

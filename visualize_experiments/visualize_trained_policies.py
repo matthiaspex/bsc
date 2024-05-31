@@ -6,7 +6,7 @@ from jax import numpy as jnp
 
 from evosax import ParameterReshaper
 
-from bsc_utils.miscellaneous import load_config_from_yaml, complete_config_with_defaults
+from bsc_utils.miscellaneous import load_config_from_yaml, complete_config_with_defaults, get_target_positions
 from bsc_utils.simulate.analyze import Simulator
 from bsc_utils.controller.base import NNController, ExplicitMLP
 from bsc_utils.controller.hebbian import HebbianController
@@ -29,17 +29,32 @@ config = complete_config_with_defaults(config)
 
 ####################################################################################
 # finutune episode simulation
+simulation_time = 5
+config["environment"]["simulation_time"] = simulation_time
+playback_speed = 1
+
 simulate_undamaged = True
 simulate_damaged = True
-arm_setup_damage = [5,0,5,5,5]
+
+joint_angle_plots = False
+opacity_frames_image = False
+video_render = False
+
+
+arm_setup_damage = [5,5,0,5,5]
 config["damage"]["arm_setup_damage"] = arm_setup_damage
 config["arena"]["sand_ground_color"] = False
 config["environment"]["render"] = {"render_size": [ 480, 640 ], "camera_ids": [ 0, 1 ]} # only static aquarium camera camera [ 0 ], otherwise: "camera_ids": [ 0, 1 ]
                             # choose ratio 3:4 --> [ 480, 640 ], [ 720, 960 ], [ 960, 1280 ] (720p), [ 1440, 1920 ] (1080p), [ 3072, 4069 ] (HDTV 4k)
 
-run_name_addition = " no sand"
-# run_name_addition = f"{arm_setup_damage}"
-playback_speed = 1
+if config["arena"]["sand_ground_color"] == False:
+    run_name_addition = " no sand"
+
+if playback_speed != 1:
+    run_name_addition += f" x{playback_speed}"
+
+if simulation_time != 5:
+    run_name_addition += f" {simulation_time}s"
 ####################################################################################
 
 
@@ -52,6 +67,17 @@ print(f"""
 observation_space_dim = {observation_space_dim}
 actuator_space_dim = {actuator_space_dim}
 """)
+
+if config["environment"]["reward_type"] == 'target':
+    rng, rng_targets_simulator = jax.random.split(rng, 2)
+    targets_simulator = get_target_positions(rng=rng_targets_simulator,
+                                    distance=config["environment"]["target_distance"],
+                                    num_rowing=0,
+                                    num_reverse_rowing=0,
+                                    num_random_positions=1,
+                                    parallel_dim=trained_policy_params_flat.shape[0],
+                                    parallel_constant=True)
+    simulator.update_targets(targets_simulator[0])
 
 if config["controller"]["hebbian"] == True:
     nn_controller = HebbianController(simulator)
@@ -76,9 +102,12 @@ if simulate_undamaged:
     penalty = simulator.get_episode_penalty()
     efficiency = simulator.get_episode_efficiency()
     fitness = simulator.get_episode_fitness()
-    # simulator.get_ip_oop_joint_angles_plot(file_path = IMAGE_DIR + RUN_NAME + run_name_addition + "PLOTS.png")
-    simulator.get_increasing_opacity_image(number_of_frames=8, file_path=IMAGE_DIR + RUN_NAME + run_name_addition + " OPACITY.png")
-    # simulator.get_episode_video(file_path = VIDEO_DIR + RUN_NAME + run_name_addition + ".mp4", playback_speed=playback_speed)
+    if joint_angle_plots == True:
+        simulator.get_ip_oop_joint_angles_plot(file_path = IMAGE_DIR + RUN_NAME + run_name_addition + "PLOTS.png")
+    if opacity_frames_image == True:
+        simulator.get_increasing_opacity_image(number_of_frames=8, file_path=IMAGE_DIR + RUN_NAME + run_name_addition + " OPACITY.png")
+    if video_render == True:
+        simulator.get_episode_video(file_path = VIDEO_DIR + RUN_NAME + run_name_addition + ".mp4", playback_speed=playback_speed)
 
 
     print(f"""
@@ -100,9 +129,12 @@ if simulate_damaged:
     penalty_damage = simulator.get_episode_penalty()
     efficiency_damage = simulator.get_episode_efficiency()
     fitness_damage = simulator.get_episode_fitness()
-    # simulator.get_ip_oop_joint_angles_plot(file_path = IMAGE_DIR + RUN_NAME + run_name_addition + " PLOTS DAMAGE.png")
-    simulator.get_increasing_opacity_image(number_of_frames=8, file_path=IMAGE_DIR + RUN_NAME + run_name_addition + "OPACITY DAMAGE.png")
-    # simulator.get_episode_video(file_path = VIDEO_DIR + RUN_NAME + run_name_addition + " DAMAGE.mp4", playback_speed=playback_speed)
+    if joint_angle_plots == True:
+        simulator.get_ip_oop_joint_angles_plot(file_path = IMAGE_DIR + RUN_NAME + run_name_addition + " PLOTS DAMAGE.png")
+    if opacity_frames_image == True:
+        simulator.get_increasing_opacity_image(number_of_frames=8, file_path=IMAGE_DIR + RUN_NAME + run_name_addition + "OPACITY DAMAGE.png")
+    if video_render == True:
+        simulator.get_episode_video(file_path = VIDEO_DIR + RUN_NAME + run_name_addition + " DAMAGE.mp4", playback_speed=playback_speed)
 
 
     print(f"""
