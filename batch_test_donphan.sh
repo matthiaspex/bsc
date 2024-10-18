@@ -10,8 +10,8 @@
 #PBS -m abe
 
 ml purge
-ml load glew/2.2.0-GCCcore-12.3.0-osmesa
-ml load FFmpeg/6.0-GCCcore-12.3.0
+ml load glew/2.2.0-GCCcore-11.2.0-osmesa
+ml load FFmpeg/4.3.2-GCCcore-11.2.0
 # ml load typing-extensions/3.10.0.2-GCCcore-11.2.0
 export MUJOCO_GL="osmesa"
 export XLA_FLAGS="--xla_gpu_triton_gemm_any=True"
