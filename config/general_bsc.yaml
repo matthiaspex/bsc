@@ -4,9 +4,9 @@
    seed: 2024
  wandb:
    project: "job_sub_test"
-   group: "Local_VSC"
-   tags: ["hebbian", "cost_efficiency"]
-   notes: "directed_2"
+   group: "Linux_VSC"
+   tags: ["Linux", "Hebbian"]
+   notes: "Linux restart again"
  morphology:
    arm_setup: [ 5, 5, 5, 5, 5 ]
    joint_control: 'position'
@@ -34,7 +34,7 @@
    num_generations: 10
    cost_expr: "nocost" # choose from ["nocost", "torque x angvel", "torque"]
    penal_expr: "nopenal" # choose from ["nopenal", "body_stability"]
-   efficiency_expr: "reward" # choose from ["reward", "reward _ cost", "reward + reward _ cost"]
+   efficiency_expr: "reward _ cost" # choose from ["reward", "reward _ cost", "reward + reward _ cost"]
  controller:
    hebbian: True
    num_hebbian_steps_per_control_step: 1

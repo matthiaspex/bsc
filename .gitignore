@@ -7,9 +7,9 @@ __pychache__
 *ipynb_checkpoints/
 # ignore bsc environment folder
 bsc/
-# ignore all .mp4 files
+# ignore all .mp4 files - video files usually
 *.mp4
-# ignore all .jpg files
+# ignore all .jpg files - image files usually
 *.jpg
 
 # ignore Videos and Images folder

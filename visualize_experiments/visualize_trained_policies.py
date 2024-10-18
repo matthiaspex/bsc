@@ -36,9 +36,9 @@ playback_speed = 1
 simulate_undamaged = True
 simulate_damaged = True
 
-joint_angle_plots = False
-opacity_frames_image = False
-video_render = False
+joint_angle_plots = True
+opacity_frames_image = True
+video_render = True
 
 
 arm_setup_damage = [5,5,0,5,5]

@@ -1,5 +1,5 @@
 """
-This file is compatible with any config (yaml) file that takes Hebbian True or not
+This file is compatible with any config (yaml) file that takes Hebbian True or not (so also static trainings are possible in this file)
 """
 
 import sys
@@ -233,14 +233,16 @@ simulator.generate_env_damaged()
 controller.update_policy_params(policy_params=policy_params_to_render)
 
 rng, rng_targets_simulator = jax.random.split(rng, 2)
-targets_simulator = get_target_positions(rng=rng_targets_simulator,
-                                distance=config["environment"]["target_distance"],
-                                num_rowing=0,
-                                num_reverse_rowing=0,
-                                num_random_positions=1,
-                                parallel_dim=policy_params_to_render.shape[0],
-                                parallel_constant=True)
-simulator.update_targets(targets_simulator[0])
+
+if config["environment"]["reward_type"] == "target":
+    targets_simulator = get_target_positions(rng=rng_targets_simulator,
+                                    distance=config["environment"]["target_distance"],
+                                    num_rowing=0,
+                                    num_reverse_rowing=0,
+                                    num_random_positions=1,
+                                    parallel_dim=policy_params_to_render.shape[0],
+                                    parallel_constant=True)
+    simulator.update_targets(targets_simulator[0])
 
 simulator.update_nn_controller(controller)
 
@@ -317,6 +319,7 @@ wandb.log({"Joint Angles damaged morophology": wandb.Image(IMAGE_DIR + run_name 
 wandb.finish()
 trainer.clear_envs()
 simulator.clear_envs()
+print("Environments cleared")
 
 
 
