@@ -5,6 +5,8 @@ import jax
 from jax import numpy as jnp
 from PIL import Image
 import matplotlib.pyplot as plt
+import matplotlib.animation as animation
+
 
 from evosax import ParameterReshaper
 
@@ -173,6 +175,99 @@ class Simulator(EnvContainer):
         if show_image:
             img.show()
 
+    def get_kernel_animation(
+            self,
+            file_path: str = None,
+            playback_speed: float = 1.0
+    ):
+        """
+        self.kernels is a tree (list with dicts)
+        has a shape like (#simulation timesteps, synapse strenghts dict)
+        Exports a video if it is a plastic controller
+        Exports an image if it is a static controller
+        """
+        assert np.any(self.kernels), "First run an episode using generate_episode_data_(un)damaged"
+        _fps = int(1/self.environment_configuration.control_timestep)
+        _fps *= playback_speed
+
+        if len(self.kernels) >= 0:
+            # possibly correct the extensions so you get video (.mp4) or picture (.png, .jpg)
+            if file_path.endswith(".png") or file_path.endswith(".jpg"):
+                file_path = file_path[:-4]+".mp4"
+            elif file_path.endswith(".mp4"):
+                pass
+            else:
+                raise TypeError("Make sure the extension of the file_path if .mp4")
+            
+
+            num_layers = len(self.kernels[0]["params"])
+            width_ratios = np.zeros(num_layers)
+            for i in range(num_layers):
+                width_ratios[i] = self.kernels[0]["params"][f"layers_{i}"]["kernel"][0].shape[-1]
+            # rescale width_ratios for the subplots width scaling
+            width_ratios = width_ratios/np.sum(width_ratios)*len(width_ratios)
+
+            fig, axes = plt.subplots(1, num_layers, figsize = (5*num_layers, 5), width_ratios=width_ratios)
+            fig.tight_layout(pad=3)                  
+
+            ims = []
+            cbs = []
+            for i in range(num_layers):
+                ims.append(f"im_{i}")
+                cbs.append(f"cb_{i}")
+                globals()[ims[i]] = axes[i].imshow(self.kernels[0]["params"][f"layers_{i}"]["kernel"][0], cmap="seismic",\
+                                                interpolation="nearest")
+                globals()[cbs[i]] = fig.colorbar(globals()[ims[i]], orientation="vertical")
+                axes[i].set_title(f"layer {i}")
+                axes[i].set_xlabel('post-synaptic nodes')
+                axes[i].set_ylabel('pre-synaptic nodes')
+
+            def update(num, kernels):
+                num_layers = len(kernels[num]["params"])
+                for i in range(num_layers):
+                    arr = kernels[num]["params"][f"layers_{i}"]["kernel"][0]
+                    vmax = np.max(arr)
+                    vmin = np.min(arr)
+                    globals()[ims[i]].set_data(arr)
+                    globals()[ims[i]].set_clim(vmin, vmax)
+
+            ani = animation.FuncAnimation(fig=fig, func=update, frames=len(self.kernels), fargs=[self.kernels])
+            ani.save(filename=file_path, writer="ffmpeg", fps=_fps) # either "ffmpeg" or "imagemagick if you want gifs"
+
+
+        elif len(self.kernels) == 0:
+            if file_path.endswith(".png") or file_path.endswith(".jpg"):
+                pass
+            elif file_path.endswith(".mp4"):
+                file_path = file_path[:-4]+".png"
+            else:
+                raise TypeError("Make sure the extension of the file_path if .png or .jpg")
+
+            num_layers = len(self.kernels[0]["params"])
+            width_ratios = np.zeros(num_layers)
+            for i in range(num_layers):
+                width_ratios[i] = self.kernels[0]["params"][f"layers_{i}"]["kernel"][0].shape[-1]
+            # rescale width_ratios for the subplots width scaling
+            width_ratios = width_ratios/np.sum(width_ratios)*len(width_ratios)
+
+            fig, axes = plt.subplots(1, num_layers, figsize = (5*num_layers, 5), width_ratios=width_ratios)
+            fig.tight_layout(pad=3)                  
+
+            ims = []
+            cbs = []
+            for i in range(num_layers):
+                ims.append(f"im_{i}")
+                cbs.append(f"cb_{i}")
+                globals()[ims[i]] = axes[i].imshow(self.kernels[0]["params"][f"layers_{i}"]["kernel"][0], cmap="seismic",\
+                                                interpolation="nearest")
+                globals()[cbs[i]] = fig.colorbar(globals()[ims[i]], orientation="vertical")
+                axes[i].set_title(f"layer {i}")
+                axes[i].set_xlabel('post-synaptic nodes')
+                axes[i].set_ylabel('pre-synaptic nodes')
+
+            plt.savefig(file_path)
+
+
     
     def _generate_episode_data(
             self,
@@ -190,8 +285,6 @@ class Simulator(EnvContainer):
         - stacked rewards: array with dims [n, t]: n = parallel envs, t = timesteps during rollout
         """
         assert self.nn_controller, "No nn_controller has been provided yet using the update_nn_controller method"
-
-
 
         if damage:
             _env = self.env_damage
@@ -229,6 +322,15 @@ class Simulator(EnvContainer):
             self.nn_controller.reset_neuron_activities(parallel_dim=_NUM_MJX_ENVIRONMENTS)
             _synapse_strengths = self.nn_controller.get_synapse_strengths()
             _neuron_activities = self.nn_controller.get_neuron_activities()
+
+
+        _kernels = []
+        # store all the kernels for visualisation
+        if self.config["controller"]["hebbian"]:
+            _kernels.append(_synapse_strengths)
+        else:
+            _kernels.append(_policy_params)           
+
 
         # visualisation
         _frames = []
@@ -279,6 +381,7 @@ class Simulator(EnvContainer):
                                                                         learning_rules=_policy_params, # learning rules in case of hebbian
                                                                         neuron_activities=_neuron_activities
                                                                         )
+                _kernels.append(_synapse_strengths)
 
             else:
                 # apply a static control: just yields action and neuron activities
@@ -331,6 +434,19 @@ class Simulator(EnvContainer):
         self.background_frame = _background_frame
         self.observations = _observations
         self.rewards = _rewards
+        self.kernels = _kernels
+
+
+    # def _extract_kernels_from_synapse_strengths(
+    #         self,
+    #         synapse_strengths: dict
+    # ):
+    #     kernels = []
+    #     num_layers = len(synapse_strengths["params"].keys())
+    #     for p in range(num_layers):
+    #         kernels.append(synapse_strengths["params"][f"layers_{p}"]["kernel"])
+    #     np.array(kernels)
+    #     return kernels
 
 
 

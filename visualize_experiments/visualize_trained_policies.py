@@ -37,8 +37,9 @@ simulate_undamaged = True
 simulate_damaged = True
 
 joint_angle_plots = True
-opacity_frames_image = True
+opacity_frames_image = False
 video_render = True
+kernel_animation = True
 
 
 arm_setup_damage = [5,5,0,5,5]
@@ -108,6 +109,8 @@ if simulate_undamaged:
         simulator.get_increasing_opacity_image(number_of_frames=8, file_path=IMAGE_DIR + RUN_NAME + run_name_addition + " OPACITY.png")
     if video_render == True:
         simulator.get_episode_video(file_path = VIDEO_DIR + RUN_NAME + run_name_addition + ".mp4", playback_speed=playback_speed)
+    if kernel_animation == True:
+        simulator.get_kernel_animation(file_path = VIDEO_DIR + "kernel" + RUN_NAME + run_name_addition + ".mp4") 
 
 
     print(f"""
@@ -135,6 +138,8 @@ if simulate_damaged:
         simulator.get_increasing_opacity_image(number_of_frames=8, file_path=IMAGE_DIR + RUN_NAME + run_name_addition + "OPACITY DAMAGE.png")
     if video_render == True:
         simulator.get_episode_video(file_path = VIDEO_DIR + RUN_NAME + run_name_addition + " DAMAGE.mp4", playback_speed=playback_speed)
+    if kernel_animation == True:
+        simulator.get_kernel_animation(file_path = VIDEO_DIR + "kernel" + RUN_NAME + run_name_addition + "DAMAGE.mp4")
 
 
     print(f"""

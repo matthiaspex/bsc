@@ -14,11 +14,14 @@ export PYTHONPATH=. # relative path, because cd already put the python path to t
 # Set system variables required by the python script
 export VIDEO_DIR="./Videos/"
 export IMAGE_DIR="./Images/"
-export POLICY_PARAMS_DIR="./trained_policy_params/b16/"
-export RUN_NAME="b16_r01 target [5, 5, 5, 5, 5] popsize 6912 nocost reward hebbian True"
+export POLICY_PARAMS_DIR="./trained_policy_params/b11/"
+export RUN_NAME="b11_r01 distance arms [5, 5, 5, 5, 5] popsize 6912 torque reward _ cost hebbian True"
 
 
 python "./visualize_experiments/visualize_trained_policies.py"
+
+
+
 
 
 # Old bash script for windows
