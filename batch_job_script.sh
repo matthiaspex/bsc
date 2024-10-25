@@ -1,9 +1,9 @@
 #!/bin/bash
 
-#PBS -N batch_17
-#PBS -l nodes=1:ppn=4
-#PBS -l gpus=1 # not necessary to specify on donphan, but DON'T FORGET on ACCELGOR
-#PBS -l mem=16gb
+#PBS -N batch_17_run_1
+#PBS -l nodes=1:ppn=16
+#PBS -l gpus=1 # not necessary to specify on donphan, but DON'T FORGET on ACCELGOR, 80GB per GPU core
+#PBS -l mem=64gb
 #PBS -l walltime=72:00:00
 #PBS -e Job_scripts_logs/
 #PBS -o Job_scripts_logs/
@@ -15,7 +15,7 @@ ml load FFmpeg/4.3.2-GCCcore-11.2.0
 # ml load typing-extensions/3.10.0.2-GCCcore-11.2.0
 export MUJOCO_GL="osmesa"
 export XLA_FLAGS="--xla_gpu_triton_gemm_any=True"
-
+export XLA_PYTHON_CLIENT_MEM_FRACTION="0.99" # max jax GPU memory allocation %
 
 
 # Setup wandb
