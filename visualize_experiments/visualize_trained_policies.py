@@ -34,7 +34,7 @@ config["environment"]["simulation_time"] = simulation_time
 playback_speed = 1
 
 simulate_undamaged = True
-simulate_damaged = True
+simulate_damaged = False
 
 joint_angle_plots = True
 opacity_frames_image = False
@@ -110,7 +110,7 @@ if simulate_undamaged:
     if video_render == True:
         simulator.get_episode_video(file_path = VIDEO_DIR + RUN_NAME + run_name_addition + ".mp4", playback_speed=playback_speed)
     if kernel_animation == True:
-        simulator.get_kernel_animation(file_path = VIDEO_DIR + "kernel" + RUN_NAME + run_name_addition + ".mp4") 
+        simulator.get_kernel_animation(file_path = VIDEO_DIR + "kernel " + RUN_NAME + run_name_addition + ".mp4") 
 
 
     print(f"""
@@ -139,7 +139,7 @@ if simulate_damaged:
     if video_render == True:
         simulator.get_episode_video(file_path = VIDEO_DIR + RUN_NAME + run_name_addition + " DAMAGE.mp4", playback_speed=playback_speed)
     if kernel_animation == True:
-        simulator.get_kernel_animation(file_path = VIDEO_DIR + "kernel" + RUN_NAME + run_name_addition + "DAMAGE.mp4")
+        simulator.get_kernel_animation(file_path = VIDEO_DIR + "kernel " + RUN_NAME + run_name_addition + "DAMAGE.mp4")
 
 
     print(f"""
