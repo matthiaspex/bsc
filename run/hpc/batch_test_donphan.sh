@@ -44,14 +44,11 @@ export IMAGE_DIR="$VSC_DATA/brittle_star/tmp/"
 
 
 
-for file in $HOME/bsc/config/batch_donphan/*.yaml
-do
-  echo "Run started"
-  echo $file
-  export CONFIG_FILE="$file"
-  python './python_scripts/centralized_hebbian_training.py' 
-  echo "Run finished"
-done
+echo "Run started"
+export CONFIG_FILE="./config/batch_test_donphan.yaml"
+python './python_scripts/centralized_hebbian_training.py' 
+echo "Run finished"
+
 
 rm $VIDEO_DIR*
 # rm $IMAGE_DIR* # Only remove when it is actually different from the $VIDEO_DIR
