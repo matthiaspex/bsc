@@ -259,6 +259,7 @@ efficiency = simulator.get_episode_efficiency()
 fitness = simulator.get_episode_fitness()
 simulator.get_ip_oop_joint_angles_plot(file_path = IMAGE_DIR + run_name + ".png")
 simulator.get_episode_video(file_path = VIDEO_DIR + run_name + ".mp4")
+simulator.get_kernel_animation(file_path = VIDEO_DIR + run_name + "kernel" + ".mp4")
 
 
 print(f"""
@@ -282,6 +283,7 @@ if config["damage"]["damage"]:
     fitness_damage = simulator.get_episode_fitness()
     simulator.get_ip_oop_joint_angles_plot(file_path = IMAGE_DIR + run_name + " DAMAGE.png")
     simulator.get_episode_video(file_path = VIDEO_DIR + run_name + " DAMAGE.mp4")
+    simulator.get_kernel_animation(file_path = VIDEO_DIR + run_name + "kernel " + " DAMAGE.mp4")
 
 
     print(f"""
@@ -310,10 +312,11 @@ if config["damage"]["damage"]:
 fps = int(1/simulator.environment_configuration.control_timestep)
 wandb.log({"Video trained model": wandb.Video(VIDEO_DIR + run_name + ".mp4", caption=run_name, fps=fps, format='mp4')})
 wandb.log({"Joint Angles trained model": wandb.Image(IMAGE_DIR + run_name + ".png")})
+wandb.log({"Kernel visualisation": wandb.Video(VIDEO_DIR + run_name + "kernel" + ".mp4", caption=run_name, fps=fps, format='mp4')})
 
 wandb.log({"Video damaged morphology": wandb.Video(VIDEO_DIR + run_name + " DAMAGE.mp4", caption=run_name, fps=fps, format='mp4')})
 wandb.log({"Joint Angles damaged morophology": wandb.Image(IMAGE_DIR + run_name + " DAMAGE.png")})
-
+wandb.log({"Kernel visualisation damaged": wandb.Video(VIDEO_DIR + run_name + "kernel" + " DAMAGE.mp4", caption=run_name, fps=fps, format='mp4')})
 
 
 wandb.finish()

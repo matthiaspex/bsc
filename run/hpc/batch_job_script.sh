@@ -5,8 +5,8 @@
 #PBS -l gpus=1 # not necessary to specify on donphan, but DON'T FORGET on ACCELGOR, 80GB per GPU core
 #PBS -l mem=12gb
 #PBS -l walltime=8:00:00
-#PBS -e Job_scripts_logs/
-#PBS -o Job_scripts_logs/
+#PBS -e /user/gent/457/vsc45787/bsc/Job_scripts_logs
+#PBS -o /user/gent/457/vsc45787/bsc/Job_scripts_logs
 #PBS -m abe
 
 ml purge
