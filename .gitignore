@@ -1,7 +1,7 @@
 # ignore the wandb directory
 wandb/
 # ignore the __pychache__ directory and .pyc files
-__pychache__/
+__pycache__/
 *.pyc
 # ignore .ipynb_checkpoints directories
 .ipynb_checkpoints/
