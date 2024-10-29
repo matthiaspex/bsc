@@ -18,13 +18,13 @@ which python
 export PYTHONPATH="$HOME/bsc/:$HOME/bsc/bsc_utils/"
 
 
-export POLICY_PARAMS_DIR="./trained_policy_params/b11/"
+export POLICY_PARAMS_DIR="./post_processing/trained_policy_params/b11/"
 export VIDEO_DIR="$VSC_DATA/brittle_star/tmp/"
 export IMAGE_DIR="$VSC_DATA/brittle_star/tmp/"
 export RUN_NAME="b11_r01 distance arms [5, 5, 5, 5, 5] popsize 6912 torque reward _ cost hebbian True"
 
 echo "run started"
-python "./visualize_experiments/visualize_trained_policies.py"
+python "./python_scripts/visualize_trained_policies.py"
 echo "run finished"
 
 

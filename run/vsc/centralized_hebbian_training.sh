@@ -13,12 +13,12 @@ export PYTHONPATH=. # relative path, because cd already put the python path to t
 
 # Set system variables required by the python script
 export CONFIG_FILE="./config/general_bsc.yaml"
-export VIDEO_DIR="./Videos/"
-export IMAGE_DIR="./Images/"
-export POLICY_PARAMS_DIR="./trained_policy_params/"
+export VIDEO_DIR="./post_processing/Videos/tmp/"
+export IMAGE_DIR="./post_processing/Images/tmp/"
+export POLICY_PARAMS_DIR="./post_processing/trained_policy_params/"
 
 
-python "./Hebbian_centr_ctrl/centralized_hebbian_training.py"
+python "./python_scripts/centralized_hebbian_training.py"
 
 
 

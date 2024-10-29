@@ -13,11 +13,16 @@ bsc/
 *.jpg
 
 # ignore Videos and Images folder
+post_processing/Videos/
+post_processing/Images/
 Videos/
 Images/
 
 # # ignore trained policies params folder
 # trained_policy_params/
+
+# # ignore post_processing folder in general
+# post_processing/
 
 # ignore wandb API key file
 *wandb_key.txt
@@ -25,3 +30,5 @@ Images/
 # ignore Job_script_logs folder
 Job_scripts_logs/
 
+# ignore tests folder
+tests/

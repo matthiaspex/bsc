@@ -12,13 +12,13 @@ export PYTHONPATH=. # relative path, because cd already put the python path to t
 
 
 # Set system variables required by the python script
-export VIDEO_DIR="./Videos/"
-export IMAGE_DIR="./Images/"
-export POLICY_PARAMS_DIR="./trained_policy_params/b11/"
+export VIDEO_DIR="./post_processing/Videos/"
+export IMAGE_DIR="./post_processing/Images/"
+export POLICY_PARAMS_DIR="./post_processing/trained_policy_params/b11/"
 export RUN_NAME="b11_r01 distance arms [5, 5, 5, 5, 5] popsize 6912 torque reward _ cost hebbian True"
 
 
-python "./visualize_experiments/visualize_trained_policies.py"
+python "./python_scripts/visualize_trained_policies.py"
 
 
 
