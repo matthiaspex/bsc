@@ -283,7 +283,7 @@ if config["damage"]["damage"]:
     fitness_damage = simulator.get_episode_fitness()
     simulator.get_ip_oop_joint_angles_plot(file_path = IMAGE_DIR + run_name + " DAMAGE.png")
     simulator.get_episode_video(file_path = VIDEO_DIR + run_name + " DAMAGE.mp4")
-    simulator.get_kernel_animation(file_path = VIDEO_DIR + run_name + "kernel " + " DAMAGE.mp4")
+    simulator.get_kernel_animation(file_path = VIDEO_DIR + run_name + "kernel" + " DAMAGE.mp4")
 
 
     print(f"""
