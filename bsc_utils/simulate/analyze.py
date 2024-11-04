@@ -14,7 +14,7 @@ from bsc_utils.BrittleStarEnv import EnvContainer
 from bsc_utils.controller.base import NNController
 from bsc_utils.controller.hebbian import HebbianController
 from bsc_utils.visualization import post_render, change_alpha, move_camera, generate_timestep_joint_angle_plot_data, \
-    plot_ip_oop_joint_angles, save_video_from_raw_frames
+    plot_ip_oop_joint_angles, save_video_from_raw_frames, create_histogram
 from bsc_utils.damage import pad_sensory_input, select_actuator_output, check_damage
 from bsc_utils.simulate.base import cost_step_during_rollout, penal_step_during_rollout
 from bsc_utils.evolution import efficiency_from_reward_cost, fitness_from_stacked_data
@@ -266,6 +266,34 @@ class Simulator(EnvContainer):
                 axes[i].set_ylabel('pre-synaptic nodes')
 
             plt.savefig(file_path)
+
+
+    def get_final_kernel_histogram(
+            self,
+            file_path: str = None,
+            **kwargs
+    ):
+        """
+        Based on what is stored in self.kernels from the _generate_episode_data call,
+        this method will store all the weights and biases of all layers from the last
+        timestep update.
+        This provides insights into the final skills of the agent.
+        """
+        tree = self.kernels[-1]
+        # this tree has a dict structure with layers, weights, biases, ...
+        # Extract all the values from all leaves into a flat numpy array
+        tree = jax.tree.map(lambda x:x.flatten(), tree)
+
+        leaves = jax.tree.leaves(tree)
+        for i in range(len(leaves)):
+            if i == 0:
+                data = leaves[i]
+            else:
+                data = jnp.concatenate([data, leaves[i]])
+
+        fig = create_histogram(data, **kwargs) 
+        plt.savefig(file_path)
+
 
 
     

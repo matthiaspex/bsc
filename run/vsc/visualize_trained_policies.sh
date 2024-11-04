@@ -10,10 +10,11 @@ source "./bsc/bin/activate"
 export PYTHONPATH=. # relative path, because cd already put the python path to the right location
 # export PYTHONPATH="$HOME/OneDrive/Documents/DOCUMENTEN/4_PhD/BSC" (absolute path)
 
+export MUJOCO_GL="egl"
 
 # Set system variables required by the python script
-export VIDEO_DIR="./post_processing/Videos/"
-export IMAGE_DIR="./post_processing/Images/"
+export VIDEO_DIR="./post_processing/Videos/tmp/"
+export IMAGE_DIR="./post_processing/Images/tmp/"
 export POLICY_PARAMS_DIR="./post_processing/trained_policy_params/b11/"
 export RUN_NAME="b11_r01 distance arms [5, 5, 5, 5, 5] popsize 6912 torque reward _ cost hebbian True"
 

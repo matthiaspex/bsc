@@ -4,13 +4,12 @@ import mediapy as media
 from typing import List
 from moojoco.environment.base import MuJoCoEnvironmentConfiguration, BaseEnvState
 from moojoco.mjcf.component import MJCFRootComponent
-from moojoco.environment.mjx_env import MJXEnv, MJXEnvState
+from moojoco.environment.mjx_env import MJXEnvState
 import cv2
 import mujoco
 import logging
 import matplotlib.pyplot as plt
 import imageio
-from PIL import Image
 import copy
 from jax import numpy as jnp
 
@@ -163,6 +162,35 @@ def change_alpha(
     # noinspection PyUnresolvedReferences
     state = state.replace(mjx_model=new_mjx_model)
     return state
+
+
+
+
+def create_histogram(data, bins=30, title='Histogram', xlabel='Value', ylabel='Frequency', color='blue', edgecolor='black', alpha=0.7):
+    """
+    Creates a histogram plot and returns the figure object.
+
+    Parameters:
+    - data: array-like, the data to plot
+    - bins: int, number of bins in the histogram
+    - color: str, color of the bars
+    - edgecolor: str, color of the bar edges
+    - alpha: float, transparency of the bars
+    - title: str, title of the plot
+    - xlabel: str, label for the x-axis
+    - ylabel: str, label for the y-axis
+
+    Returns:
+    - fig: matplotlib.figure.Figure, the figure object of the histogram
+    """
+    fig, ax = plt.subplots(figsize=(8, 6))
+    ax.hist(data, bins=bins, color=color, edgecolor=edgecolor, alpha=alpha)
+    ax.set_title(title)
+    ax.set_xlabel(xlabel)
+    ax.set_ylabel(ylabel)
+    ax.grid(True, linestyle='--', alpha=0.5)
+    
+    return fig
 
 
         

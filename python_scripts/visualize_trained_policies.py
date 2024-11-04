@@ -4,12 +4,11 @@ import sys
 import jax
 from jax import numpy as jnp
 
-from evosax import ParameterReshaper
-
 from bsc_utils.miscellaneous import load_config_from_yaml, complete_config_with_defaults, get_target_positions
 from bsc_utils.simulate.analyze import Simulator
 from bsc_utils.controller.base import NNController, ExplicitMLP
 from bsc_utils.controller.hebbian import HebbianController
+
 
 rng = jax.random.PRNGKey(0)
 
@@ -36,10 +35,11 @@ playback_speed = 1
 simulate_undamaged = True
 simulate_damaged = False
 
-joint_angle_plots = True
+joint_angle_plots = False
 opacity_frames_image = False
-video_render = True
-kernel_animation = True
+video_render = False
+kernel_animation = False
+kernel_histogram = True
 
 
 arm_setup_damage = [5,5,0,5,5]
@@ -110,7 +110,13 @@ if simulate_undamaged:
     if video_render == True:
         simulator.get_episode_video(file_path = VIDEO_DIR + RUN_NAME + run_name_addition + ".mp4", playback_speed=playback_speed)
     if kernel_animation == True:
-        simulator.get_kernel_animation(file_path = VIDEO_DIR + "kernel " + RUN_NAME + run_name_addition + ".mp4") 
+        simulator.get_kernel_animation(file_path = VIDEO_DIR + "kernel " + RUN_NAME + run_name_addition + ".mp4")
+    if kernel_histogram == True:
+        simulator.get_final_kernel_histogram(file_path = IMAGE_DIR + "histogram " + RUN_NAME + run_name_addition + ".png",\
+                                             xlabel="synapse weights",\
+                                             title="Final weight distribution - Undamaged")
+    
+
 
 
     print(f"""
@@ -140,7 +146,10 @@ if simulate_damaged:
         simulator.get_episode_video(file_path = VIDEO_DIR + RUN_NAME + run_name_addition + " DAMAGE.mp4", playback_speed=playback_speed)
     if kernel_animation == True:
         simulator.get_kernel_animation(file_path = VIDEO_DIR + "kernel " + RUN_NAME + run_name_addition + "DAMAGE.mp4")
-
+    if kernel_histogram == True:
+        simulator.get_final_kernel_histogram(file_path=IMAGE_DIR + "histogram " + RUN_NAME + run_name_addition + "DAMAGE.png",\
+                                             xlabel="synapse weights",\
+                                             title="Final weight distribution - Damaged")
 
     print(f"""
     reward_damage = {reward_damage}
@@ -158,6 +167,5 @@ if simulate_undamaged and simulate_damaged:
     efficiency = {efficiency} - efficiency_damage = {efficiency_damage}
     fitness = {fitness} - fitness_damage = {fitness_damage}
     """)
-
 
 simulator.clear_envs()

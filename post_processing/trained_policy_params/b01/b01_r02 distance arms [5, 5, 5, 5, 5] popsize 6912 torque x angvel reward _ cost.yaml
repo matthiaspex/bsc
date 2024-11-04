@@ -1,0 +1,57 @@
+arena:
+  arena_size: !!python/tuple
+  - 10
+  - 10
+  sand_ground_color: true
+controller:
+  hidden_layers:
+  - 128
+  - 128
+damage:
+  arm_setup_damage:
+  - 5
+  - 0
+  - 0
+  - 0
+  - 0
+  damage: false
+environment:
+  color_contacts: false
+  joint_randomization_noise_scale: 0.0
+  light_perlin_noise_scale: 4
+  num_physics_steps_per_control_step: 10
+  reward_type: distance
+  sensor_selection: !!python/tuple
+  - joint_position
+  - joint_actuator_force
+  - segment_contact
+  simulation_time: 5
+  target_distance: 9
+  target_position:
+  - 9.0
+  - 0.0
+  - 0.0
+evolution:
+  cost_expr: torque x angvel
+  es_popsize: 6912
+  fitness_expr: reward _ cost
+  num_generations: 70
+experiment:
+  interface: HPC
+  run_name_format: '{notes} {reward_type} arms {arm_setup} popsize {es_popsize} {cost_expr}
+    {fitness_expr}'
+morphology:
+  arm_setup:
+  - 5
+  - 5
+  - 5
+  - 5
+  - 5
+  joint_control: position
+wandb:
+  group: cost_fitness_again
+  notes: b01_r02
+  project: biomimicry
+  tags:
+  - torque x angvel
+  - reward _ cost
