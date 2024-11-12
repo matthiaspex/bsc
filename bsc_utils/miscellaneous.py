@@ -231,4 +231,9 @@ def complete_config_with_defaults(config):
     except:
         config["controller"]["num_hebbian_steps_per_control_step"] = 1
 
+    try:
+        config["evolution"]["centered_rank"]
+    except:
+        config["evolution"]["centered_rank"] = True
+
     return config

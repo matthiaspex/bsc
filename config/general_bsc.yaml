@@ -30,8 +30,9 @@
    damage: True # try to write code indepent of this argument
    arm_setup_damage: [ 5, 0, 0, 0, 0]
  evolution:
-   es_popsize: 2
+   es_popsize: 4
    num_generations: 10
+   centered_rank: true
    cost_expr: "nocost" # choose from ["nocost", "torque x angvel", "torque"]
    penal_expr: "nopenal" # choose from ["nopenal", "body_stability"]
    efficiency_expr: "reward _ cost" # choose from ["reward", "reward _ cost", "reward + reward _ cost"]

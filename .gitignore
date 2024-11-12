@@ -3,6 +3,7 @@ wandb/
 # ignore the __pychache__ directory and .pyc files
 __pycache__/
 *.pyc
+*__pycache__/
 # ignore .ipynb_checkpoints directories
 .ipynb_checkpoints/
 *ipynb_checkpoints/
