@@ -1,6 +1,6 @@
 # controller
 import chex
-from typing import Union
+from typing import Union, Type
 
 import jax
 from jax import numpy as jnp
@@ -79,16 +79,29 @@ class NNController():
 
     def update_model(
             self,
-            model_class: Union[ExplicitMLP, None] # provide ExplicitMLP as model class, not an instance of it.
+            model_class: Union[Type[ExplicitMLP], None] = ExplicitMLP, # provide ExplicitMLP as model class, not an instance of it.
+            layer_architecture: Union[list, None] = None
     ):
         """
         Model updated based on env_container (input and output dimensions) and the configuration file (hidden layers)
-        Model must be supported by evosax, built based on Flax. Stuff like Parameter reshaper must still work
+        Inputs:
+        - model_class: model must be supported by evosax, built based on Flax. Stuff like Parameter reshaper must still work
+        - layer_architecture: array with [#input nodes, #hidden nodes, #output nodes]
+        e.g. 50 sensors, 2x128 hidden nodes and 20 actuators would be [50, 128, 128, 20]
+        -> By default, the layer architecture is based on the number of sensors and actuators,
+        and the number of hidden layers of a centralized controller.
+        When layer_architecture is provided, this is no longer the case.
+        ---
+        Generates a self.model attribute which is by default of the type ExplicitMLP
         """
         assert self.env_container.env, "Model must be built based on undamaged configurations, but no non-damaged env was instantiated"
-        if model_class == ExplicitMLP:
+        if layer_architecture == None:
             nn_input_dim, nn_output_dim = self.env_container.get_observation_action_space_info()
             self.layers = [nn_input_dim] + self.config["controller"]["hidden_layers"] + [nn_output_dim]
+        else:
+            self.layers = layer_architecture
+
+        if model_class == ExplicitMLP:
             _features = tuple(self.layers[1:])
             self.model = ExplicitMLP(features = _features, joint_control = self.config["morphology"]["joint_control"])
         else:

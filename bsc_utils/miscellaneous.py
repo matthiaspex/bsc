@@ -237,3 +237,77 @@ def complete_config_with_defaults(config):
         config["evolution"]["centered_rank"] = True
 
     return config
+
+
+
+def check_sensor_selection_order(
+        sensor_selection
+):
+    """
+    For the brittle star environment, the sensors are ordered in a very specific way.
+    This function checks wether the sensor selection is composed correctly.
+    The order of the sensors should be
+    ['joint_position', 'joint_velocity', 'joint_actuator_force', 'actuator_force',
+     'disk_position', 'disk_rotation', 'disk_linear_velocity', 'disk_angular_velocity', 'segment_contact',
+     'unit_xy_direction_to_target', 'xy_distance_to_target',
+     'segment_light_intake'
+    ]
+    -------------------------------------------------------------------------------------
+    Checks if all elements of `sensor_selection` appear in the above list in the same order.
+
+    Returns nothing if sensor_selection order is correct
+    Raises error otherwise.
+    """
+    possible_sensors = ['joint_position', 'joint_velocity', 'joint_actuator_force', 'actuator_force',\
+     'disk_position', 'disk_rotation', 'disk_linear_velocity', 'disk_angular_velocity', 'segment_contact',\
+     'unit_xy_direction_to_target', 'xy_distance_to_target',\
+     'segment_light_intake'\
+    ]
+
+    # check wether all provided sensors are valid sensors
+    for sensor in sensor_selection:
+        if not sensor in possible_sensors:
+            raise ValueError(f"The provided sensor '{sensor}' is not a valid sensor for the agent.\n\
+    Check the valid brittle star sensor by calling the help() function")
+
+    it = iter(possible_sensors)  # Create an iterator for the longer list
+    if all(element in it for element in sensor_selection):
+        pass
+    else:
+        raise IndexError("The provided sensors are not in the correct order.\n\
+    Check the correct order by calling the help() function")
+
+
+
+def calculate_arm_target_allignment_factors(
+        unit_xy_direction_to_target: chex.Array,
+        num_arms = 5
+):
+    """
+    Inputs
+    - unit_xy_direction_to_target: max 1 per simulation environment
+    - num_arms: usually 5 arms are present
+    Outputs
+    - returns an array with 5 values between -1 and 1
+        -> 1: arm pointed towards the target
+        -> 0: arm direction perpendicular to target direction
+        -> -1: arm direction opposite to target
+    """
+    x_pos = []
+    y_pos = []
+    angle = 2*jnp.pi/num_arms
+
+    for i in range(num_arms):
+        x_pos.append(jnp.cos(i*angle))
+        y_pos.append(jnp.sin(i*angle))
+
+
+    arm_projections = []
+    for i in range(num_arms):
+        dot = jnp.dot(jnp.array([x_pos[i], y_pos[i]]), unit_xy_direction_to_target)
+        arm_projections.append(dot)
+
+    return jnp.array(arm_projections)
+
+   
+

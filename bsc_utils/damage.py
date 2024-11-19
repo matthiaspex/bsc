@@ -38,7 +38,9 @@ def pad_sensory_input(sensory_input, arm_setup, arm_setup_damage, sensor_selecti
         elif type in body_sensors_3D or type in body_sensors_2D or type in body_sensors_1D:
             padding_per_segment = 0
         else:
-            raise Warning("New sensory inputs not specified in: ['joint_position', 'joint_velocity', 'joint_actuator_force', 'segment_contact', 'disk_position', 'disk_rotation', 'disk_linear_velocity', 'disk_angular_velocity']")
+            raise Warning("New sensory inputs not specified in: ['joint_position', 'joint_velocity', 'joint_actuator_force',\
+                          'segment_contact', 'segment_light_intake', 'disk_position', 'disk_rotation', 'disk_linear_velocity',\
+                          'disk_angular_velocity', 'unit_xy_direction_to_target', 'xy_distance_to_target']")
 
            
         for arm in range(len(arm_setup)):

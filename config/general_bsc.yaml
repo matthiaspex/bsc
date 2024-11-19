@@ -14,7 +14,7 @@
    arena_size: !!python/tuple [ 4, 4 ]
    sand_ground_color: True # must be true for light escape environment
  environment:
-   reward_type: 'distance' # choose from distance, target or light
+   reward_type: 'target' # choose from distance, target or light
    sensor_selection: !!python/tuple [ 'joint_position', 'joint_actuator_force', 'segment_contact']
    num_physics_steps_per_control_step: 10
    simulation_time: 5 # also for hebbian, 5 suffices
@@ -40,6 +40,11 @@
    hebbian: True
    num_hebbian_steps_per_control_step: 1
    hidden_layers: [ 128, 128 ]
+   decentralized:
+     decentralized_on: True
+     embed_hidden_layers: [64, 64] # The hidden layers of the input network
+     output_hidden_layers: [64, 64] # The hidden layers of the output network
+     embedding_dim_per_arm: 20
  training:
    target:
      distance: 6

@@ -48,6 +48,9 @@ class HebbianController(NNController):
     ):
         """
         The callable to be used by method _empty_learning_rule_tree_from_synapse_strenghts
+        For 2D kernels matrices, it appends a fifth dimension with n elements (the learning rule parameters)
+        For 1D bias arrays, it does nothing
+        It returns a jnp.zeros array of the provided size.
         """
         if len(x.shape) == 2:
             new_shape = tuple(list(x.shape)+[n])
