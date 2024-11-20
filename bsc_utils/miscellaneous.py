@@ -1,7 +1,7 @@
 import os
 import subprocess
 import logging
-from typing import Sequence
+from typing import Sequence, Optional, Tuple
 import yaml
 from collections import Counter
 
@@ -121,14 +121,18 @@ def get_target_positions(
         num_reverse_rowing: int,
         num_random_positions: int=0,
         parallel_dim: int=1,
-        parallel_constant: bool=False
+        parallel_constant: bool=False,
+        force_single_direction: Optional[Tuple[bool, str, int]] = None
 )->Sequence:
     """
     Returns array with cartesian positions of targets on a circle with a certain radius
     for rowing and reverse rowing positions based on starting position.
     parallel_dim: can provide popsizes for parallelized environment resets.
     parallel_constant: same target positions for all parallel environments or not.
-    --------------
+
+    inputs:
+    - force_single_direction: default None, otherwise Tuple (True/False, "rowing"/"reverse_rowing", arm_index)
+    
     returns: list[array(parallel_dim, 3)]
     --> iterate over list: each list element is a parallelised vector of 3D-target positions which can be vmapped
     --> in case parallel_constant = True: everything should be constant along parallel_dim dimension.
@@ -169,6 +173,17 @@ def get_target_positions(
         angles = jnp.concatenate([rowing_angles_sel, random_angles], axis = -1)
     else:
         angles = jnp.concatenate([rowing_angles_sel, reverse_rowing_angles_sel, random_angles], axis = -1)
+    
+    if force_single_direction != None and force_single_direction[0] == True:
+        if force_single_direction[1] == "rowing":
+            angle = jnp.arange(0,359, 360//5)[force_single_direction[2]]
+        elif force_single_direction[1] == "reverse_rowing":
+            angle = jnp.arange(360//10,359,360//5)[force_single_direction[2]]
+        else:
+            raise ValueError("string at position 1 in tuple force_single_direction in config file should be 'rowing' or 'reverse_rowing'")
+        angles = jnp.ones((parallel_dim,1)) * angle # in case of force_single_direction: overwrite the angles already generated.
+
+
     angles = jnp.radians(angles)
 
     target_positions = []

@@ -7,7 +7,6 @@ from jax import numpy as jnp
 from evosax import ParameterReshaper
 
 from bsc_utils.BrittleStarEnv import EnvContainer
-from bsc_utils.controller.base import NNController, ExplicitMLP
 from bsc_utils.controller.hebbian import HebbianController
 from bsc_utils.miscellaneous import check_sensor_selection_order,\
     calculate_arm_target_allignment_factors

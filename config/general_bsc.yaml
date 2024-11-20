@@ -31,7 +31,7 @@
    arm_setup_damage: [ 5, 0, 0, 0, 0]
  evolution:
    es_popsize: 4
-   num_generations: 10
+   num_generations: 3
    centered_rank: true
    cost_expr: "nocost" # choose from ["nocost", "torque x angvel", "torque"]
    penal_expr: "nopenal" # choose from ["nopenal", "body_stability"]
@@ -48,9 +48,12 @@
  training:
    target:
      distance: 6
-     num_rowing: 2 # max 5, only 5 different rowing positions possible
-     num_reverse_rowing: 2 # max 5, only 5 different rowing positions possible
+     num_rowing: 1 # max 5, only 5 different rowing positions possible
+     num_reverse_rowing: 0 # max 5, only 5 different rowing positions possible
      num_random_positions: 0
      # total number of targets is the sum of targets in rowing, reverse_rowing and random positions
      parallel_constant: False # whether all parallel environments during training get the same targets
+     force_single_direction: !!python/tuple [ True, "rowing", 0] # First element: whether forced target is enabled. Second: "rowing" or "reverse_rowing". Third: which arm direction.
+                                                                 # reverse_rowing and index 0: in between arm 0 and 1.
+     
  
