@@ -3,6 +3,7 @@ import subprocess
 import logging
 from typing import Sequence
 import yaml
+from collections import Counter
 
 import jax
 from jax import numpy as jnp
@@ -252,7 +253,7 @@ def check_sensor_selection_order(
      'unit_xy_direction_to_target', 'xy_distance_to_target',
      'segment_light_intake'
     ]
-    -------------------------------------------------------------------------------------
+
     Checks if all elements of `sensor_selection` appear in the above list in the same order.
 
     Returns nothing if sensor_selection order is correct
@@ -269,7 +270,15 @@ def check_sensor_selection_order(
         if not sensor in possible_sensors:
             raise ValueError(f"The provided sensor '{sensor}' is not a valid sensor for the agent.\n\
     Check the valid brittle star sensor by calling the help() function")
+        
+    # check whether none of the sensors appear twice
+    counts = Counter(sensor_selection)
+    if any(count > 1 for count in counts.values()):
+        raise ValueError("Some of the sensors in sensor selection appear twice")
 
+
+
+    # check whether sensors are in the correct order
     it = iter(possible_sensors)  # Create an iterator for the longer list
     if all(element in it for element in sensor_selection):
         pass
@@ -282,32 +291,54 @@ def check_sensor_selection_order(
 def calculate_arm_target_allignment_factors(
         unit_xy_direction_to_target: chex.Array,
         num_arms = 5
-):
+) -> chex.Array:
     """
     Inputs
-    - unit_xy_direction_to_target: max 1 per simulation environment
+    - unit_xy_direction_to_target: max 1 per simulation environment, can be 1D with dim (2,) or 2D with dim (#popsize, 2)
     - num_arms: usually 5 arms are present
     Outputs
     - returns an array with 5 values between -1 and 1
         -> 1: arm pointed towards the target
         -> 0: arm direction perpendicular to target direction
         -> -1: arm direction opposite to target
+    if unit_xy_direction_to_target had a popsize dim on axis = 0, the output will also have a popsize dim on axis = 0
     """
-    x_pos = []
-    y_pos = []
+    arm_dir = []
     angle = 2*jnp.pi/num_arms
 
     for i in range(num_arms):
-        x_pos.append(jnp.cos(i*angle))
-        y_pos.append(jnp.sin(i*angle))
+        arm_dir.append(jnp.array([jnp.cos(i*angle), jnp.sin(i*angle)]))
+
+    arm_dir = jnp.array(arm_dir)
 
 
-    arm_projections = []
+    vector = False
+    # If there are multiple parallel dimensions, copy the arm directions to all these parallel dimensions.
+    if len(unit_xy_direction_to_target.shape) == 2:
+        vector = True
+        arm_dir_expanded = jnp.expand_dims(arm_dir, axis = 0)
+        arm_dir_expanded = jnp.tile(arm_dir_expanded, (unit_xy_direction_to_target.shape[0],1,1))
+
+
+    vectorized_dot = jax.vmap(jnp.dot)
+
+    if vector:
+        arm_projections = jnp.zeros((unit_xy_direction_to_target.shape[0], 5))
+    else:
+        arm_projections = jnp.zeros(5)
+
     for i in range(num_arms):
-        dot = jnp.dot(jnp.array([x_pos[i], y_pos[i]]), unit_xy_direction_to_target)
-        arm_projections.append(dot)
+        if vector:
+            dot = vectorized_dot(arm_dir_expanded[:,i,:], unit_xy_direction_to_target)
+            arm_projections = arm_projections.at[:,i].set(dot)
+        else:
+            dot = jnp.dot(arm_dir[i,:], unit_xy_direction_to_target)
+            arm_projections = arm_projections.at[i].set(dot)
 
-    return jnp.array(arm_projections)
+
+    return arm_projections
+
+
 
    
 

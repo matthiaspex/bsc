@@ -23,7 +23,7 @@ from bsc_utils.simulate.analyze import Simulator
 from bsc_utils.simulate.base import rollout
 from bsc_utils.miscellaneous import check_GPU_access, load_config_from_yaml, \
     store_config_and_policy_params, get_run_name_from_config, complete_sensor_selection, \
-    get_target_positions
+    get_target_positions, check_sensor_selection_order
 from bsc_utils.evolution import efficiency_from_reward_cost, fitness_from_stacked_data
 
 jnp.set_printoptions(precision=3, suppress=False, linewidth=100)
@@ -47,6 +47,7 @@ except KeyError:
 
 # in case of target/light reward: add those relevant inputs to the sensor_selection
 config = complete_sensor_selection(config)
+check_sensor_selection_order(config["environment"]["sensor_selection"])
 
 rng = jax.random.PRNGKey(config["experiment"]["seed"])
 run_name = get_run_name_from_config(config)

@@ -47,8 +47,12 @@ class ExplicitMLP(nn.Module):
         """
         Returning the output of a layer for a given input.
         Don't directly call an instance of ExplicitMLP --> this method is called in the apply method.
-        -----
         
+        output:
+        - x: output array of neural network
+        - neuron_activities: neuron activities of the neural network, including the input layer.
+            e.g. neural network with 2 hidden layers has 4 layers of node activities:
+            [input_nodes, hidden_nodes_1, hidden_nodes_2, output_nodes]
         """
         neuron_activities = [inputs]
         x = inputs

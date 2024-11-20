@@ -1,4 +1,4 @@
-from typing import Union, Sequence, Type
+from typing import Union, Sequence, Type, Literal
 import chex
 
 import jax
@@ -9,6 +9,8 @@ from evosax import ParameterReshaper
 from bsc_utils.BrittleStarEnv import EnvContainer
 from bsc_utils.controller.base import NNController, ExplicitMLP
 from bsc_utils.controller.hebbian import HebbianController
+from bsc_utils.miscellaneous import check_sensor_selection_order,\
+    calculate_arm_target_allignment_factors
 
 
 class DecentralisedController():
@@ -351,12 +353,284 @@ class DecentralisedController():
 
     def apply(
             self,
-            sensory_input: chex.Array,
+            sensory_input: chex.Array
+    ) -> chex.Array:
+        """
+        input:
+        - sensory_input: array with dim (popsize, sensory_input_dim)
+
+        output:
+        - actuation signal for the brittle star simulator
+
+        Unlike other controllers, the apply function of this controller is not vmappable or jittable
+        because of the specific way the internal states of the decentralised controller are stored
+        in the arm_states attribute and central_reservoir attribute.
+        
+        Instead, this function launches the entire flow of information through the network
+        when the sensory input is provided. After all, all information is already present
+        in the controller to do this rollout.
+
+        Internally, this function makes use of a vmapped apply of all the Hebbian subnetworks
+        in every arm.
+
+        Additionally, this function has the side effect of updating the internal states.
+        NOTE: since this function allows side effects, it cannot be jitted.
+        """
+
+        self.store_sensory_input_into_arm_states(sensory_inputs=sensory_input)
+
+
+        for i in range(len(self._config["morphology"]["arm_setup"])):
+            sensory_input_embed = self._arm_states[f"arm_{i}_embed"]["inputs"][:,-1,:]
+            synapse_strengths_embed = self.get_synapse_strengths_from_arm_states(arm_ind=i, embed_or_output="embed")
+            learning_rules_embed = self._arm_models[f"arm_{i}"]["embed"].learning_rules
+            neuron_activities_embed = self.get_neuron_activities_from_arm_states(arm_ind=i, embed_or_output="embed")
+
+            actuator_output_embed, synapse_strengths_embed, neuron_activities_embed = self._arm_models[f"arm_{i}"]["embed"].vectorized_apply(
+                                                                sensory_input=sensory_input_embed,
+                                                                synapse_strengths=synapse_strengths_embed,
+                                                                learning_rules=learning_rules_embed,
+                                                                neuron_activities=neuron_activities_embed
+                                                            )
             
+            
+            self._central_reservoir[f"arm_{i}"] = jnp.concatenate([self._central_reservoir[f"arm_{i}"], jnp.expand_dims(actuator_output_embed, axis = 1)],
+                                                                  axis = 1)
+            
+
+            for layer_ind in range(len(self._embed_layers)-1):
+                self._arm_states[f"arm_{i}_embed"][f"layers_{layer_ind}"]["output"] = jnp.concatenate([self._arm_states[f"arm_{i}_embed"][f"layers_{layer_ind}"]["output"],
+                                                                                             jnp.expand_dims(neuron_activities_embed[layer_ind+1], axis = 1)],
+                                                                                             axis = 1)
+                self._arm_states[f"arm_{i}_embed"][f"layers_{layer_ind}"]["kernel"] = jnp.concatenate([self._arm_states[f"arm_{i}_embed"][f"layers_{layer_ind}"]["kernel"],
+                                                                                             jnp.expand_dims(synapse_strengths_embed["params"][f"layers_{layer_ind}"]["kernel"], axis = 1)],
+                                                                                             axis = 1)
+                self._arm_states[f"arm_{i}_embed"][f"layers_{layer_ind}"]["bias"] = jnp.concatenate([self._arm_states[f"arm_{i}_embed"][f"layers_{layer_ind}"]["bias"],
+                                                                                jnp.expand_dims(synapse_strengths_embed["params"][f"layers_{layer_ind}"]["bias"], axis = 1)],
+                                                                                axis = 1)
+                
+        
+        for i in range(len(self._config["morphology"]["arm_setup"])):
+            sensory_input_output =  self.permutation_central_reservoir(i) # sensory input to output layer
+
+            self._arm_states[f"arm_{i}_output"]["inputs"] = jnp.concatenate([self._arm_states[f"arm_{i}_output"]["inputs"],
+                                                                             sensory_input_output],
+                                                                             axis = 1)
+            synapse_strenghts_output = self.get_synapse_strengths_from_arm_states(arm_ind=i, embed_or_output="output")
+            learning_rules_output = self._arm_models[f"arm_{i}"]["embed"].learning_rules
+            neuron_activities_output = self.get_neuron_activities_from_arm_states(arm_ind=i, embed_or_output="output")
+
+            actuator_output_output, synapse_strengths_output, neuron_activities_output = self._arm_models[f"arm_{i}"]["output"].vectorized_apply(
+                                                                sensory_input=sensory_input_output,
+                                                                synapse_strengths=synapse_strenghts_output,
+                                                                learning_rules=learning_rules_output,
+                                                                neuron_activities=neuron_activities_output
+                                                            )
+
+            for layer_ind in range(len(self._output_layers)-1):
+                self._arm_states[f"arm_{i}_output"][f"layers_{layer_ind}"]["output"] = jnp.concatenate([self._arm_states[f"arm_{i}_output"][f"layers_{layer_ind}"]["output"],
+                                                                                             jnp.expand_dims(neuron_activities_output[layer_ind+1], axis = 1)],
+                                                                                             axis = 1)
+                self._arm_states[f"arm_{i}_output"][f"layers_{layer_ind}"]["kernel"] = jnp.concatenate([self._arm_states[f"arm_{i}_output"][f"layers_{layer_ind}"]["kernel"],
+                                                                                             jnp.expand_dims(synapse_strengths_output["params"][f"layers_{layer_ind}"]["kernel"], axis = 1)],
+                                                                                             axis = 1)
+                self._arm_states[f"arm_{i}_output"][f"layers_{layer_ind}"]["bias"] = jnp.concatenate([self._arm_states[f"arm_{i}_output"][f"layers_{layer_ind}"]["bias"],
+                                                                                jnp.expand_dims(synapse_strengths_output["params"][f"layers_{layer_ind}"]["bias"], axis = 1)],
+                                                                                axis = 1)
+        
+        actuation_signal_brittle_star_agent = self.get_actuation_signal_brittle_star_agent_from_arm_states()
+
+        return actuation_signal_brittle_star_agent
+    
+
+
+    def store_sensory_input_into_arm_states(
+            self,
+            sensory_inputs: chex.Array
     ):
-        raise NotImplementedError
+        """
+        Sensory inputs are a 2D array with dim = (#popsize, #sensors).
+        Only the sensors from the sensor selection are included.
+
+        Side effect: arm_states inputs of embed layers are updated.
+        """
+        sensory_inputs_expanded = jnp.expand_dims(sensory_inputs, axis = 1) # reflects the timestep dim. Should be added to allow concatenations later.
+
+        sensor_selection = self._config["environment"]["sensor_selection"]
+        num_arms = len(self._config["moprhology"]["arm_setup"])
+        num_segm_per_arm = self._config["morphology"]["arm_setup"][0]
+        check_sensor_selection_order(sensor_selection)
+        
+        segm_sensors_2 = ['joint_position', 'joint_velocity', 'joint_actuator_force'] # every segment has 2 sensors: ip and oop
+        segm_sensors_1 = ['segment_contact', 'segment_light_intake'] # every segment has 1 sensor
+        body_sensors_3D = ['disk_position', 'disk_rotation', 'disk_linear_velocity', 'disk_angular_velocity'] # sensors are related to body
+        body_sensors_2D = ['unit_xy_direction_to_target']
+        body_sensors_1D = ['xy_distance_to_target']
+
+        
+        # make empty array to store the new sensory input per arm
+        tmp_dict = {}
+        for i in range(num_arms):
+            tmp_dict[f"arm_{i}"] = []
 
 
+        # Extract new sensory input and distribute in correct order across arms
+        for sensor in sensor_selection:
+            if sensor in segm_sensors_2:
+                dim = 2*num_segm_per_arm
+                for i in range(num_arms):
+                    tmp_dict[f"arm_{i}"].append(sensory_inputs_expanded[:,:,:dim])                    
+                    sensory_inputs_expanded = sensory_inputs_expanded[:,:,dim:]
+
+            if sensor in segm_sensors_1:
+                dim = num_segm_per_arm
+                for i in range(num_arms):
+                    tmp_dict[f"arm_{i}"].append(sensory_inputs_expanded[:,:,:dim])                    
+                    sensory_inputs_expanded = sensory_inputs_expanded[:,:,dim:]
+
+            if sensor in body_sensors_3D:
+                dim = 3
+                sensory_inputs_expanded = sensory_inputs_expanded[:,:,dim:]
+                # you could add stuff here to central_reservoir later if needed
+            
+            if sensor in body_sensors_2D and not sensor=='unit_xy_direction_to_target':
+                dim = 2
+                sensory_inputs_expanded = sensory_inputs_expanded[:,:,dim:]
+                # you could add stuff here to central_reservoir later if needed
+            
+            elif sensor in body_sensors_2D and sensor=='unit_xy_direction_to_target' and self._config["environment"]["reward_type"] == 'target':
+                dim = 2
+                arm_target_dir_projections = calculate_arm_target_allignment_factors(sensory_inputs_expanded[:,0,:dim])
+                arm_target_dir_projections_expanded = jnp.expand_dims(arm_target_dir_projections, axis = 1)
+                for i in range(num_arms):
+                    tmp_dict[f"arm_{i}"].append(arm_target_dir_projections_expanded[:,:,i])
+                sensory_inputs_expanded = sensory_inputs_expanded[:,:,dim:]
+                # you could add stuff here to central_reservoir later if needed
+            
+
+            if sensor in body_sensors_1D:
+                dim = 1
+                sensory_inputs_expanded = sensory_inputs_expanded[:,:,dim:]
+                # you could add stuff here to central_reservoir later if needed
+
+        assert len(sensory_inputs_expanded.shape[-1] == 0), "Implementation incorrect: the array should be empty after all the sensors have been considered."
+
+        # Add this sensory information per arm to the arm_states dict
+        for i in range(num_arms):
+            self._arm_states[f"arm_{i}_embed"]["inputs"] = jnp.concatenate([self._arm_states[f"arm_{i}_embed"]["inputs"],\
+                                                                                    tmp_dict[f"arm_{i}"]], axis=1)
+
+
+
+    def permutation_central_reservoir(
+            self,
+            arm_index
+    ) -> chex.Array:
+        """
+        input:
+        - arm_index, prescribing to what extent the array should be permutated
+        output:
+        - array with dimension (popsize, dim of central reservoir), so no dimension on axis 1 with the timesteps
+        """
+        
+        permutation_central_reservoir = []
+        num_arms = len(self._config["morphology"]["arm_setup"])
+
+        for i in range(num_arms):
+            arm_number = (i+arm_index) % num_arms
+            permutation_central_reservoir.append(self._central_reservoir[f"arm_{arm_number}"][:,-1,:])
+            
+
+        try: # will only work if body_sensors are enabled
+            permutation_central_reservoir.append(self._central_reservoir["body_sensors"][:,-1,:])
+        except:
+            pass
+
+        permutation_central_reservoir = jnp.concatenate(permutation_central_reservoir, axis=-1)
+        permutation_central_reservoir = jnp.expand_dims(permutation_central_reservoir, axis = 1)
+        return permutation_central_reservoir
+    
+
+    def get_neuron_activities_from_arm_states(
+            self,
+            arm_ind: int,
+            embed_or_output: Literal["embed", "output"]
+    ):
+        """
+        neuron activities are a list with the node activities of all the neurons, so
+        [input_nodes, activities_hidden_layer_1, activities_hiden_layer_2, ..., activities_outputs_nodes]
+        """
+        neuron_activities = []
+        neuron_activities.append(self._arm_states[f"arm_{arm_ind}_{embed_or_output}"]["inputs"][:,-1,:])
+        if embed_or_output == "embed":
+            for p in range(len(self._embed_layers)-1):
+                neuron_activities.append(self._arm_states[f"arm_{arm_ind}_{embed_or_output}"][f"layers_{p}"]["output"][:,-1,:])
+        elif embed_or_output == "output":
+            for p in range(len(self._output_layers)-1):
+                neuron_activities.append(self._arm_states[f"arm_{arm_ind}_{embed_or_output}"][f"layers_{p}"]["output"][:,-1,:])
+
+
+    def get_synapse_strengths_from_arm_states(
+            self,
+            arm_ind: int,
+            embed_or_output: Literal["embed", "output"]
+    ) -> dict:
+        """
+        returns dict with the following structure:
+        {params:
+            {layers_0:
+                {kernel: array(popsize, 2D kernel dim)
+                 bias:   array(popsize, 1D bias dim)
+                },
+             layers_1:
+                ...,
+             ...
+            }
+        }
+        """
+
+        synapse_strengths_arm = {}
+        synapse_strengths_arm["params"] = {}
+        if embed_or_output == "embed":
+            for p in range(len(self._embed_layers)-1):
+                synapse_strengths_arm["params"][f"layers_{p}"] = {}
+                synapse_strengths_arm["params"][f"layers_{p}"]["kernel"] = self._arm_states[f"arm_{arm_ind}_{embed_or_output}"][f"layers_{p}"]["kernel"][:,-1,:,:]
+                synapse_strengths_arm["params"][f"layers_{p}"]["bias"] = self._arm_states[f"arm_{arm_ind}_{embed_or_output}"][f"layers_{p}"]["bias"][:,-1,:]
+
+        if embed_or_output == "output":
+            for p in range(len(self._output_layers)-1):
+                synapse_strengths_arm["params"][f"layers_{p}"] = {}
+                synapse_strengths_arm["params"][f"layers_{p}"]["kernel"] = self._arm_states[f"arm_{arm_ind}_{embed_or_output}"][f"layers_{p}"]["kernel"][:,-1,:,:]
+                synapse_strengths_arm["params"][f"layers_{p}"]["bias"] = self._arm_states[f"arm_{arm_ind}_{embed_or_output}"][f"layers_{p}"]["bias"][:,-1,:]
+
+        return synapse_strengths_arm
+
+
+    def get_actuation_signal_brittle_star_agent_from_arm_states(
+        self
+    ):
+        actuation_signal = []
+        num_layers = len(self._embed_layers)-1
+        for i in range(len(self._config["morphology"]["arm_setup"])):
+            arm_actuation_signal = self._arm_states[f"arm_{i}_output"][f"layers_{num_layers}"]["output"][:,-1,:]
+            actuation_signal.append(arm_actuation_signal)
+        
+        actuation_signal = jnp.concatenate(actuation_signal, axis = -1)
+        return actuation_signal
+
+
+
+
+        
+    
+
+    
+
+
+
+
+            
+    
 
     
 

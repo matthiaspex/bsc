@@ -147,6 +147,10 @@ class HebbianController(NNController):
         - neuron_activities: necessary for next apply of a plastic neural network
         IMPORTANT: DON'T ALLOW SIDE EFFECTS IN FUNCTION THAT WILL HAVE TO BE JITTED
         --> don't overwrite attributes like self.synapse_strengths or neuron_activities
+
+       - neuron_activities: neuron activities of the neural network, including the input layer.
+        e.g. neural network with 2 hidden layers has 4 layers of node activities:
+        [input_nodes, hidden_nodes_1, hidden_nodes_2, output_nodes]
         """
 
         # implement all functionalities that update the synapse strengths based on the learning rules
@@ -158,6 +162,10 @@ class HebbianController(NNController):
         actuator_output, neuron_activities = super().apply(sensory_input=sensory_input, synapse_strengths=synapse_strengths)
 
         return actuator_output, synapse_strengths, neuron_activities
+    
+
+    vectorized_apply = jax.jit(jax.vmap(apply))
+    # this function is used for instance by the DecentralizedControlller class
 
     def _update_synapse_strengths(
             self,
@@ -185,9 +193,17 @@ class HebbianController(NNController):
         return synapse_strengths
 
 
-    def _apply_learning_rule(self, lr_kernel, input_nodes, output_nodes):
+    def _apply_learning_rule(self,
+                             lr_kernel,
+                             input_nodes,
+                             output_nodes,
+                             learning_rule: str = "ABCD"
+                             ):
+        
         """ 
-        Input: learning rule kernel: dims (popsize, input_layer_dim, output_layer_dim, lr_dim = 5)
+        Input: 
+        - learning rule kernel: dims (popsize, input_layer_dim, output_layer_dim, lr_dim = 5)
+        - learning_rule: only "ABCD" implemented so far.
         Output: synaptic strength increment kernel: dims (popsize, input_layer_dim, output_layer_dim)
         This function is vmapable and jittable
         """
@@ -203,6 +219,13 @@ class HebbianController(NNController):
         B = lr_kernel[:,:,2]
         C = lr_kernel[:,:,3]
         D = lr_kernel[:,:,4]
+
+        if learning_rule == "ABCD":
+            pass
+        elif learning_rule == "AD":
+            raise NotImplementedError
+            # you could do something like B *= 0 and then the below will still apply.
+
         ss_incr_kernel = alpha * (A*inp*outp + B*inp + C*outp + D)
 
         return ss_incr_kernel # synaptic strength increment kernel
