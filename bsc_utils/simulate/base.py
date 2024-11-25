@@ -1,6 +1,7 @@
 import chex
-from typing import Sequence, Union
+from typing import Sequence, Union, Optional
 import numpy as np
+import sys
 
 import jax
 from jax import numpy as jnp
@@ -10,14 +11,139 @@ from moojoco.environment.mjx_env import MJXEnv, MJXEnvState
 
 from bsc_utils.controller.base import ExplicitMLP, NNController
 from bsc_utils.controller.hebbian import HebbianController
+from bsc_utils.controller.decentralized import DecentralisedController
 from bsc_utils.visualization import post_render, change_alpha, move_camera
 from bsc_utils.damage import pad_sensory_input, select_actuator_output, check_damage
+
+
+def states_based_rollout(
+        rng: chex.PRNGKey,
+        policy_params_evosax: chex.Array,
+        env: MJXEnv,
+        controller: Union[DecentralisedController], # gradually add more options when the implementation allows. Can only have models with states.
+        parallel_dim: int,
+        targets: Optional[chex.Array] = None,
+        store_states_history: Union[bool, int] = False
+):
+    """
+    The step function is jitted and cannot have any side effects.
+    Working with comprehensive state and model objects can allow to pass on the models and get them returned
+    for the next iteration.
+
+    Inputs:
+    - rng: jax rng key
+    - mjx_env: Mujoco Environment as generated in the EnvContainer class:
+        Can be damaged or non-damaged
+        Is still parallelised within the rollout function (based on number of parallel environments)
+    - controller: currently only allows for instances of the DecentralisedController class 
+        Should contain policy parameters already
+        Initialised with EnvContainer so already has config information
+        The controller states, models, environment data can be attributes of the controller.
+    - parallel_dim: the number of parallel simulations that should be run across parallel workers
+    - targets: optional 2D chex array with dimension (popsize, 3) where every target is characterised by a 3D coordinate
+    - store_states_history: Not Implemented Yet. False: keep no more history then necessary; True: kep as much history as necessary.
+                            int: specifiy the explicit number of timesteps to keep.
+
+    Outputs
+    """
+    config = controller.config
+
+    if store_states_history != False:
+        raise NotImplementedError
+    
+    if not isinstance(controller, (DecentralisedController)):
+        raise TypeError(f"""the specified controller if of type {type(controller)}, which is not supported by the states_model_based_rollout function.
+                            Consider using the 'rollout' method""")
+    
+    
+    vectorized_env_step = jax.jit(jax.vmap(env.step))
+    vectorized_env_reset = jax.jit(jax.vmap(env.reset))
+    rng, vectorized_env_rng = jax.random.split(rng, 2)
+    vectorized_env_rng = jnp.array(jax.random.split(vectorized_env_rng, parallel_dim))
+
+    if config["environment"]["reward_type"] == 'target':
+        assert targets.shape == (parallel_dim, 3), \
+        "targets input is wrong dimension. Make sure it has dim (parallel_dim, 3). Or no targets have been provided."
+        vectorized_env_state_reset = vectorized_env_reset(rng=vectorized_env_rng, target_position=targets)
+    else:
+        vectorized_env_state_reset = vectorized_env_reset(rng=vectorized_env_rng)
+
+    controller.update_policy_params(policy_params=policy_params_evosax) # if the input was an array with policy params, the reshaper is now also internally applied
+    # policy_params = controller.policy_params # for Hebbian controller, this is dict with learning rules for embed and output ANNs
+    # # -> policy params are already in the model_init
+
+    # reset arm_states: resets the synapse strengths, the neuron activities, etc.
+    rng, rng_reset = jax.random.split(rng, 2)
+    controller.reset_states(rng=rng_reset)
+    states_init = controller.states
+
+
+    carry_init = [vectorized_env_state_reset, states_init]
+
+    def step(carry, _):
+        """
+        Carry: any information required in the carryover:
+        - vectorized state array for the mujoco steps
+        - states: contains all the information about inputs, outputs, kernels, biases, central reservoir, neuron activities, ... across all timesteps
+        - model: contains all the policy information and methods to apply them
+        
+        "_" placeholder for xs: is not required for this purpose, but put in the arguments as a placeholder for jax.lax.scan to function.
+        
+        output:
+        - Carry: updated env_state, neural network states and neural network models
+        - stack: rewards and work costs are tracked for every step
+        """   
+
+        _vectorized_env_state, _states = carry
+
+        _sensory_input_nn = jnp.concatenate(
+            [_vectorized_env_state.observations[label] for label in config["environment"]["sensor_selection"]],
+            axis = 1
+        )
+
+        _action, _states_updated = controller.apply(sensory_input=_sensory_input_nn,
+                                                    states=_states)
+        
+        ############################
+        print("states after one step:\n", _states_updated)
+        print("states after one step shapes:\n", jax.tree.map(lambda x: x.shape, _states_updated))
+        sys.exit()
+        ############################
+        
+        _vectorized_env_state_updated = vectorized_env_step(state=_vectorized_env_state, action=_action)
+
+        reward_step = _vectorized_env_state_updated.reward
+        cost_step = cost_step_during_rollout(env_state_observations=_vectorized_env_state_updated.observations, cost_expr=config["evolution"]["cost_expr"])
+        penal_step = penal_step_during_rollout(env_state_observations=_vectorized_env_state_updated.observations, penal_expr=config["evolution"]["penal_expr"])
+        
+        carry = [_vectorized_env_state_updated, _states_updated]
+        return carry, [reward_step, cost_step, penal_step]
+
+    final_carry, stack = jax.lax.scan(
+        step,
+        carry_init,
+        None,
+        controller.env_container.environment_configuration.total_num_control_steps,
+    )
+
+    rewards, costs, penal = stack
+
+    vectorized_env_state_final, states_final = final_carry
+
+
+
+    return vectorized_env_state_final, states_final, (rewards, costs, penal)
+
+# jit the rollout function
+states_based_rollout = jax.jit(states_based_rollout, static_argnames=("env", "controller", "parallel_dim", "store_states_history"))
+
+
 
 def rollout(
         rng: chex.PRNGKey,
         policy_params_evosax: chex.Array,
         env: MJXEnv,
-        controller: Union[HebbianController, NNController],
+        controller: Union[HebbianController, NNController, DecentralisedController],
         parallel_dim: int,
         targets = None # array met dimensie [parallel_dim, 3] --> a target for every parallel brittle star env
         ):
@@ -38,7 +164,10 @@ def rollout(
     - rng
     """
     config = controller.config
-    vectorized_controller_apply = jax.jit(jax.vmap(controller.apply))
+    if isinstance(controller, DecentralisedController):
+        vectorized_controller_apply = controller.apply # vectorisation happens internally
+    else:
+        vectorized_controller_apply = jax.jit(jax.vmap(controller.apply))
     vectorized_env_step = jax.jit(jax.vmap(env.step))
     vectorized_env_reset = jax.jit(jax.vmap(env.reset))
     rng, vectorized_env_rng = jax.random.split(rng, 2)
@@ -72,9 +201,9 @@ def rollout(
         - synapse_strengths_init: shaped pytree or flat array with initial synapse_strengths
         - policy_params (remains static throughout steps, is not updated)
         - initial neuron activities (mainly necessary for Hebbian Learning)
-        -----
+        
         "_" placeholder for xs: is not required for this purpose, but put in the arguments as a placeholder for jax.lax.scan to function.
-        -----
+        
         output:
         - Carry: updated state, synapse strengths and neuron activities
         - stack: rewards and work costs are tracked for every step

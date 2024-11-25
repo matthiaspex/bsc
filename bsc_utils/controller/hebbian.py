@@ -143,7 +143,7 @@ class HebbianController(NNController):
 
         return:
         - actuator_output: necessary to take a step in the simulation environment
-        - synapse_strengths: necessary to update in next apply step
+        - synapse_strengths: dict, necessary to update in next apply step
         - neuron_activities: necessary for next apply of a plastic neural network
         IMPORTANT: DON'T ALLOW SIDE EFFECTS IN FUNCTION THAT WILL HAVE TO BE JITTED
         --> don't overwrite attributes like self.synapse_strengths or neuron_activities
@@ -172,7 +172,7 @@ class HebbianController(NNController):
             synapse_strengths_input: dict,
             learning_rules: dict, # pytree
             neuron_activities: Sequence[chex.Array] # jax array
-    ):
+    ) -> dict:
         """
         This function is HebbianController specific and is meant to update the synaptic strengths to apply in the MLP as defined in the NNController superclass.
         """

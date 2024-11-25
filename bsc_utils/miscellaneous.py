@@ -219,6 +219,30 @@ def complete_sensor_selection(config):
 
     sensor_selection_new = tuple(sensor_selection_new)
     config["environment"]["sensor_selection"] = sensor_selection_new
+    
+    return config
+
+
+def order_sensor_selection_in_config(config:dict) -> dict:
+    """
+    Will arange the sensor selection into the following order:
+    possible_sensors = ['joint_position', 'joint_velocity', 'joint_actuator_force', 'actuator_force',
+     'disk_position', 'disk_rotation', 'disk_linear_velocity', 'disk_angular_velocity', 'segment_contact',
+     'unit_xy_direction_to_target', 'xy_distance_to_target',
+     'segment_light_intake'
+    ]
+    """
+
+    possible_sensors = ['joint_position', 'joint_velocity', 'joint_actuator_force', 'actuator_force',\
+     'disk_position', 'disk_rotation', 'disk_linear_velocity', 'disk_angular_velocity', 'segment_contact',\
+     'unit_xy_direction_to_target', 'xy_distance_to_target',\
+     'segment_light_intake'\
+    ]
+
+    sensor_selection_ordered = [sensor for sensor in possible_sensors if sensor in config["environment"]["sensor_selection"]]
+    sensor_selection_ordered = tuple(sensor_selection_ordered)
+    config["environment"]["sensor_selection"] = sensor_selection_ordered
+    
     return config
 
 
@@ -286,10 +310,10 @@ def check_sensor_selection_order(
             raise ValueError(f"The provided sensor '{sensor}' is not a valid sensor for the agent.\n\
     Check the valid brittle star sensor by calling the help() function")
         
-    # check whether none of the sensors appear twice
-    counts = Counter(sensor_selection)
-    if any(count > 1 for count in counts.values()):
-        raise ValueError("Some of the sensors in sensor selection appear twice")
+    # # check whether none of the sensors appear twice
+    # counts = Counter(sensor_selection)
+    # if any(count > 1 for count in counts.values()):
+    #     raise ValueError("Some of the sensors in sensor selection appear twice")
 
 
 
@@ -298,7 +322,7 @@ def check_sensor_selection_order(
     if all(element in it for element in sensor_selection):
         pass
     else:
-        raise IndexError("The provided sensors are not in the correct order.\n\
+        raise ValueError("The provided sensors are not in the correct order.\n\
     Check the correct order by calling the help() function")
 
 

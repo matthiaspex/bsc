@@ -20,10 +20,10 @@ from bsc_utils.controller.hebbian import HebbianController
 from bsc_utils.controller.decentralized import DecentralisedController
 from bsc_utils.simulate.train import Trainer
 from bsc_utils.simulate.analyze import Simulator
-from bsc_utils.simulate.base import rollout
+from bsc_utils.simulate.base import states_based_rollout
 from bsc_utils.miscellaneous import check_GPU_access, load_config_from_yaml, \
     store_config_and_policy_params, get_run_name_from_config, complete_sensor_selection, \
-    get_target_positions, check_sensor_selection_order
+    get_target_positions, check_sensor_selection_order, order_sensor_selection_in_config
 from bsc_utils.evolution import efficiency_from_reward_cost, fitness_from_stacked_data
 
 jnp.set_printoptions(precision=3, suppress=False, linewidth=100)
@@ -47,6 +47,7 @@ except KeyError:
 
 # in case of target/light reward: add those relevant inputs to the sensor_selection
 config = complete_sensor_selection(config)
+config = order_sensor_selection_in_config(config)
 check_sensor_selection_order(config["environment"]["sensor_selection"])
 
 rng = jax.random.PRNGKey(config["experiment"]["seed"])
@@ -66,32 +67,27 @@ print(f"""
       Action space dim: {action_space_dim}
 """)
 
-controller = DecentralisedController(trainer)
-
-
 
 if config["controller"]["decentralized"]["decentralized_on"]:
-    controller = DecentralisedController(trainer)
+    controller = DecentralisedController(trainer, parallel_dim=config["evolution"]["es_popsize"])
+
 
 elif config["controller"]["hebbian"] == True:
     controller = HebbianController(trainer) # inherits from NNController
-
 else:
     controller = NNController(trainer)
 
 
 
-print(jax.tree.map(lambda x: x.shape, controller.arm_states))
-print(f"len arm states = {len(controller.arm_states)}")
-print(jax.tree.map(lambda x: x.shape, controller.central_reservoir))
+print(jax.tree.map(lambda x: x.shape, controller.states))
+print(f"len arm states = {len(controller.states)}")
 print(controller.embed_layers)
 print(controller.output_layers)
 
 rng, rng_init = jax.random.split(rng, 2)
-controller.reset_synapse_strengths_unif(rng_init)
-print(controller.arm_states["arm_0_embed"]["layers_0"])
-print(controller.arm_states["arm_0_output"]["layers_0"])
-sys.exit()
+controller.reset_states(rng_init)
+print(controller.states["arm_0_embed"]["layers_0"])
+print(controller.states["arm_0_output"]["layers_0"])
 
 controller.update_model() # all information to build controller present in EnvContainer (hidden layers, action dim, obs dim)
 
@@ -134,11 +130,6 @@ print(f"""
       reshaped policy params in jax:
       {jax.tree_util.tree_map(lambda x: x.shape, policy_params_test_reshaped)}
 """)
-
-
-
-
-
 
 
 ##########################
@@ -190,13 +181,14 @@ for gen in range(config["evolution"]["num_generations"]):
         efficiency_list = []
         fitness_list = []
         for i in range(len(targets)):
-            vectorized_env_state_final, steps_stacked_data, rng = rollout(rng=rng,
+            vectorized_env_state_final, states_final, steps_stacked_data = states_based_rollout(rng=rng,
                                                 policy_params_evosax=policy_params_evosax,
                                                 env=trainer.env,
                                                 controller=controller,
                                                 parallel_dim=NUM_MJX_ENVIRONMENTS,
                                                 targets=targets[i]
                                                 )
+            controller.set_states(states_final)
             rewards, costs, penal = steps_stacked_data
             total_reward_list.append(jnp.sum(rewards, axis = 0))
             total_cost_list.append(jnp.sum(costs, axis = 0))
@@ -205,6 +197,7 @@ for gen in range(config["evolution"]["num_generations"]):
             fitness_list.append(fitness_from_stacked_data(stacked_data=steps_stacked_data, efficiency_expr=config["evolution"]["efficiency_expr"]))
         
         # list of number of targets (e.g. 4) arrays of popsize (e.g. 6912) rewards. take min/max along the targets dimension (axis = 0)
+        # be conservative: take only worst rewards and highest cost across targets
         total_reward = jnp.min(jnp.array(total_reward_list), axis = 0)
         total_cost = jnp.max(jnp.array(total_cost_list), axis = 0)
         total_penal = jnp.max(jnp.array(total_penal_list), axis = 0)
@@ -212,12 +205,13 @@ for gen in range(config["evolution"]["num_generations"]):
         fitness = jnp.min(jnp.array(fitness_list), axis = 0)
 
     else:
-        vectorized_env_state_final, steps_stacked_data, rng = rollout(rng=rng,
+        vectorized_env_state_final, states_final, steps_stacked_data = states_based_rollout(rng=rng,
                                             policy_params_evosax=policy_params_evosax,
                                             env=trainer.env,
                                             controller=controller,
                                             parallel_dim=NUM_MJX_ENVIRONMENTS
                                             )
+        controller.set_states(states_final)
     
         rewards, costs, penal = steps_stacked_data
         

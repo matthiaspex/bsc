@@ -45,6 +45,7 @@
      embed_hidden_layers: [64, 64] # The hidden layers of the input network
      output_hidden_layers: [64, 64] # The hidden layers of the output network
      embedding_dim_per_arm: 20
+     explicit_body_sensors: False # specifies whether body sensors are incorporated in the central reservoir
  training:
    target:
      distance: 6
