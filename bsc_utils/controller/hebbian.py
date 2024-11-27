@@ -164,7 +164,7 @@ class HebbianController(NNController):
         return actuator_output, synapse_strengths, neuron_activities
     
 
-    vectorized_apply = jax.jit(jax.vmap(apply))
+    # vectorized_apply = jax.jit(jax.vmap(apply))
     # this function is used for instance by the DecentralizedControlller class
 
     def _update_synapse_strengths(

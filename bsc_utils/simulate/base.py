@@ -52,9 +52,8 @@ def states_based_rollout(
         raise NotImplementedError
     
     if not isinstance(controller, (DecentralisedController)):
-        raise TypeError(f"""the specified controller if of type {type(controller)}, which is not supported by the states_model_based_rollout function.
+        raise TypeError(f"""the specified controller if of type {type(controller)}, which is not supported by the states_based_rollout function.
                             Consider using the 'rollout' method""")
-    
     
     vectorized_env_step = jax.jit(jax.vmap(env.step))
     vectorized_env_reset = jax.jit(jax.vmap(env.reset))
@@ -104,11 +103,6 @@ def states_based_rollout(
         _action, _states_updated = controller.apply(sensory_input=_sensory_input_nn,
                                                     states=_states)
         
-        ############################
-        print("states after one step:\n", _states_updated)
-        print("states after one step shapes:\n", jax.tree.map(lambda x: x.shape, _states_updated))
-        sys.exit()
-        ############################
         
         _vectorized_env_state_updated = vectorized_env_step(state=_vectorized_env_state, action=_action)
 
@@ -116,7 +110,8 @@ def states_based_rollout(
         cost_step = cost_step_during_rollout(env_state_observations=_vectorized_env_state_updated.observations, cost_expr=config["evolution"]["cost_expr"])
         penal_step = penal_step_during_rollout(env_state_observations=_vectorized_env_state_updated.observations, penal_expr=config["evolution"]["penal_expr"])
         
-        carry = [_vectorized_env_state_updated, _states_updated]
+        _states_updated_carry = jax.tree.map(lambda x:x[:,-1:,...], _states_updated)
+        carry = [_vectorized_env_state_updated, _states_updated_carry] # only pass on the last part of the states, because this is all we use.
         return carry, [reward_step, cost_step, penal_step]
 
     final_carry, stack = jax.lax.scan(

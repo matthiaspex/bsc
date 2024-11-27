@@ -79,15 +79,11 @@ else:
 
 
 
-print(jax.tree.map(lambda x: x.shape, controller.states))
-print(f"len arm states = {len(controller.states)}")
-print(controller.embed_layers)
-print(controller.output_layers)
+print(f"controller embed layers: {controller.embed_layers}")
+print(f"controller output layers: {controller.output_layers}")
 
 rng, rng_init = jax.random.split(rng, 2)
 controller.reset_states(rng_init)
-print(controller.states["arm_0_embed"]["layers_0"])
-print(controller.states["arm_0_output"]["layers_0"])
 
 controller.update_model() # all information to build controller present in EnvContainer (hidden layers, action dim, obs dim)
 
@@ -142,14 +138,14 @@ es_state = strategy.initialize(rng_init, es_params)
 
 policy_params_to_render = []
 
-# wandb.init(
-#     project = config["wandb"]["project"],
-#     group = config["wandb"]["group"],
-#     name = run_name,
-#     tags = config["wandb"]["tags"],
-#     notes = config["wandb"]["notes"],
-#     config = config
-#     )
+wandb.init(
+    project = config["wandb"]["project"],
+    group = config["wandb"]["group"],
+    name = run_name,
+    tags = config["wandb"]["tags"],
+    notes = config["wandb"]["notes"],
+    config = config
+    )
 
 # run one ask-eval-tell loop (iterate over generations)
 start_time = time.time()
@@ -227,145 +223,152 @@ for gen in range(config["evolution"]["num_generations"]):
     fit_re = fit_shaper.apply(policy_params_evosax, fitness)
 
 
-#     # log metrics to wandb
-#     wandb.log({"mean reward": jnp.mean(total_reward),
-#                "max reward":jnp.max(total_reward),
-#                "mean cost": jnp.mean(total_cost),
-#                "min cost": jnp.min(total_cost),
-#                "mean penalty": jnp.mean(total_penal),
-#                "min penalty": jnp.min(total_penal),
-#                "mean efficiency": jnp.mean(efficiency),
-#                "max efficiency": jnp.max(efficiency),
-#                "mean fitness": jnp.mean(fitness),
-#                "max fitness": jnp.max(fitness),
-#                "time": time.time()-start_time_gen
-#               })
+    # log metrics to wandb
+    wandb.log({"mean reward": jnp.mean(total_reward),
+               "max reward":jnp.max(total_reward),
+               "mean cost": jnp.mean(total_cost),
+               "min cost": jnp.min(total_cost),
+               "mean penalty": jnp.mean(total_penal),
+               "min penalty": jnp.min(total_penal),
+               "mean efficiency": jnp.mean(efficiency),
+               "max efficiency": jnp.max(efficiency),
+               "mean fitness": jnp.mean(fitness),
+               "max fitness": jnp.max(fitness),
+               "time": time.time()-start_time_gen
+              })
 
 #     # # Select certain training generations to render videos
 #     # if gen in [2, 5, 10, 20, 40, 80]:
 #     #     policy_params_to_render.append(es_state.best_member)
 
-#     es_state = strategy.tell(policy_params_evosax, fit_re, es_state, es_params)
+    es_state = strategy.tell(policy_params_evosax, fit_re, es_state, es_params)
 #     # if gen%150 == 0 and gen != 0:
 #     #     policy_params_to_render.append(policy_params_evosax[jnp.argmax(fitness)])
 #     #     store_config_and_policy_params(file_name=POLICY_PARAMS_DIR+run_name+f" gen: {gen}", cfg=config, policy_params=policy_params_to_render)
         
-# # Get best overall population member
-# policy_params_to_render.append(policy_params_evosax[jnp.argmax(fitness)])
-# print('Policy training finished!')
+# Get best overall population member
+policy_params_to_render.append(policy_params_evosax[jnp.argmax(fitness)])
+print('Policy training finished!')
 
-# store_config_and_policy_params(file_name=POLICY_PARAMS_DIR+run_name, cfg=config, policy_params=policy_params_to_render)
+store_config_and_policy_params(file_name=POLICY_PARAMS_DIR+run_name, cfg=config, policy_params=policy_params_to_render)
 
-# #####################################
-# # Video and angle plots visualisation
-# #####################################
-# policy_params_to_render = jnp.array(policy_params_to_render)
+#####################################
+# Video and angle plots visualisation
+#####################################
+policy_params_to_render = jnp.array(policy_params_to_render)
+parallel_dim = policy_params_to_render.shape[0]
 
-# simulator = Simulator(config)
-# simulator.generate_env()
-# simulator.generate_env_damaged()
+simulator = Simulator(config)
+simulator.generate_env()
+simulator.generate_env_damaged()
 
-# controller.update_policy_params(policy_params=policy_params_to_render)
 
-# rng, rng_targets_simulator = jax.random.split(rng, 2)
+controller = DecentralisedController(simulator, parallel_dim=parallel_dim)
+controller.update_model(HebbianController)
+controller.update_parameter_reshaper()
+controller.update_policy_params(policy_params=policy_params_to_render)
 
-# if config["environment"]["reward_type"] == "target":
-#     targets_simulator = get_target_positions(rng=rng_targets_simulator,
-#                                     distance=config["environment"]["target_distance"],
-#                                     num_rowing=0,
-#                                     num_reverse_rowing=0,
-#                                     num_random_positions=1,
-#                                     parallel_dim=policy_params_to_render.shape[0],
-#                                     parallel_constant=True)
-#     simulator.update_targets(targets_simulator[0])
+rng, rng_targets_simulator = jax.random.split(rng, 2)
 
-# simulator.update_nn_controller(controller)
+if config["environment"]["reward_type"] == "target":
+    targets_simulator = get_target_positions(rng=rng_targets_simulator,
+                                    distance=config["environment"]["target_distance"],
+                                    num_rowing=1,
+                                    num_reverse_rowing=0,
+                                    num_random_positions=0,
+                                    parallel_dim=parallel_dim,
+                                    parallel_constant=True,
+                                    force_single_direction=config["training"]["target"]["force_single_direction"])
+    simulator.update_targets(targets_simulator[0])
 
-# # simulate undamaged:
-# print("simulation of single episode started: Undamaged")
-# rng, rng_episode = jax.random.split(rng, 2)
-# simulator.generate_episode_data_undamaged(rng_episode)
-# print("simulation of single episode finished: Undamaged")
 
-# reward = simulator.get_episode_reward()
-# cost  = simulator.get_episode_cost()
-# penalty = simulator.get_episode_penalty()
-# efficiency = simulator.get_episode_efficiency()
-# fitness = simulator.get_episode_fitness()
-# simulator.get_ip_oop_joint_angles_plot(file_path = IMAGE_DIR + run_name + ".png")
-# simulator.get_episode_video(file_path = VIDEO_DIR + run_name + ".mp4")
+simulator.update_nn_controller(controller)
+
+# simulate undamaged:
+print("simulation of single episode started: Undamaged")
+rng, rng_episode = jax.random.split(rng, 2)
+simulator.generate_episode_data_undamaged(rng_episode)
+print("simulation of single episode finished: Undamaged")
+
+reward = simulator.get_episode_reward()
+cost  = simulator.get_episode_cost()
+penalty = simulator.get_episode_penalty()
+efficiency = simulator.get_episode_efficiency()
+fitness = simulator.get_episode_fitness()
+simulator.get_ip_oop_joint_angles_plot(file_path = IMAGE_DIR + run_name + ".png")
+simulator.get_episode_video(file_path = VIDEO_DIR + run_name + ".mp4")
 # simulator.get_kernel_animation(file_path = VIDEO_DIR + run_name + " kernel" + ".mp4")
-# simulator.get_final_kernel_histogram(file_path=IMAGE_DIR + run_name + " histogram" + ".png",\
-#                                         xlabel="synapse weights",\
-#                                         title="Final weight distribution - Undamaged")
+simulator.get_final_kernel_histogram(file_path=IMAGE_DIR + run_name + " histogram" + ".png",\
+                                        xlabel="synapse weights",\
+                                        title="Final weight distribution - Undamaged")
 
 
-# print(f"""
-# reward = {reward}
-# cost = {cost}
-# penalty = {penalty}
-# efficiency = {efficiency}
-# fitness = {fitness}
-# """)
+print(f"""
+reward = {reward}
+cost = {cost}
+penalty = {penalty}
+efficiency = {efficiency}
+fitness = {fitness}
+""")
 
-# if config["damage"]["damage"]:
-#     print("simulation of single episode started: Damaged")
-#     rng, rng_episode = jax.random.split(rng, 2)
-#     simulator.generate_episode_data_damaged(rng_episode)
-#     print("simulation of single episode finished: Damaged")
+if config["damage"]["damage"]:
+    print("simulation of single episode started: Damaged")
+    rng, rng_episode = jax.random.split(rng, 2)
+    simulator.generate_episode_data_damaged(rng_episode)
+    print("simulation of single episode finished: Damaged")
 
-#     reward_damage = simulator.get_episode_reward()
-#     cost_damage  = simulator.get_episode_cost()
-#     penalty_damage = simulator.get_episode_penalty()
-#     efficiency_damage = simulator.get_episode_efficiency()
-#     fitness_damage = simulator.get_episode_fitness()
-#     simulator.get_ip_oop_joint_angles_plot(file_path = IMAGE_DIR + run_name + " DAMAGE.png")
-#     simulator.get_episode_video(file_path = VIDEO_DIR + run_name + " DAMAGE.mp4")
-#     simulator.get_kernel_animation(file_path = VIDEO_DIR + run_name + " kernel" + " DAMAGE.mp4")
-#     simulator.get_final_kernel_histogram(file_path=IMAGE_DIR + run_name + " histogram" + "DAMAGE.png",\
-#                                             xlabel="synapse weights",\
-#                                             title="Final weight distribution - Damaged")
+    reward_damage = simulator.get_episode_reward()
+    cost_damage  = simulator.get_episode_cost()
+    penalty_damage = simulator.get_episode_penalty()
+    efficiency_damage = simulator.get_episode_efficiency()
+    fitness_damage = simulator.get_episode_fitness()
+    simulator.get_ip_oop_joint_angles_plot(file_path = IMAGE_DIR + run_name + " DAMAGE.png")
+    simulator.get_episode_video(file_path = VIDEO_DIR + run_name + " DAMAGE.mp4")
+    # simulator.get_kernel_animation(file_path = VIDEO_DIR + run_name + " kernel" + " DAMAGE.mp4")
+    simulator.get_final_kernel_histogram(file_path=IMAGE_DIR + run_name + " histogram" + "DAMAGE.png",\
+                                            xlabel="synapse weights",\
+                                            title="Final weight distribution - Damaged")
 
-#     print(f"""
-#     reward_damage = {reward_damage}
-#     cost_damage = {cost_damage}
-#     penalty_damage = {penalty_damage}
-#     efficiency_damage = {efficiency_damage}
-#     fitness_damage = {fitness_damage}
-#     """)
+    print(f"""
+    reward_damage = {reward_damage}
+    cost_damage = {cost_damage}
+    penalty_damage = {penalty_damage}
+    efficiency_damage = {efficiency_damage}
+    fitness_damage = {fitness_damage}
+    """)
 
-# else:
-#     print('no damage simulation has been run')
-
-
-# if config["damage"]["damage"]:
-#     print(f"""
-#     reward = {reward} - reward_damage = {reward_damage}
-#     cost = {cost} - cost_damage = {cost_damage}
-#     penalty = {penalty} - penalty_damage = {penalty_damage}
-#     efficiency = {efficiency} - efficiency_damage = {efficiency_damage}
-#     fitness = {fitness} - fitness_damage = {fitness_damage}
-#     """)
+else:
+    print('no damage simulation has been run')
 
 
+if config["damage"]["damage"]:
+    print(f"""
+    reward = {reward} - reward_damage = {reward_damage}
+    cost = {cost} - cost_damage = {cost_damage}
+    penalty = {penalty} - penalty_damage = {penalty_damage}
+    efficiency = {efficiency} - efficiency_damage = {efficiency_damage}
+    fitness = {fitness} - fitness_damage = {fitness_damage}
+    """)
 
-# fps = int(1/simulator.environment_configuration.control_timestep)
-# wandb.log({"Video trained model": wandb.Video(VIDEO_DIR + run_name + ".mp4", caption=run_name, fps=fps, format='mp4')})
-# wandb.log({"Joint Angles trained model": wandb.Image(IMAGE_DIR + run_name + ".png")})
+
+
+fps = int(1/simulator.environment_configuration.control_timestep)
+wandb.log({"Video trained model": wandb.Video(VIDEO_DIR + run_name + ".mp4", caption=run_name, fps=fps, format='mp4')})
+wandb.log({"Joint Angles trained model": wandb.Image(IMAGE_DIR + run_name + ".png")})
 # wandb.log({"Kernel visualisation": wandb.Video(VIDEO_DIR + run_name + " kernel" + ".mp4", caption=run_name, fps=fps, format='mp4')})
-# wandb.log({"Kernel visualisation": wandb.Image(IMAGE_DIR + run_name + " histogram" + ".png", caption=run_name, fps=fps, format='mp4')})
+wandb.log({"Kernel visualisation": wandb.Image(IMAGE_DIR + run_name + " histogram" + ".png", caption=run_name, fps=fps, format='mp4')})
 
-# wandb.log({"Video damaged morphology": wandb.Video(VIDEO_DIR + run_name + " DAMAGE.mp4", caption=run_name, fps=fps, format='mp4')})
-# wandb.log({"Joint Angles damaged morophology": wandb.Image(IMAGE_DIR + run_name + " DAMAGE.png")})
+wandb.log({"Video damaged morphology": wandb.Video(VIDEO_DIR + run_name + " DAMAGE.mp4", caption=run_name, fps=fps, format='mp4')})
+wandb.log({"Joint Angles damaged morophology": wandb.Image(IMAGE_DIR + run_name + " DAMAGE.png")})
 # wandb.log({"Kernel visualisation damaged": wandb.Video(VIDEO_DIR + run_name + " kernel" + " DAMAGE.mp4", caption=run_name, fps=fps, format='mp4')})
-# wandb.log({"Kernel visualisation": wandb.Image(IMAGE_DIR + run_name + " histogram" + "DAMAGE.png", caption=run_name, fps=fps, format='mp4')})
+wandb.log({"Kernel visualisation": wandb.Image(IMAGE_DIR + run_name + " histogram" + "DAMAGE.png", caption=run_name, fps=fps, format='mp4')})
 
 
 
-# wandb.finish()
-# trainer.clear_envs()
-# simulator.clear_envs()
-# print("Environments cleared")
+wandb.finish()
+trainer.clear_envs()
+simulator.clear_envs()
+print("Environments cleared")
 
 
 

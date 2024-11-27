@@ -215,8 +215,8 @@ class DecentralisedController():
         return self._parallel_dim
     
     @property
-    def model(self) -> dict:
-        return self._arm_models
+    def model(self) -> tuple[HebbianController]:
+        return (self._model_embed, self._model_output)
     
 
     @property
@@ -233,29 +233,28 @@ class DecentralisedController():
             controller = HebbianController
     ):
         """
-        Will create a model for every arm. All these models are stored in a dict.
+        Will create a model for the embed (afferent) neural network and the output (efferent) neural network
         """
         
         if controller == HebbianController:
-            arm_models = {}
-            for i in range(len(self._config["morphology"]["arm_setup"])):
-                arm = {}
-                arm["embed"] = HebbianController(self._env_container)
-                arm["embed"].update_model(layer_architecture=self._embed_layers)
-                arm["output"] = HebbianController(self._env_container)
-                arm["output"].update_model(layer_architecture=self._output_layers)
-                arm_models[f"arm_{i}"] = arm
+            model_embed = HebbianController(self._env_container)
+            model_embed.update_model(layer_architecture=self._embed_layers)
+            model_output = HebbianController(self._env_container)
+            model_output.update_model(layer_architecture=self._output_layers)
+
 
         else:
             raise NotImplementedError("the specified controller type has not been implemented. Consider using a HebbianController")
 
-        self._arm_models = arm_models
+        self._model_embed = model_embed
+        self._model_output = model_output
 
     def set_model(
             self,
-            model: dict
+            model: Tuple[HebbianController]
     ):
-        self._arm_models = model
+        self._model_embed = model[0]
+        self._model_output = model[1]
 
     def set_states(
             self,
@@ -280,8 +279,8 @@ class DecentralisedController():
             ...
         }
         """
-        embed_policy_params_example = self._arm_models["arm_0"]["embed"].get_policy_params_example()
-        output_policy_params_example = self._arm_models["arm_0"]["output"].get_policy_params_example()
+        embed_policy_params_example = self._model_embed.get_policy_params_example()
+        output_policy_params_example = self._model_output.get_policy_params_example()
         embed_output_policy_params_example = {}
         embed_output_policy_params_example["embed"] = embed_policy_params_example
         embed_output_policy_params_example["output"] = output_policy_params_example
@@ -293,7 +292,8 @@ class DecentralisedController():
         """
         Instantiates attribute self.parameter_reshaper (as an object of evosax.ParameterReshaper class)
         """
-        assert self._arm_models, "No model has been instantiated yet. Use method update_model"
+        assert self._model_embed, "No model has been instantiated yet. Use method update_model"
+        assert self._model_output, "No model has been instantiated yet. Use method update_model"
         policy_params_example = self.get_policy_params_example()
         self.parameter_reshaper = ParameterReshaper(policy_params_example)
 
@@ -374,12 +374,11 @@ class DecentralisedController():
             policy_params = self.parameter_reshaper.reshape(policy_params)
         
         self._policy_params = policy_params
-        
-        for i in range(len(self._config["morphology"]["arm_setup"])):
-            self._arm_models[f"arm_{i}"]["embed"].update_parameter_reshaper()
-            self._arm_models[f"arm_{i}"]["output"].update_parameter_reshaper()
-            self._arm_models[f"arm_{i}"]["embed"].update_learning_rules(policy_params["embed"])
-            self._arm_models[f"arm_{i}"]["output"].update_learning_rules(policy_params["output"])
+
+        self._model_embed.update_parameter_reshaper()
+        self._model_output.update_parameter_reshaper()
+        self._model_embed.update_learning_rules(policy_params["embed"])
+        self._model_output.update_learning_rules(policy_params["output"])
 
     
     
@@ -413,22 +412,24 @@ class DecentralisedController():
 
         states = self.store_sensory_input_into_arm_states(sensory_inputs=sensory_input,
                                                           states=states)
-        
+        embed_vectorized_apply = jax.jit(jax.vmap(self._model_embed.apply))
+        output_vectorized_apply = jax.jit(jax.vmap(self._model_output.apply))
+
         # learning_rules identical for every arm
-        learning_rules_embed = self._arm_models[f"arm_{0}"]["embed"].learning_rules
+        learning_rules_embed = self._model_embed.learning_rules
+
 
         for i in range(len(self._config["morphology"]["arm_setup"])):
             sensory_input_embed = jnp.array(states[f"arm_{i}_embed"]["inputs"][:,-1,:])
             synapse_strengths_embed = self.get_synapse_strengths_from_arm_states(states=states, arm_ind=i, embed_or_output="embed")
             neuron_activities_embed = self.get_neuron_activities_from_arm_states(states=states, arm_ind=i, embed_or_output="embed")
 
-            actuator_output_embed, synapse_strengths_embed, neuron_activities_embed = self._arm_models[f"arm_{i}"]["embed"].vectorized_apply(
+            actuator_output_embed, synapse_strengths_embed, neuron_activities_embed = embed_vectorized_apply(
                                                                 sensory_input=sensory_input_embed,
                                                                 synapse_strengths=synapse_strengths_embed,
                                                                 learning_rules=learning_rules_embed,
                                                                 neuron_activities=neuron_activities_embed
                                                             )
-            
             
             states['central_reservoir'][f"arm_{i}"] = jnp.concatenate([states['central_reservoir'][f"arm_{i}"], jnp.expand_dims(actuator_output_embed, axis = 1)],
                                                                   axis = 1)
@@ -447,7 +448,7 @@ class DecentralisedController():
 
 
         # Learning rules identical for every arm       
-        learning_rules_output = self._arm_models[f"arm_{0}"]["embed"].learning_rules
+        learning_rules_output = self._model_output.learning_rules
 
         for i in range(len(self._config["morphology"]["arm_setup"])):
             sensory_input_output =  self.permutation_central_reservoir(states=states, arm_index=i) # sensory input to output layer
@@ -455,12 +456,13 @@ class DecentralisedController():
             states[f"arm_{i}_output"]["inputs"] = jnp.concatenate([states[f"arm_{i}_output"]["inputs"],
                                                                              sensory_input_output],
                                                                              axis = 1)
-            synapse_strenghts_output = self.get_synapse_strengths_from_arm_states(states=states, arm_ind=i, embed_or_output="output")
+            
+            sensory_input_output = sensory_input_output[:,-1,:]
+            synapse_strengths_output = self.get_synapse_strengths_from_arm_states(states=states, arm_ind=i, embed_or_output="output")
             neuron_activities_output = self.get_neuron_activities_from_arm_states(states=states, arm_ind=i, embed_or_output="output")
-
-            actuator_output_output, synapse_strengths_output, neuron_activities_output = self._arm_models[f"arm_{i}"]["output"].vectorized_apply(
+            actuator_output_output, synapse_strengths_output, neuron_activities_output = output_vectorized_apply(
                                                                 sensory_input=sensory_input_output,
-                                                                synapse_strengths=synapse_strenghts_output,
+                                                                synapse_strengths=synapse_strengths_output,
                                                                 learning_rules=learning_rules_output,
                                                                 neuron_activities=neuron_activities_output
                                                             )
@@ -561,9 +563,10 @@ class DecentralisedController():
         # Add this sensory information per arm to the states dict
         for i in range(num_arms):
             tmp_dict[f"arm_{i}"] = jnp.concatenate(tmp_dict[f"arm_{i}"], axis=-1)
-            states[f"arm_{i}_embed"]["inputs"] = jnp.concatenate(jnp.array([self.states[f"arm_{i}_embed"]["inputs"],\
-                                                                  tmp_dict[f"arm_{i}"]]),
-                                                                  axis=1)
+            states[f"arm_{i}_embed"]["inputs"] = jnp.concatenate([self.states[f"arm_{i}_embed"]["inputs"],\
+                                                                tmp_dict[f"arm_{i}"]],
+                                                                axis=1)
+
         
         return states
 
@@ -673,9 +676,9 @@ class DecentralisedController():
         No side effects
         """
         actuation_signal = []
-        num_layers = len(self._embed_layers)-1
+        num_layers = len(self._output_layers)-1
         for i in range(len(self._config["morphology"]["arm_setup"])):
-            arm_actuation_signal = states[f"arm_{i}_output"][f"layers_{num_layers}"]["output"][:,-1,:]
+            arm_actuation_signal = states[f"arm_{i}_output"][f"layers_{num_layers-1}"]["output"][:,-1,:]
             actuation_signal.append(arm_actuation_signal)
         
         actuation_signal = jnp.concatenate(actuation_signal, axis = -1)

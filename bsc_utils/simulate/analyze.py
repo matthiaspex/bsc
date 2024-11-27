@@ -6,6 +6,7 @@ from jax import numpy as jnp
 from PIL import Image
 import matplotlib.pyplot as plt
 import matplotlib.animation as animation
+import sys
 
 
 from evosax import ParameterReshaper
@@ -13,9 +14,10 @@ from evosax import ParameterReshaper
 from bsc_utils.BrittleStarEnv import EnvContainer
 from bsc_utils.controller.base import NNController
 from bsc_utils.controller.hebbian import HebbianController
+from bsc_utils.controller.decentralized import DecentralisedController
 from bsc_utils.visualization import post_render, change_alpha, move_camera, generate_timestep_joint_angle_plot_data, \
     plot_ip_oop_joint_angles, save_video_from_raw_frames, create_histogram
-from bsc_utils.damage import pad_sensory_input, select_actuator_output, check_damage
+from bsc_utils.damage import pad_sensory_input, select_actuator_output, check_damage, set_damaged_actuators_to_zero_arm_states
 from bsc_utils.simulate.base import cost_step_during_rollout, penal_step_during_rollout
 from bsc_utils.evolution import efficiency_from_reward_cost, fitness_from_stacked_data
 
@@ -38,7 +40,7 @@ class Simulator(EnvContainer):
 
     def update_nn_controller(
             self,
-            nn_controller: Union[NNController, HebbianController]
+            nn_controller: Union[NNController, HebbianController, DecentralisedController]
     ):
         """
         Before updating nn_controller, try to make sure that it has a model attribute (method update_model)
@@ -66,7 +68,10 @@ class Simulator(EnvContainer):
             rng: chex.PRNGKey,
     ):
         assert self.env, "First instantiate an undamaged environment using the generate_env method"
-        self._generate_episode_data(rng, damage = False)
+        if isinstance(self.nn_controller, DecentralisedController):
+            self._states_based_generate_episode_data(rng, damage=False)
+        else:
+            self._generate_episode_data(rng, damage = False)
 
     def generate_episode_data_damaged(
             self,
@@ -74,7 +79,10 @@ class Simulator(EnvContainer):
     ):
         assert self.env_damage, "First instantiate a damaged environment using the generate_env_damaged method"
         check_damage(self.config["morphology"]["arm_setup"], self.config["damage"]["arm_setup_damage"])
-        self._generate_episode_data(rng, damage = True)
+        if isinstance(self.nn_controller, DecentralisedController):
+            self._states_based_generate_episode_data(rng, damage=True)
+        else:
+            self._generate_episode_data(rng, damage = True)
 
 
     def get_episode_reward(self):
@@ -279,17 +287,31 @@ class Simulator(EnvContainer):
         timestep update.
         This provides insights into the final skills of the agent.
         """
-        tree = self.kernels[-1]
-        # this tree has a dict structure with layers, weights, biases, ...
-        # Extract all the values from all leaves into a flat numpy array
-        tree = jax.tree.map(lambda x:x.flatten(), tree)
+        # if no states objects are used
+        if isinstance(self.nn_controller, DecentralisedController):
+            data = []
+            flattened, _ = jax.tree_util.tree_flatten_with_path(self.nn_controller.states)
 
-        leaves = jax.tree.leaves(tree)
-        for i in range(len(leaves)):
-            if i == 0:
-                data = leaves[i]
-            else:
-                data = jnp.concatenate([data, leaves[i]])
+            for key_path, value in flattened:
+                if "kernel" in jax.tree_util.keystr(key_path):
+                    print(value.shape)
+                    data.append(value.flatten())
+            data = jnp.concatenate(data)    
+
+        else:
+            tree = self.kernels[-1]
+            # this tree has a dict structure with layers, weights, biases, ...
+            # Extract all the values from all leaves into a flat numpy array
+            tree = jax.tree.map(lambda x:x.flatten(), tree)
+
+            leaves = jax.tree.leaves(tree)
+            for i in range(len(leaves)):
+                if i == 0:
+                    data = leaves[i]
+                else:
+                    data = jnp.concatenate([data, leaves[i]])
+              
+
 
         fig = create_histogram(data, **kwargs) 
         plt.savefig(file_path)
@@ -463,6 +485,139 @@ class Simulator(EnvContainer):
         self.observations = _observations
         self.rewards = _rewards
         self.kernels = _kernels
+
+
+    def _states_based_generate_episode_data(
+            self,
+            rng: chex.PRNGKey,
+            damage: bool = False
+    ):
+        assert self.nn_controller, "No nn_controller has been provided yet using the update_nn_controller method"
+
+        if damage:
+            _env = self.env_damage
+        else:
+            _env = self.env
+
+        _policy_params = self.nn_controller.policy_params
+        _NUM_MJX_ENVIRONMENTS = jax.tree.leaves(_policy_params)[0].shape[0]
+
+        rng, _vectorized_env_rng = jax.random.split(rng, 2)
+        _vectorized_env_rng = jnp.array(jax.random.split(_vectorized_env_rng, _NUM_MJX_ENVIRONMENTS))
+
+        _vectorized_env_step = jax.jit(jax.vmap(_env.step))
+        _vectorized_env_reset = jax.jit(jax.vmap(_env.reset))
+
+        if not isinstance(self.nn_controller, DecentralisedController):
+            raise TypeError(f"""the specified controller if of type {type(nn_controller)}, which is not supported by the "_states_based_generate_episode_data" method.
+                                Consider using the '_generate_episode_data' method""")
+
+        if self.config["environment"]["reward_type"] == 'target':
+            try:
+                self.targets
+            except AttributeError:
+                raise Exception("first call the update_targets method")
+            assert self.targets.shape == (_NUM_MJX_ENVIRONMENTS, 3), "the targets provided don't have the correct dimension (parallel_envs, 3)"
+            _vectorized_env_state = _vectorized_env_reset(rng=_vectorized_env_rng, target_position = self.targets)
+        else:
+            _vectorized_env_state = _vectorized_env_reset(rng=_vectorized_env_rng)
+        
+        rng, rng_reset = jax.random.split(rng, 2)
+        self.nn_controller.reset_states(rng=rng_reset)
+        _states = self.nn_controller.states
+
+        # visualisation
+        _frames = []
+        _joint_angles_ip = []
+        _joint_angles_oop = []
+        _brittle_star_frames = []
+
+        _env_state_background = move_camera(state=_vectorized_env_state)
+        _env_state_background = change_alpha(state = _env_state_background, brittle_star_alpha=0.0, background_alpha=1.0)
+        _background_frame = post_render(
+            _env.render(state=_env_state_background),
+            _env.environment_configuration
+            )
+        
+        t=0
+        while not jnp.any(_vectorized_env_state.terminated | _vectorized_env_state.truncated):
+            _sensory_input = jnp.concatenate(
+                [_vectorized_env_state.observations[label] for label in self.config["environment"]["sensor_selection"]],
+                axis = 1
+            )
+
+            if damage:
+                _sensory_input = pad_sensory_input(
+                    _sensory_input,
+                    self.config["morphology"]["arm_setup"],
+                    self.config["damage"]["arm_setup_damage"],
+                    self.config["environment"]["sensor_selection"]
+                    )
+
+            if damage:
+                arms_joint_angles_plot = self.config["damage"]["arm_setup_damage"]
+            else:
+                arms_joint_angles_plot = self.config["morphology"]["arm_setup"]
+
+            _joint_angles_ip_t, _joint_angles_oop_t = generate_timestep_joint_angle_plot_data(arms_joint_angles_plot, _vectorized_env_state)
+            _joint_angles_ip.append(_joint_angles_ip_t)
+            _joint_angles_oop.append(_joint_angles_oop_t)
+
+            
+            _action, _states = self.nn_controller.apply(sensory_input=_sensory_input,
+                                                            states=_states)
+            
+            if damage:
+                _action = select_actuator_output(_action, self.config["morphology"]["arm_setup"], self.config["damage"]["arm_setup_damage"])
+                _states = set_damaged_actuators_to_zero_arm_states(states=_states,
+                                                                   arm_setup=self.config["morphology"]["arm_setup"],
+                                                                   arm_setup_damage=self.config["damage"]["arm_setup_damage"])
+
+
+            _vectorized_env_state = _vectorized_env_step(state=_vectorized_env_state, action=_action)
+
+            if t == 0:
+                _observations = jax.tree_util.tree_map(lambda x: jnp.expand_dims(x, axis = -1), _vectorized_env_state.observations)
+                _rewards = jnp.expand_dims(_vectorized_env_state.reward, axis = -1)
+            else:
+                _observations = jax.tree_util.tree_map(
+                    lambda x, y: jnp.concatenate(
+                        [x, jnp.expand_dims(y, axis = -1)],
+                        axis=-1),
+                    _observations, _vectorized_env_state.observations)
+                _rewards = jnp.concatenate(
+                    [_rewards, jnp.expand_dims(_vectorized_env_state.reward, axis = -1)],
+                    axis = -1) 
+
+            _frames.append(
+                post_render(
+                    _env.render(state=_vectorized_env_state),
+                    _env.environment_configuration
+                    )
+                )
+
+            _env_state_brittle_star = move_camera(state=_vectorized_env_state)
+            _env_state_brittle_star = change_alpha(state = _env_state_brittle_star, brittle_star_alpha=1.0, background_alpha=0.0)
+            _brittle_star_frames.append(
+                post_render(
+                _env.render(state=_env_state_brittle_star),
+                _env.environment_configuration
+                )
+            )
+
+            t += 1
+        
+        self.frames = _frames
+        self.joint_angles_ip = _joint_angles_ip
+        self.joint_angles_oop = _joint_angles_oop
+        self.brittle_star_frames = _brittle_star_frames
+        self.background_frame = _background_frame
+        self.observations = _observations
+        self.rewards = _rewards
+
+        self.nn_controller.set_states(_states)
+
+
 
 
     # def _extract_kernels_from_synapse_strengths(

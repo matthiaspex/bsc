@@ -1,5 +1,6 @@
 # module for damaging morphology
-import numpy as np
+import sys
+
 from jax import numpy as jnp
 
 
@@ -91,6 +92,49 @@ def select_actuator_output(action, arm_setup, arm_setup_damage):
         track_pos += num_segm_rm * 2
 
     return action_selection
+
+
+def set_damaged_actuators_to_zero_arm_states(
+        states: dict,
+        arm_setup: list,
+        arm_setup_damage: list
+        ) -> dict:
+    """
+    states is has 3D or 4D array leaves: (popsize, #timesteps, ...)
+        -> 3D for bias, input, output, ...
+        -> 4D for kernels
+    This function is compatible with multiple parallel MJX environments
+    Goes over the arm states and puts the last output layer to zero.
+    """
+    check_damage(arm_setup, arm_setup_damage)
     
+
+    indices = []
+    for key in states["arm_0_output"].keys():
+        if "layers_" in key:
+            indices.append(int(key[-1]))
+    final_layer_ind = max(indices)
+    
+
+    for arm in range(len(arm_setup)):
+        num_segm_rm = arm_setup[arm] - arm_setup_damage[arm]
+        num_segm_maintained = arm_setup[arm] - num_segm_rm
+        num_actuators_per_segment = 2
+
+        original_shape = states[f"arm_{arm}_output"][f"layers_{final_layer_ind}"]["output"].shape
+        shape_zeros = list(original_shape)
+        shape_zeros[-1] = num_segm_rm*num_actuators_per_segment
+        shape_zeros = tuple(shape_zeros)
+
+        
+        if num_segm_maintained > 0 and num_segm_rm != 0:
+            output_kept = states[f"arm_{arm}_output"][f"layers_{final_layer_ind}"]["output"][:,:,:num_segm_maintained*num_actuators_per_segment]
+            output_zero = jnp.zeros(shape_zeros)
+            states[f"arm_{arm}_output"][f"layers_{final_layer_ind}"]["output"] = jnp.concatenate([output_kept, output_zero], axis=1)
+        elif num_segm_maintained == 0:
+            states[f"arm_{arm}_output"][f"layers_{final_layer_ind}"]["output"] = jnp.zeros(shape_zeros)
+        elif num_segm_rm == 0:
+            pass
+    return states
     
         
