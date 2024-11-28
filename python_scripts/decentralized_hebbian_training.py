@@ -356,7 +356,7 @@ fps = int(1/simulator.environment_configuration.control_timestep)
 wandb.log({"Video trained model": wandb.Video(VIDEO_DIR + run_name + ".mp4", caption=run_name, fps=fps, format='mp4')})
 wandb.log({"Joint Angles trained model": wandb.Image(IMAGE_DIR + run_name + ".png")})
 # wandb.log({"Kernel visualisation": wandb.Video(VIDEO_DIR + run_name + " kernel" + ".mp4", caption=run_name, fps=fps, format='mp4')})
-wandb.log({"Kernel visualisation": wandb.Image(IMAGE_DIR + run_name + " histogram" + ".png"})
+wandb.log({"Kernel visualisation": wandb.Image(IMAGE_DIR + run_name + " histogram" + ".png")})
 
 wandb.log({"Video damaged morphology": wandb.Video(VIDEO_DIR + run_name + " DAMAGE.mp4", caption=run_name, fps=fps, format='mp4')})
 wandb.log({"Joint Angles damaged morophology": wandb.Image(IMAGE_DIR + run_name + " DAMAGE.png")})
