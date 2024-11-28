@@ -10,6 +10,9 @@
  morphology:
    arm_setup: [ 5, 5, 5, 5, 5 ]
    joint_control: 'position'
+   replace_joint_stiffness: !!python/tuple [ False, 0.01] # if False, default value of 0.01 will be used
+   replace_joint_damping: !!python/tuple [ False, 0.1] # if False, default value of 0.1 will be used
+   replace_joint_armature: !!python/tuple [ True, 0.02] # if False, default value of 0.001 will be used
  arena:
    arena_size: !!python/tuple [ 12, 12 ]
    sand_ground_color: False # must be true for light escape environment

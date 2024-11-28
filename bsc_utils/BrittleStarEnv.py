@@ -29,7 +29,9 @@ from moojoco.environment.mjx_env import MJXEnv
 from bsc_utils.damage import check_damage
 from bsc_utils.visualization import visualize_mjcf, post_render
 
+from fprs.parameters import FixedParameter
 import mediapy as media
+
 
 
 class EnvContainer():
@@ -38,6 +40,32 @@ class EnvContainer():
     
     def generate_env(self):
         morph_spec, arena_conf, env_conf = _full_mjcf_configurations(config=self.config)
+
+        joint_stiffness = self.config["morphology"]["replace_joint_stiffness"]
+        joint_damping = self.config["morphology"]["replace_joint_damping"]
+        joint_armature = self.config["morphology"]["replace_joint_armature"]
+
+        try:
+            if joint_stiffness[0] or joint_damping[0] or joint_armature[0]:
+                for arm_spec in morph_spec.arm_specifications:
+                    for segment_spec in arm_spec.segment_specifications:
+                        if joint_stiffness[0]:
+                            # noinspection PyUnboundLocalVariable
+                            segment_spec.in_plane_joint_specification.stiffness = FixedParameter(joint_stiffness[1])
+                            segment_spec.out_of_plane_joint_specification.stiffness = FixedParameter(joint_stiffness[1])    
+
+                        if joint_damping[0]:
+                            # noinspection PyUnboundLocalVariable
+                            segment_spec.in_plane_joint_specification.damping = FixedParameter(joint_damping[1])
+                            segment_spec.out_of_plane_joint_specification.damping = FixedParameter(joint_damping[1])
+
+                        if joint_armature[0]:
+                            # noinspection PyUnboundLocalVariable
+                            segment_spec.in_plane_joint_specification.armature = FixedParameter(joint_armature[1])
+                            segment_spec.out_of_plane_joint_specification.armature = FixedParameter(joint_armature[1])    
+
+        except KeyError:
+            pass
 
         self.morphology_specification = morph_spec
         self.arena_configuration = arena_conf
@@ -108,6 +136,7 @@ class EnvContainer():
         observation_space_dim = sum([_env_state.observations[sensor].shape[-1] for sensor in self.config["environment"]["sensor_selection"]])
         actuator_space_dim = len(self.env.actuators)
         return observation_space_dim, actuator_space_dim
+
 
 
 def _create_morphology(
