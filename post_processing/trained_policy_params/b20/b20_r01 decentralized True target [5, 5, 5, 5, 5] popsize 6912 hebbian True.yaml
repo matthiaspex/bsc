@@ -1,0 +1,106 @@
+arena:
+  arena_size: !!python/tuple
+  - 9
+  - 9
+  sand_ground_color: false
+controller:
+  decentralized:
+    decentralized_on: true
+    embed_hidden_layers:
+    - 64
+    - 64
+    embedding_dim_per_arm: 20
+    explicit_body_sensors: false
+    output_hidden_layers:
+    - 64
+    - 64
+  hebbian: true
+  hidden_layers:
+  - 128
+  - 128
+  num_hebbian_steps_per_control_step: 1
+damage:
+  arm_setup_damage:
+  - 5
+  - 0
+  - 5
+  - 5
+  - 5
+  damage: true
+environment:
+  color_contacts: false
+  joint_randomization_noise_scale: 0.0
+  light_perlin_noise_scale: 4
+  num_physics_steps_per_control_step: 10
+  render:
+    camera_ids:
+    - 0
+    - 1
+    render_size:
+    - 480
+    - 640
+  reward_type: target
+  sensor_selection: !!python/tuple
+  - joint_position
+  - joint_actuator_force
+  - disk_rotation
+  - segment_contact
+  - unit_xy_direction_to_target
+  - xy_distance_to_target
+  simulation_time: 10
+  target_distance: 5
+  target_position:
+  - 7.0
+  - 0.0
+  - 0.0
+evolution:
+  centered_rank: true
+  cost_expr: torque
+  efficiency_expr: reward _ cost
+  es_popsize: 6912
+  num_generations: 500
+  penal_expr: nopenal
+experiment:
+  interface: HPC
+  run_name_format: '{notes} decentralized {decentralized_on} {reward_type} {arm_setup}
+    popsize {es_popsize} hebbian {hebbian}'
+  seed: 2024
+morphology:
+  arm_setup:
+  - 5
+  - 5
+  - 5
+  - 5
+  - 5
+  joint_control: position
+  replace_joint_armature: !!python/tuple
+  - true
+  - 0.02
+  replace_joint_damping: !!python/tuple
+  - false
+  - 0.1
+  replace_joint_stiffness: !!python/tuple
+  - false
+  - 0.01
+training:
+  target:
+    distance: 8
+    force_single_direction: !!python/tuple
+    - true
+    - rowing
+    - 0
+    num_random_positions: 0
+    num_reverse_rowing: 0
+    num_rowing: 1
+    parallel_constant: false
+wandb:
+  group: 'Hebbian: single fixed target'
+  notes: b20_r01
+  project: decentralized
+  tags:
+  - cost_efficiency
+  - hebbian
+  - force single target
+  - 6912 pop
+  - 10s
+  - 500 gen
