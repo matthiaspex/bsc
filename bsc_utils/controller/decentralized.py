@@ -8,6 +8,7 @@ from jax import numpy as jnp
 from evosax import ParameterReshaper
 
 from bsc_utils.BrittleStarEnv import EnvContainer
+from bsc_utils.controller.base import NNController
 from bsc_utils.controller.hebbian import HebbianController
 from bsc_utils.miscellaneous import check_sensor_selection_order,\
     calculate_arm_target_allignment_factors
@@ -230,7 +231,7 @@ class DecentralisedController():
 
     def update_model(
             self,
-            controller = HebbianController
+            controller: Union[HebbianController, NNController]
     ):
         """
         Will create a model for the embed (afferent) neural network and the output (efferent) neural network
@@ -242,7 +243,11 @@ class DecentralisedController():
             model_output = HebbianController(self._env_container)
             model_output.update_model(layer_architecture=self._output_layers)
 
-
+        elif controller == NNController:
+            model_embed = NNController(self._env_container)
+            model_embed.update_model(layer_architecture=self._embed_layers)
+            model_output = NNController(self._env_container)
+            model_output.update_model(layer_architecture=self._output_layers)
         else:
             raise NotImplementedError("the specified controller type has not been implemented. Consider using a HebbianController")
 
@@ -251,7 +256,7 @@ class DecentralisedController():
 
     def set_model(
             self,
-            model: Tuple[HebbianController]
+            model: Tuple[Union[HebbianController, NNController]]
     ):
         self._model_embed = model[0]
         self._model_output = model[1]
@@ -377,8 +382,8 @@ class DecentralisedController():
 
         self._model_embed.update_parameter_reshaper()
         self._model_output.update_parameter_reshaper()
-        self._model_embed.update_learning_rules(policy_params["embed"])
-        self._model_output.update_learning_rules(policy_params["output"])
+        self._model_embed.update_policy_params(policy_params["embed"])
+        self._model_output.update_policy_params(policy_params["output"])
 
     
     
@@ -415,21 +420,31 @@ class DecentralisedController():
         embed_vectorized_apply = jax.jit(jax.vmap(self._model_embed.apply))
         output_vectorized_apply = jax.jit(jax.vmap(self._model_output.apply))
 
-        # learning_rules identical for every arm
-        learning_rules_embed = self._model_embed.learning_rules
+        # policy_params for every arm identical for every arm
+        policy_params_embed = self._model_embed.policy_params 
+        policy_params_output = self._model_output.policy_params
+        # If HebbianController: policy params are learning rules and biases
+        # If NNController: policy params are synapse strengths and biases
 
-
+        # embed
         for i in range(len(self._config["morphology"]["arm_setup"])):
             sensory_input_embed = jnp.array(states[f"arm_{i}_embed"]["inputs"][:,-1,:])
-            synapse_strengths_embed = self.get_synapse_strengths_from_arm_states(states=states, arm_ind=i, embed_or_output="embed")
-            neuron_activities_embed = self.get_neuron_activities_from_arm_states(states=states, arm_ind=i, embed_or_output="embed")
 
-            actuator_output_embed, synapse_strengths_embed, neuron_activities_embed = embed_vectorized_apply(
-                                                                sensory_input=sensory_input_embed,
-                                                                synapse_strengths=synapse_strengths_embed,
-                                                                learning_rules=learning_rules_embed,
-                                                                neuron_activities=neuron_activities_embed
-                                                            )
+            if self._config["controller"]["hebbian"] == True:
+                synapse_strengths_embed = self.get_synapse_strengths_from_arm_states(states=states, arm_ind=i, embed_or_output="embed")
+                neuron_activities_embed = self.get_neuron_activities_from_arm_states(states=states, arm_ind=i, embed_or_output="embed")
+                actuator_output_embed, synapse_strengths_embed, neuron_activities_embed = embed_vectorized_apply(
+                                                                    sensory_input=sensory_input_embed,
+                                                                    synapse_strengths=synapse_strengths_embed,
+                                                                    learning_rules=policy_params_embed,
+                                                                    neuron_activities=neuron_activities_embed
+                                                                )
+            elif self._config["controller"]["hebbian"] == False:
+                synapse_strengths_embed = policy_params_embed
+                actuator_output_embed, neuron_activities_embed = embed_vectorized_apply(
+                                                                    sensory_input=sensory_input_embed,
+                                                                    synapse_strengths=synapse_strengths_embed                    
+                                                                )
             
             states['central_reservoir'][f"arm_{i}"] = jnp.concatenate([states['central_reservoir'][f"arm_{i}"], jnp.expand_dims(actuator_output_embed, axis = 1)],
                                                                   axis = 1)
@@ -447,9 +462,7 @@ class DecentralisedController():
                                                                                 axis = 1)
 
 
-        # Learning rules identical for every arm       
-        learning_rules_output = self._model_output.learning_rules
-
+        # output
         for i in range(len(self._config["morphology"]["arm_setup"])):
             sensory_input_output =  self.permutation_central_reservoir(states=states, arm_index=i) # sensory input to output layer
 
@@ -458,14 +471,24 @@ class DecentralisedController():
                                                                              axis = 1)
             
             sensory_input_output = sensory_input_output[:,-1,:]
-            synapse_strengths_output = self.get_synapse_strengths_from_arm_states(states=states, arm_ind=i, embed_or_output="output")
-            neuron_activities_output = self.get_neuron_activities_from_arm_states(states=states, arm_ind=i, embed_or_output="output")
-            actuator_output_output, synapse_strengths_output, neuron_activities_output = output_vectorized_apply(
-                                                                sensory_input=sensory_input_output,
-                                                                synapse_strengths=synapse_strengths_output,
-                                                                learning_rules=learning_rules_output,
-                                                                neuron_activities=neuron_activities_output
-                                                            )
+
+
+            if self._config["controller"]["hebbian"] == True:
+                synapse_strengths_output = self.get_synapse_strengths_from_arm_states(states=states, arm_ind=i, embed_or_output="output")
+                neuron_activities_output = self.get_neuron_activities_from_arm_states(states=states, arm_ind=i, embed_or_output="output")
+                actuator_output_output, synapse_strengths_output, neuron_activities_output = output_vectorized_apply(
+                                                                    sensory_input=sensory_input_output,
+                                                                    synapse_strengths=synapse_strengths_output,
+                                                                    learning_rules=policy_params_output,
+                                                                    neuron_activities=neuron_activities_output
+                                                                )
+                
+            elif self._config["controller"]["hebbian"] == False:
+                synapse_strengths_output = policy_params_output
+                actuator_output_output, neuron_activities_output = output_vectorized_apply(
+                                                                    sensory_input=sensory_input_output,
+                                                                    synapse_strengths=synapse_strengths_output                    
+                                                                )
 
             for layer_ind in range(len(self._output_layers)-1):
                 states[f"arm_{i}_output"][f"layers_{layer_ind}"]["output"] = jnp.concatenate([states[f"arm_{i}_output"][f"layers_{layer_ind}"]["output"],

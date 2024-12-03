@@ -16,6 +16,13 @@ class HebbianController(NNController):
     ):
         super().__init__(env_container)
 
+    @property
+    def policy_params(self):
+        """
+        Returns the attribute containing the policy params, being the learning rules for the HebbianController class.
+        """
+        return self.learning_rules
+
     def get_policy_params_example(self) -> dict:
         """
         For a Hebbian controller, the policy parameters are the learning rules, not the synapses
@@ -94,7 +101,7 @@ class HebbianController(NNController):
         return self.parameter_reshaper
     
 
-    def update_learning_rules(
+    def update_policy_params(
             self,
             learning_rules: Union[dict, chex.Array] # can be pytree with learning rules or flat array from evosax ask
     ):

@@ -86,28 +86,23 @@ class Simulator(EnvContainer):
 
 
     def get_episode_reward(self):
-        assert np.any(self.rewards), "First run an episode using generate_episode_data_(un)damaged"
         return jnp.sum(self.rewards, axis = -1)
 
     def get_episode_cost(self):
-        assert self.observations, "First run an episode using generate_episode_data_(un)damaged"
         _cost_step = cost_step_during_rollout(self.observations, self.config["evolution"]["cost_expr"])
         return jnp.sum(_cost_step, axis = -1) # return array of costs of complete morphology over complete episode for every parallel episode
     
     def get_episode_penalty(self):
-        assert self.observations, "First run an episode using generate_episode_data_(un)damaged"
         _penal_step = penal_step_during_rollout(self.observations, self.config["evolution"]["penal_expr"])
         return jnp.sum(_penal_step, axis = -1)
     
     def get_episode_efficiency(self):
-        assert self.observations, "First run an episode using generate_episode_data_(un)damaged"
         _reward = self.get_episode_reward()
         _cost = self.get_episode_cost()
         efficiency = efficiency_from_reward_cost(_reward, _cost, self.config["evolution"]["efficiency_expr"])
         return efficiency
     
     def get_episode_fitness(self):
-        assert self.observations, "First run an episode using generate_episode_data_(un)damaged"
         _reward = self.get_episode_reward()
         _cost = self.get_episode_cost()
         _penalty = self.get_episode_penalty()
@@ -123,7 +118,6 @@ class Simulator(EnvContainer):
         """
         filepath should end in .png, .jpg, ...
         """
-        assert np.any(self.joint_angles_ip), "First run an episode using generate_episode_data_(un)damaged"
         fig, axes = plot_ip_oop_joint_angles(self.joint_angles_ip, self.joint_angles_oop)
         if file_path:
             fig.savefig(file_path)
@@ -138,7 +132,6 @@ class Simulator(EnvContainer):
         """
         filepath should end in .mp4
         """
-        assert np.any(self.frames), "First run an episode using generate_episode_data_(un)damaged"
         if (self.config["environment"]["render"]["render_size"][0] <= 1440) and (self.config["environment"]["render"]["render_size"][1] <= 1920): # max size can be 1080, otherwise files get too big
             _fps = int(1/self.environment_configuration.control_timestep)
             _fps *= playback_speed
@@ -156,7 +149,6 @@ class Simulator(EnvContainer):
         """
         filepath should end in .png, .jpg, ...
         """
-        assert np.any(self.background_frame), "First run an episode using generate_episode_data_(un)damaged"
         merged_frame = self.background_frame
         selected_frames = self.brittle_star_frames[::len(self.brittle_star_frames)//number_of_frames]
         for i, brittle_star_frame in enumerate(selected_frames):
@@ -194,7 +186,6 @@ class Simulator(EnvContainer):
         Exports a video if it is a plastic controller
         Exports an image if it is a static controller
         """
-        assert np.any(self.kernels), "First run an episode using generate_episode_data_(un)damaged"
         _fps = int(1/self.environment_configuration.control_timestep)
         _fps *= playback_speed
 

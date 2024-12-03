@@ -85,7 +85,11 @@ print(f"controller output layers: {controller.output_layers}")
 rng, rng_init = jax.random.split(rng, 2)
 controller.reset_states(rng_init)
 
-controller.update_model() # all information to build controller present in EnvContainer (hidden layers, action dim, obs dim)
+if config["controller"]["hebbian"] == True:
+    controller.update_model(controller=HebbianController) # all information to build controller present in EnvContainer (hidden layers, action dim, obs dim)
+else:
+    controller.update_model(controller=NNController)
+    
 
 policy_params_example = controller.get_policy_params_example()
 print(jax.tree.map(lambda x: x.shape, policy_params_example))
@@ -138,14 +142,14 @@ es_state = strategy.initialize(rng_init, es_params)
 
 policy_params_to_render = []
 
-wandb.init(
-    project = config["wandb"]["project"],
-    group = config["wandb"]["group"],
-    name = run_name,
-    tags = config["wandb"]["tags"],
-    notes = config["wandb"]["notes"],
-    config = config
-    )
+# wandb.init(
+#     project = config["wandb"]["project"],
+#     group = config["wandb"]["group"],
+#     name = run_name,
+#     tags = config["wandb"]["tags"],
+#     notes = config["wandb"]["notes"],
+#     config = config
+#     )
 
 # run one ask-eval-tell loop (iterate over generations)
 start_time = time.time()
@@ -223,19 +227,19 @@ for gen in range(config["evolution"]["num_generations"]):
     fit_re = fit_shaper.apply(policy_params_evosax, fitness)
 
 
-    # log metrics to wandb
-    wandb.log({"mean reward": jnp.mean(total_reward),
-               "max reward":jnp.max(total_reward),
-               "mean cost": jnp.mean(total_cost),
-               "min cost": jnp.min(total_cost),
-               "mean penalty": jnp.mean(total_penal),
-               "min penalty": jnp.min(total_penal),
-               "mean efficiency": jnp.mean(efficiency),
-               "max efficiency": jnp.max(efficiency),
-               "mean fitness": jnp.mean(fitness),
-               "max fitness": jnp.max(fitness),
-               "time": time.time()-start_time_gen
-              })
+    # # log metrics to wandb
+    # wandb.log({"mean reward": jnp.mean(total_reward),
+    #            "max reward":jnp.max(total_reward),
+    #            "mean cost": jnp.mean(total_cost),
+    #            "min cost": jnp.min(total_cost),
+    #            "mean penalty": jnp.mean(total_penal),
+    #            "min penalty": jnp.min(total_penal),
+    #            "mean efficiency": jnp.mean(efficiency),
+    #            "max efficiency": jnp.max(efficiency),
+    #            "mean fitness": jnp.mean(fitness),
+    #            "max fitness": jnp.max(fitness),
+    #            "time": time.time()-start_time_gen
+    #           })
 
 #     # # Select certain training generations to render videos
 #     # if gen in [2, 5, 10, 20, 40, 80]:
@@ -264,7 +268,12 @@ simulator.generate_env_damaged()
 
 
 controller = DecentralisedController(simulator, parallel_dim=parallel_dim)
-controller.update_model(HebbianController)
+
+if config["controller"]["hebbian"] == True:
+    controller.update_model(controller=HebbianController) # all information to build controller present in EnvContainer (hidden layers, action dim, obs dim)
+else:
+    controller.update_model(controller=NNController)
+
 controller.update_parameter_reshaper()
 controller.update_policy_params(policy_params=policy_params_to_render)
 
@@ -352,20 +361,20 @@ if config["damage"]["damage"]:
 
 
 
-fps = int(1/simulator.environment_configuration.control_timestep)
-wandb.log({"Video trained model": wandb.Video(VIDEO_DIR + run_name + ".mp4", caption=run_name, fps=fps, format='mp4')})
-wandb.log({"Joint Angles trained model": wandb.Image(IMAGE_DIR + run_name + ".png")})
-# wandb.log({"Kernel visualisation": wandb.Video(VIDEO_DIR + run_name + " kernel" + ".mp4", caption=run_name, fps=fps, format='mp4')})
-wandb.log({"Kernel visualisation": wandb.Image(IMAGE_DIR + run_name + " histogram" + ".png")})
+# fps = int(1/simulator.environment_configuration.control_timestep)
+# wandb.log({"Video trained model": wandb.Video(VIDEO_DIR + run_name + ".mp4", caption=run_name, fps=fps, format='mp4')})
+# wandb.log({"Joint Angles trained model": wandb.Image(IMAGE_DIR + run_name + ".png")})
+# # wandb.log({"Kernel visualisation": wandb.Video(VIDEO_DIR + run_name + " kernel" + ".mp4", caption=run_name, fps=fps, format='mp4')})
+# wandb.log({"Kernel visualisation": wandb.Image(IMAGE_DIR + run_name + " histogram" + ".png")})
 
-wandb.log({"Video damaged morphology": wandb.Video(VIDEO_DIR + run_name + " DAMAGE.mp4", caption=run_name, fps=fps, format='mp4')})
-wandb.log({"Joint Angles damaged morophology": wandb.Image(IMAGE_DIR + run_name + " DAMAGE.png")})
-# wandb.log({"Kernel visualisation damaged": wandb.Video(VIDEO_DIR + run_name + " kernel" + " DAMAGE.mp4", caption=run_name, fps=fps, format='mp4')})
-wandb.log({"Kernel visualisation": wandb.Image(IMAGE_DIR + run_name + " histogram" + "DAMAGE.png")})
+# wandb.log({"Video damaged morphology": wandb.Video(VIDEO_DIR + run_name + " DAMAGE.mp4", caption=run_name, fps=fps, format='mp4')})
+# wandb.log({"Joint Angles damaged morophology": wandb.Image(IMAGE_DIR + run_name + " DAMAGE.png")})
+# # wandb.log({"Kernel visualisation damaged": wandb.Video(VIDEO_DIR + run_name + " kernel" + " DAMAGE.mp4", caption=run_name, fps=fps, format='mp4')})
+# wandb.log({"Kernel visualisation": wandb.Image(IMAGE_DIR + run_name + " histogram" + "DAMAGE.png")})
 
 
 
-wandb.finish()
+# wandb.finish()
 trainer.clear_envs()
 simulator.clear_envs()
 print("Environments cleared")

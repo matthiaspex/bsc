@@ -1,30 +1,30 @@
  experiment:
-   interface: 'VSC' # HPC or VSC 
+   interface: 'HPC' # HPC or VSC 
    run_name_format: "{notes} decentralized {decentralized_on} {reward_type} {arm_setup} popsize {es_popsize} hebbian {hebbian}"
    seed: 2024
  wandb:
-   project: "job_sub_test"
-   group: "Linux_VSC"
-   tags: ["Linux", "Hebbian"]
-   notes: "Test Decentralized"
+   project: "decentralized"
+   group: "Static baseline: different network sizes"
+   tags: ["cost_efficiency", "static", "force single target", "6912 pop", "5s", "300 gen", "256 nodes"]
+   notes: "b21_r03"
  morphology:
    arm_setup: [ 5, 5, 5, 5, 5 ]
    joint_control: 'position'
-   replace_joint_stiffness: !!python/tuple [ False, 0.01] # if False, default value of 0.01 will be used
-   replace_joint_damping: !!python/tuple [ False, 0.1] # if False, default value of 0.1 will be used
+   replace_joint_stiffness: !!python/tuple [ True, 0.1] # if False, default value of 0.01 will be used
+   replace_joint_damping: !!python/tuple [ True, 0.5] # if False, default value of 0.1 will be used
    replace_joint_armature: !!python/tuple [ True, 0.02] # if False, default value of 0.001 will be used
  arena:
-   arena_size: !!python/tuple [ 7, 7 ]
-   sand_ground_color: True # must be true for light escape environment
+   arena_size: !!python/tuple [ 9, 9 ]
+   sand_ground_color: False # must be true for light escape environment
  environment:
    reward_type: 'target' # choose from distance, target or light
    sensor_selection: !!python/tuple [ 'joint_position', 'joint_actuator_force', 'segment_contact']
    num_physics_steps_per_control_step: 10
-   simulation_time: 0.2 # seconds, can be float
+   simulation_time: 5 # seconds, can be float
    joint_randomization_noise_scale: 0.0
    light_perlin_noise_scale: 4
-   target_distance: 7
-   target_position: [ 7., 0., 0.] # must fit in the arena
+   target_distance: 8
+   target_position: [ 8., 0., 0.] # must fit in the arena
    color_contacts: False
    render:
      camera_ids: [ 0, 1 ]
@@ -33,8 +33,8 @@
    damage: True # try to write code indepent of this argument
    arm_setup_damage: [ 5, 0, 5, 5, 5]
  evolution:
-   es_popsize: 2
-   num_generations: 1
+   es_popsize: 6912
+   num_generations: 300
    centered_rank: true
    cost_expr: "torque" # choose from ["nocost", "torque x angvel", "torque"]
    penal_expr: "nopenal" # choose from ["nopenal", "body_stability"]
@@ -45,13 +45,13 @@
    hidden_layers: [ 128, 128 ]
    decentralized:
      decentralized_on: True
-     embed_hidden_layers: [64, 64] # The hidden layers of the input network
-     output_hidden_layers: [64, 64] # The hidden layers of the output network
+     embed_hidden_layers: [256, 256] # The hidden layers of the input network
+     output_hidden_layers: [256, 256] # The hidden layers of the output network
      embedding_dim_per_arm: 20
      explicit_body_sensors: False # specifies whether body sensors are incorporated in the central reservoir
  training:
    target:
-     distance: 6
+     distance: 8
      num_rowing: 1 # max 5, only 5 different rowing positions possible
      num_reverse_rowing: 0 # max 5, only 5 different rowing positions possible
      num_random_positions: 0
