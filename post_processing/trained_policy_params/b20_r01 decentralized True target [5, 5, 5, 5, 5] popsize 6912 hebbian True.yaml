@@ -1,7 +1,7 @@
 arena:
   arena_size: !!python/tuple
-  - 12
-  - 12
+  - 9
+  - 9
   sand_ground_color: false
 controller:
   decentralized:
@@ -47,7 +47,7 @@ environment:
   - segment_contact
   - unit_xy_direction_to_target
   - xy_distance_to_target
-  simulation_time: 5
+  simulation_time: 10
   target_distance: 5
   target_position:
   - 7.0
@@ -57,8 +57,8 @@ evolution:
   centered_rank: true
   cost_expr: torque
   efficiency_expr: reward _ cost
-  es_popsize: 100
-  num_generations: 100
+  es_popsize: 6912
+  num_generations: 500
   penal_expr: nopenal
 experiment:
   interface: HPC
@@ -84,7 +84,7 @@ morphology:
   - 0.01
 training:
   target:
-    distance: 5
+    distance: 8
     force_single_direction: !!python/tuple
     - true
     - rowing
@@ -94,10 +94,13 @@ training:
     num_rowing: 1
     parallel_constant: false
 wandb:
-  group: decentralized_donphan
-  notes: Donphan_decentralized
-  project: job_sub_test
+  group: 'Hebbian: single fixed target'
+  notes: b20_r01
+  project: decentralized
   tags:
-  - decentralized
+  - cost_efficiency
   - hebbian
   - force single target
+  - 6912 pop
+  - 10s
+  - 500 gen
