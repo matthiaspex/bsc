@@ -15,8 +15,8 @@ export MUJOCO_GL="egl"
 # Set system variables required by the python script
 export VIDEO_DIR="./post_processing/Videos/tmp/"
 export IMAGE_DIR="./post_processing/Images/tmp/"
-export POLICY_PARAMS_DIR="./post_processing/trained_policy_params/b11/"
-export RUN_NAME="b11_r01 distance arms [5, 5, 5, 5, 5] popsize 6912 torque reward _ cost hebbian True"
+export POLICY_PARAMS_DIR="./post_processing/trained_policy_params/b20/"
+export RUN_NAME="b20_r01 decentralized True target [5, 5, 5, 5, 5] popsize 6912 hebbian True"
 
 
 python "./python_scripts/visualize_trained_policies.py"

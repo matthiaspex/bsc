@@ -276,6 +276,21 @@ def complete_config_with_defaults(config):
     except:
         config["evolution"]["centered_rank"] = True
 
+    try:
+        config["training"]["target"]["force_single_direction"]
+    except:
+        config["training"]["target"]["force_single_direction"] = [False, "rowing", 0]
+
+    try:
+        config["controller"]["decentralized"]
+    except:
+        config["controller"]["decentralized"] = {}
+    
+    try:
+        config["controller"]["decentralized"]["decentralized_on"]
+    except:
+        config["controller"]["decentralized"]["decentralized_on"] = False
+
     return config
 
 
@@ -376,6 +391,45 @@ def calculate_arm_target_allignment_factors(
 
 
     return arm_projections
+
+
+def decay_kernel_bias_dict(
+        param_dict: dict,
+        kernel_decay: float=1.0,
+        bias_decay: float=1.0
+    ) -> dict:
+    """
+    Takes policy params or arm states as input and all the leaves which have "kernel" and/or "bias"
+    in their path will be decayed with the provided factor
+
+    inputs:
+    - param_dict: the dictionary with policy params or arm states
+    - kernel_decay: the factor to apply to the kernel_decay; if 1: no decay applied
+    - bias_decay: the factor to apply to the bias_decay; if 1: no decay applied
+
+    output:
+    - return dict (pytree) with modified weights and/or biases
+    """
+    def modify_leaves_with_kernel_in_path(path, leaf):
+        if "kernel" in jax.tree_util.keystr(path):
+            leaf = leaf*kernel_decay
+            return leaf  # Modify leaf
+        return leaf  # Keep unchanged otherwise
+
+    def modify_leaves_with_bias_in_path(path, leaf):
+        if "bias" in jax.tree_util.keystr(path):
+            leaf = leaf*bias_decay
+            return leaf  # Modify leaf
+        return leaf  # Keep unchanged otherwise
+    
+    if kernel_decay != 1.0:
+        param_dict = jax.tree_util.tree_map_with_path(modify_leaves_with_kernel_in_path, param_dict)
+    if bias_decay != 1.0:
+        param_dict = jax.tree_util.tree_map_with_path(modify_leaves_with_bias_in_path, param_dict)
+
+    return param_dict
+
+    
 
 
 
