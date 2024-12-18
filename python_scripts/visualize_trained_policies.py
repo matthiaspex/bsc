@@ -31,9 +31,13 @@ config = complete_config_with_defaults(config)
 ####################################################################################
 # # finutune episode simulation
 
-simulation_time = 5
-config["environment"]["simulation_time"] = simulation_time
+# simulation_time = 10
+# config["environment"]["simulation_time"] = simulation_time
 playback_speed = 1
+
+# config["morphology"]["replace_joint_stiffness"] = (True, 0.1)
+# config["morphology"]["replace_joint_damping"] = (True, 0.5)
+# config["morphology"]["replace_joint_armature"] = (True, 0.02)
 
 simulate_undamaged = True
 simulate_damaged = True
@@ -41,14 +45,15 @@ simulate_damaged = True
 joint_angle_plots = False
 opacity_frames_image = False
 video_render = False
-kernel_animation = False
+kernel_animation = True
 kernel_animation_arm_selection = [0,1,2,3,4] # in case of 1 arm, it can be int or list of 1 int
-kernel_histogram = False
+kernel_histogram = True
 synapse_time_evolution = True
 specific_synapses =[("embed", 0, 1, 20, 20)]
-num_random_synapses = 5
+num_random_synapses = 20
+lr_histogram = False
 
-config["training"]["target"]["force_single_direction"] = (True, "reverse_rowing", 2)
+config["training"]["target"]["force_single_direction"] = (True, "rowing", 1)
 
 arm_setup_damage = [5,5,0,5,5]
 config["damage"]["arm_setup_damage"] = arm_setup_damage
@@ -115,6 +120,11 @@ nn_controller.update_parameter_reshaper() # as the model is already defined and 
 
 nn_controller.update_policy_params(trained_policy_params_flat)
 simulator.update_nn_controller(nn_controller)
+
+if lr_histogram == True:
+    simulator.get_learning_rule_histograms(file_path = IMAGE_DIR + RUN_NAME + run_name_addition + " LR HISTOGRAM.png",\
+                                             xlabel="parameter value",\
+                                             title="Learning rule parameters distributions")
 
 if simulate_undamaged:
     print("simulation of single episode started: Undamaged")

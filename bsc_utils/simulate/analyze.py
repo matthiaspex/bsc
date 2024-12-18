@@ -484,10 +484,50 @@ class Simulator(EnvContainer):
         
         plt.xlabel("timesteps")
         plt.ylabel("synapse strength")
-
+        plt.title(f"Time evolution of {total_curves} synaptic strengths")
         plt.grid(True)
         plt.savefig(file_path)
 
+    
+    def get_learning_rule_histograms(
+            self,
+            file_path: str = None,
+            **kwargs
+    ):
+        """
+        Plots all the learning rule parameters across the entire controller together.
+        In case of a decentralized controller, the parameters of the embedding and output arms
+        are also plotted together.
+        """
+        policy_params = self.nn_controller.policy_params
+        assert isinstance(policy_params, dict), "the policy params are not yet a dictionary. Make sure the parameter reshaper has been applied"
+
+        if self.config["controller"]["hebbian"] == True:
+            leaves_with_path = jax.tree_util.tree_leaves_with_path(policy_params)
+            for key_path, leaf in leaves_with_path:
+                if "kernel" in jax.tree_util.keystr(key_path):
+                    lr_dim = leaf.shape[-1]
+                    break
+            
+            data_list = []
+            subtitles = []
+            for i in range(lr_dim):
+                tmp_store = []
+                for key_path, leaf in leaves_with_path:
+                    if "kernel" in jax.tree_util.keystr(key_path):
+                        tmp_store.append(leaf[:,:,:,i].flatten())
+                data_list.append(jnp.concatenate(tmp_store))
+                subtitles.append(f"lr_param_{i}")
+            
+            fig = create_histogram(data_list, **kwargs, subtitles=subtitles)
+            plt.savefig(file_path)
+
+            print("remove sys.exit() from simulate.analyze.get_leraning_rule_histograms")
+            sys.exit()
+
+
+        else:
+            print("Learning rules parameter distributions cannot be plotted as a static controller is used")
 
 
     

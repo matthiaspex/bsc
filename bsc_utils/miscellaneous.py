@@ -1,3 +1,4 @@
+from ast import List
 import os
 import subprocess
 import logging
@@ -429,7 +430,47 @@ def decay_kernel_bias_dict(
 
     return param_dict
 
-    
+
+def multimodal_normal_sampling(
+        rng: chex.PRNGKey,
+        means: List,
+        stds: List,
+        sample_sizes: List,
+        trunc_mins: List,
+        trunc_maxs: List
+) -> chex.Array:
+    """
+    Samples from a multimodal normal distribution.
+    Inputs:
+    - rng: jax random number generator key
+    - means: means of the different normal distributions
+    - stds: standard deviations of the different normal distributions
+    - sample_sizes: how many samples to pick randomly from every distribution
+    - trunc_min: to prevent large initialisations, truncate the distributions minimums
+    - trunc_max: to prevent large initialisations, truncate the distribution maximums
+    The lengths of all inputs should be identical
+    """
+    lengths = []
+    lengths.append(len(means))
+    lengths.append(len(stds))
+    lengths.append(len(sample_sizes))
+    lengths.append(len(trunc_mins))
+    lengths.append(len(trunc_maxs))
+    num = lengths[0]
+
+    assert all(element == lengths[0] for element in lengths), "make sure all the provided lists have the same length"
+
+    rngs = jax.random.split(rng, num)
+
+    x_list = []
+    for i in range(num):
+        x_tmp = jax.random.truncated_normal(rng, (trunc_mins[i]-means[i])/stds[i], (trunc_maxs[i]-means[i])/stds[i], sample_sizes[i]) * stds[i] + means[i]
+        x_list.append(x_tmp)
+
+    x = jnp.concatenate(x_list)
+
+    return x
+        
 
 
 
