@@ -1,10 +1,10 @@
 #!/bin/bash
 
-#PBS -N batch_20_run_1_try_1
+#PBS -N batch_21
 #PBS -l nodes=1:ppn=2
 #PBS -l gpus=1 # not necessary to specify on donphan, but DON'T FORGET on ACCELGOR
-#PBS -l mem=16gb
-#PBS -l walltime=60:00:00
+#PBS -l mem=25gb
+#PBS -l walltime=40:00:00
 #PBS -e /user/gent/457/vsc45787/bsc/Job_scripts_logs
 #PBS -o /user/gent/457/vsc45787/bsc/Job_scripts_logs
 #PBS -m abe
