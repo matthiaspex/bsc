@@ -32,8 +32,8 @@ config = complete_config_with_defaults(config)
 ####################################################################################
 # # finutune episode simulation
 
-simulation_time = 10
-config["environment"]["simulation_time"] = simulation_time
+# simulation_time = 5
+# config["environment"]["simulation_time"] = simulation_time
 playback_speed = 1
 
 config["morphology"]["replace_joint_stiffness"] = (False, 0.1)
@@ -44,18 +44,18 @@ config["arena"]["arena_size"] = (14,7)
 simulate_undamaged = True
 simulate_damaged = False
 
-joint_angle_plots = False
+joint_angle_plots = True
 opacity_frames_image = False
 video_render = True
-kernel_animation = False
+kernel_animation = True
 kernel_animation_arm_selection = [0,1,2,3,4] # in case of 1 arm, it can be int or list of 1 int
-kernel_histogram = False
+kernel_histogram = True
 synapse_time_evolution = False
-specific_synapses =[("embed", 0, 1, 20, 20)]
+specific_synapses = [("embed", 0, 1, 20, 20)]
 num_random_synapses = 20
 lr_histogram = False
 
-config["training"]["target"]["force_single_direction"] = (True, "rowing", 1)
+config["training"]["target"]["force_single_direction"] = (False, "rowing", 1)
 
 arm_setup_damage = [5,5,0,5,5]
 config["damage"]["arm_setup_damage"] = arm_setup_damage
