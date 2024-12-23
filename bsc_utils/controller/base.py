@@ -64,7 +64,7 @@ class ExplicitMLP(nn.Module):
                 assert self.joint_control in ['position', 'torque'], "joint_control should be either 'position' or 'torque'"
                 if self.joint_control == 'position':
                     x = 30*jnp.pi/180 * act_output(x) # the action space range for positions is -0.5236..0.5236
-                elif self.joint_control == 'control':
+                elif self.joint_control == 'torque':
                     x = act_output(x) # the action space range for torques is -1..1
             neuron_activities.append(x)
         return x, neuron_activities

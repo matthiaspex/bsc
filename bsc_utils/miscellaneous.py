@@ -278,6 +278,16 @@ def complete_config_with_defaults(config):
         config["evolution"]["centered_rank"] = True
 
     try:
+        config["training"]
+    except:
+        config["training"] = {}
+    
+    try:
+        config["training"]["target"]
+    except:
+        config["training"]["target"] = {}
+    
+    try:
         config["training"]["target"]["force_single_direction"]
     except:
         config["training"]["target"]["force_single_direction"] = [False, "rowing", 0]
@@ -291,6 +301,21 @@ def complete_config_with_defaults(config):
         config["controller"]["decentralized"]["decentralized_on"]
     except:
         config["controller"]["decentralized"]["decentralized_on"] = False
+
+    try:
+        config["morphology"]["replace_joint_stiffness"]
+    except:
+        config["morphology"]["replace_joint_stiffness"] = (False, 0.1)
+    
+    try:
+        config["morphology"]["replace_joint_damping"]
+    except:
+        config["morphology"]["replace_joint_damping"] = (False, 0.5)
+    
+    try:
+        config["morphology"]["replace_joint_armature"]
+    except:
+        config["morphology"]["replace_joint_armature"] = (False, 0.02)
 
     return config
 
@@ -460,14 +485,18 @@ def multimodal_normal_sampling(
 
     assert all(element == lengths[0] for element in lengths), "make sure all the provided lists have the same length"
 
-    rngs = jax.random.split(rng, num)
+    rng, rng_tmp = jax.random.split(rng, 2)
+    rngs = jax.random.split(rng_tmp, num)
 
     x_list = []
     for i in range(num):
-        x_tmp = jax.random.truncated_normal(rng, (trunc_mins[i]-means[i])/stds[i], (trunc_maxs[i]-means[i])/stds[i], sample_sizes[i]) * stds[i] + means[i]
+        x_tmp = jax.random.truncated_normal(rngs[i], (trunc_mins[i]-means[i])/stds[i], (trunc_maxs[i]-means[i])/stds[i], sample_sizes[i]) * stds[i] + means[i]
         x_list.append(x_tmp)
 
     x = jnp.concatenate(x_list)
+
+    rng, rng_permutation = jax.random.split(rng, 2)
+    x = jax.random.permutation(rng_permutation, x)
 
     return x
         

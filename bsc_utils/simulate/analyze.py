@@ -660,6 +660,7 @@ class Simulator(EnvContainer):
             if t == 0:
                 _observations = jax.tree_util.tree_map(lambda x: jnp.expand_dims(x, axis = -1), _vectorized_env_state.observations)
                 _rewards = jnp.expand_dims(_vectorized_env_state.reward, axis = -1)
+                _actions = jnp.expand_dims(_action, axis = -1)
             else:
                 _observations = jax.tree_util.tree_map(
                     lambda x, y: jnp.concatenate(
@@ -668,6 +669,9 @@ class Simulator(EnvContainer):
                     _observations, _vectorized_env_state.observations)
                 _rewards = jnp.concatenate(
                     [_rewards, jnp.expand_dims(_vectorized_env_state.reward, axis = -1)],
+                    axis = -1)
+                _actions = jnp.concatenate(
+                    [_actions, jnp.expand_dims(_action, axis = -1)],
                     axis = -1)
 
 
@@ -696,6 +700,7 @@ class Simulator(EnvContainer):
         self.background_frame = _background_frame
         self.observations = _observations
         self.rewards = _rewards
+        self.actions = _actions
         self.kernels = _kernels
 
 

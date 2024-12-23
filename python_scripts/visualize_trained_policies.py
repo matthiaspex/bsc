@@ -3,6 +3,7 @@ import sys
 
 import jax
 from jax import numpy as jnp
+import pickle
 
 from bsc_utils.controller.decentralized import DecentralisedController
 from bsc_utils.miscellaneous import load_config_from_yaml, complete_config_with_defaults, get_target_positions
@@ -31,24 +32,25 @@ config = complete_config_with_defaults(config)
 ####################################################################################
 # # finutune episode simulation
 
-# simulation_time = 10
-# config["environment"]["simulation_time"] = simulation_time
+simulation_time = 10
+config["environment"]["simulation_time"] = simulation_time
 playback_speed = 1
 
-# config["morphology"]["replace_joint_stiffness"] = (True, 0.1)
-# config["morphology"]["replace_joint_damping"] = (True, 0.5)
-# config["morphology"]["replace_joint_armature"] = (True, 0.02)
+config["morphology"]["replace_joint_stiffness"] = (False, 0.1)
+config["morphology"]["replace_joint_damping"] = (False, 0.5)
+config["morphology"]["replace_joint_armature"] = (False, 0.02)
+config["arena"]["arena_size"] = (14,7)
 
 simulate_undamaged = True
-simulate_damaged = True
+simulate_damaged = False
 
 joint_angle_plots = False
 opacity_frames_image = False
-video_render = False
-kernel_animation = True
+video_render = True
+kernel_animation = False
 kernel_animation_arm_selection = [0,1,2,3,4] # in case of 1 arm, it can be int or list of 1 int
-kernel_histogram = True
-synapse_time_evolution = True
+kernel_histogram = False
+synapse_time_evolution = False
 specific_synapses =[("embed", 0, 1, 20, 20)]
 num_random_synapses = 20
 lr_histogram = False
@@ -131,6 +133,13 @@ if simulate_undamaged:
     rng, rng_episode = jax.random.split(rng, 2)
     simulator.generate_episode_data_undamaged(rng_episode)
     print("simulation of single episode finished: Undamaged")
+
+    # with open("observations.pkl", "wb") as file:
+    #     pickle.dump(simulator.observations, file)
+    # with open("nn_params_example.pkl", "wb") as file:
+    #     pickle.dump(nn_controller.get_policy_params_example(), file)
+    # jnp.save("actions.npy", simulator.actions)
+    # jnp.save("rewards.npy", simulator.rewards)
 
     reward = simulator.get_episode_reward()
     cost  = simulator.get_episode_cost()
