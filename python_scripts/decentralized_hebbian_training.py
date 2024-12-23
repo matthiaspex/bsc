@@ -23,7 +23,8 @@ from bsc_utils.simulate.analyze import Simulator
 from bsc_utils.simulate.base import states_based_rollout
 from bsc_utils.miscellaneous import check_GPU_access, load_config_from_yaml, \
     store_config_and_policy_params, get_run_name_from_config, complete_sensor_selection, \
-    get_target_positions, check_sensor_selection_order, order_sensor_selection_in_config
+    get_target_positions, check_sensor_selection_order, order_sensor_selection_in_config, \
+    complete_config_with_defaults
 from bsc_utils.evolution import efficiency_from_reward_cost, fitness_from_stacked_data
 
 jnp.set_printoptions(precision=3, suppress=False, linewidth=100)
@@ -38,6 +39,7 @@ POLICY_PARAMS_DIR = os.environ["POLICY_PARAMS_DIR"] # where to store trained pol
 CONFIG_FILE = os.environ["CONFIG_FILE"]
 
 config = load_config_from_yaml(CONFIG_FILE)
+config = complete_config_with_defaults(config)
 
 try:
     config["controller"]["decentralized"]["decentralized_on"]
