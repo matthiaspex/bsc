@@ -12,6 +12,7 @@ from moojoco.environment.mjx_env import MJXEnv, MJXEnvState
 from bsc_utils.controller.base import ExplicitMLP, NNController
 from bsc_utils.controller.hebbian import HebbianController
 from bsc_utils.controller.decentralized import DecentralisedController
+from bsc_utils.miscellaneous import decay_kernel_bias_dict
 from bsc_utils.visualization import post_render, change_alpha, move_camera
 from bsc_utils.damage import pad_sensory_input, select_actuator_output, check_damage
 
@@ -111,6 +112,7 @@ def states_based_rollout(
         penal_step = penal_step_during_rollout(env_state_observations=_vectorized_env_state_updated.observations, penal_expr=config["evolution"]["penal_expr"])
         
         _states_updated_carry = jax.tree.map(lambda x:x[:,-1:,...], _states_updated)
+
         carry = [_vectorized_env_state_updated, _states_updated_carry] # only pass on the last part of the states, because this is all we use.
         return carry, [reward_step, cost_step, penal_step]
 

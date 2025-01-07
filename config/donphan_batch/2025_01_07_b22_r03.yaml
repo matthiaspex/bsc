@@ -3,10 +3,10 @@
    run_name_format: "{notes} decentralized hebbian single target popsize {es_popsize}"
    seed: 2024
  wandb:
-   project: "job_sub_test"
+   project: "Decentralized"
    group: "Plasticity variations"
-   tags: ["cost_efficiency", "hebbian", "distributed", "force_single_target", "400 pop", "10s", "500 generations", "no_biases"]
-   notes: "b22_test"
+   tags: ["cost_efficiency", "hebbian", "distributed", "force_single_target", "400 pop", "10s", "500 gen", "kernel_decay 0.95"]
+   notes: "b22_r03"
  morphology:
    arm_setup: [ 5, 5, 5, 5, 5 ]
    joint_control: 'position'
@@ -33,8 +33,8 @@
    damage: True # try to write code indepent of this argument
    arm_setup_damage: [ 5, 0, 5, 5, 5]
  evolution:
-   es_popsize: 200
-   num_generations: 30
+   es_popsize: 400
+   num_generations: 500
    centered_rank: true
    cost_expr: "torque" # choose from ["nocost", "torque x angvel", "torque"]
    penal_expr: "nopenal" # choose from ["nopenal", "body_stability"]
@@ -43,9 +43,9 @@
    hebbian: True
    num_hebbian_steps_per_control_step: 1
    hidden_layers: [ 128, 128 ]
-   biases: False # False puts all biases to zero
+   biases: True # False puts all biases to zero
    bias_decay: 1.0 # float, preferably between 0. and 1.
-   kernel_decay: 1.0 # float, preferably between 0. and 1.
+   kernel_decay: 0.95 # float, preferably between 0. and 1.
    kernel_clipping: False # If True, synapses (kernel elements) can't go beyond +3.0 or -3.0 (if you want different values then +3 and -3, still implement)
    multiplicative_plasticity: False # if True, weight increments become weight factors, avoids zero-crossing
    presynaptic_competition: False

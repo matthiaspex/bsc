@@ -1,10 +1,10 @@
 #!/bin/bash
 
-#PBS -N job_sub_test_b22
+#PBS -N b22_r04
 #PBS -l nodes=1:ppn=2
 # #PBS -l gpus=1 # not necessary to specify on donphan, but DON'T FORGET on ACCELGOR
 #PBS -l mem=12gb
-#PBS -l walltime=10:00:00
+#PBS -l walltime=48:00:00
 #PBS -e /user/gent/457/vsc45787/bsc/Job_scripts_logs
 #PBS -o /user/gent/457/vsc45787/bsc/Job_scripts_logs
 #PBS -m abe
@@ -34,22 +34,22 @@ conda activate hope
 echo "which python"
 which python
 
+batch="b22"
+
 export PYTHONPATH="$HOME/bsc/:$HOME/bsc/bsc_utils/"
-export POLICY_PARAMS_DIR="./post_processing/trained_policy_params/tmp/"
-export VIDEO_DIR="$VSC_DATA/brittle_star/tmp/"
-export IMAGE_DIR="$VSC_DATA/brittle_star/tmp/"
+export POLICY_PARAMS_DIR="./post_processing/$batch/"
+export VIDEO_DIR="$VSC_DATA/brittle_star/$batch/"
+export IMAGE_DIR="$VSC_DATA/brittle_star/$batch/"
 
 # # Update code
 # git pull --recurse-submodules
 
 
-
 echo "Run started"
-export CONFIG_FILE="./config/decentralized_donphan_job.yaml"
+export CONFIG_FILE="./config/donphan_batch/2025_01_07_b22_r04.yaml"
 python './python_scripts/decentralized_hebbian_training.py' 
 echo "Run finished"
 
 
 rm $VIDEO_DIR*
 # rm $IMAGE_DIR* # Only remove when it is actually different from the $VIDEO_DIR
-

@@ -9,6 +9,7 @@ from typing import Callable, Sequence
 from evosax import ParameterReshaper
 
 from bsc_utils.BrittleStarEnv import EnvContainer
+from bsc_utils.miscellaneous import decay_kernel_bias_dict
 
 
 
@@ -172,9 +173,14 @@ class NNController():
         Stores a dict, but can take evosax array as flat input
         """
         if isinstance(policy_params, dict):
-            self.policy_params = policy_params
-        if isinstance(policy_params, chex.Array):
-            self.policy_params = self.parameter_reshaper.reshape(policy_params)
+            pass
+        elif isinstance(policy_params, chex.Array):
+            policy_params = self.parameter_reshaper.reshape(policy_params)
+        
+        if self.config["controller"]["biases"] == False:
+            policy_params = decay_kernel_bias_dict(policy_params, bias_decay=0.0)
+        
+        self.policy_params = policy_params
 
     def get_policy_params(
             self,

@@ -317,6 +317,36 @@ def complete_config_with_defaults(config):
     except:
         config["morphology"]["replace_joint_armature"] = (False, 0.02)
 
+    try:
+        config["controller"]["biases"]
+    except:
+        config["controller"]["biases"] = True
+    
+    try:
+        config["controller"]["bias_decay"]
+    except:
+        config["controller"]["bias_decay"] = 1.0
+
+    try:
+        config["controller"]["kernel_decay"]
+    except:
+        config["controller"]["kernel_decay"] = 1.0
+    
+    try:
+        config["controller"]["kernel_clipping"]
+    except:
+        config["controller"]["kernel_clipping"] = False
+
+    try:
+        config["controller"]["multiplicative_plasticity"]
+    except:
+        config["controller"]["multiplicative_plasticity"] = False
+
+    try:
+        config["controller"]["presynaptic_competition"]
+    except:
+        config["controller"]["presynaptic_competition"] = False
+
     return config
 
 
@@ -453,6 +483,81 @@ def decay_kernel_bias_dict(
     if bias_decay != 1.0:
         param_dict = jax.tree_util.tree_map_with_path(modify_leaves_with_bias_in_path, param_dict)
 
+    return param_dict
+
+
+def clip_kernel_biases_dict(
+        param_dict: dict,
+        kernel_min: Optional[float]=None,
+        kernel_max: Optional[float]=None,
+        bias_min: Optional[float]=None,
+        bias_max: Optional[float]=None
+) -> dict:
+    """
+    Takes policy params or arm states as input and all the leaves which have "kernel" and/or "bias" in their path
+    will be clipped to not go outside the provided interval (or only max/min value)
+    
+    inputs:
+    - param_dict: the dictionary with policy params or arm states
+    - kernel_min: the lowest value in the kernel arrays which will still occur in the resulting dict
+    - kernel_max: the highest value in the kernel arrays which will still occur in the resulting dict
+    - bias_min: the lowest value in the bias arrays which will still occur in the resulting dict
+    - bias_max: the highest value in the bias arrays which will still occur in the resulting dict
+    
+    output:
+    - return dict (pytree) with the modified weights and/or biases
+    """
+    def clip_leaves_with_kernel_in_path(path, leaf):
+        if "kernel" in jax.tree_util.keystr(path):
+            leaf = jnp.clip(leaf, min=kernel_min, max=kernel_max)
+            return leaf  # Modify leaf
+        return leaf  # Keep unchanged otherwise
+
+    def clip_leaves_with_bias_in_path(path, leaf):
+        if "bias" in jax.tree_util.keystr(path):
+            leaf = jnp.clip(leaf, min=bias_min, max=bias_max)
+            return leaf  # Modify leaf
+        return leaf  # Keep unchanged otherwise
+    
+    if kernel_min != None or kernel_max != None:
+        if kernel_min and kernel_max:
+            assert kernel_min < kernel_max, "kernel_min should be smaller than kernel_max"
+        param_dict = jax.tree_util.tree_map_with_path(clip_leaves_with_kernel_in_path, param_dict)
+
+    if bias_min != None or bias_max != None:
+        if bias_min and bias_max:
+            assert bias_min < bias_max, "bias_min should be smaller than bias_max"
+        param_dict = jax.tree_util.tree_map_with_path(clip_leaves_with_bias_in_path, param_dict)
+
+    return param_dict
+
+
+def presynaptic_competition_rescale(
+        param_dict: dict,
+
+):
+    """
+    Based on Fung and Fukai (2023) eq (3)
+    For every output node (column in the kernel matrix), check whether any weight surpasses value 1.0
+    If it surpasses, than divide entire column by the maximum value.
+
+    Input:
+    - param_dict: a pytree containing the weight kernels (can be arm_states object as well)
+
+    Output:
+    - dict (pytree) containing the rescaled weights
+    """
+    def rescale_kernel_columns(path, leaf):
+        if "kernel" in jax.tree_util.keystr(path):
+            num_rows = leaf.shape[0]
+            maximums = jnp.max(leaf, axis=0)
+            maximums = jnp.where(maximums < 1., 1., maximums)
+            maximums_2D = jnp.tile(maximums, (num_rows,1))
+            return leaf/maximums_2D  # Modify leaf
+        return leaf  # Keep unchanged otherwise
+
+    param_dict = jax.tree_util.tree_map_with_path(rescale_kernel_columns, param_dict)
+    
     return param_dict
 
 

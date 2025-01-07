@@ -8,6 +8,7 @@ from evosax import ParameterReshaper
 
 from bsc_utils.controller.base import NNController
 from bsc_utils.BrittleStarEnv import EnvContainer
+from bsc_utils.miscellaneous import clip_kernel_biases_dict, decay_kernel_bias_dict, presynaptic_competition_rescale
 
 class HebbianController(NNController):
     def __init__(
@@ -122,10 +123,15 @@ class HebbianController(NNController):
             assert actual_num_params == required_num_params, \
                 """shape of the provided learning_rules params doesn't match the one required according to ParamReshaper
                    Or: problem with vmapping: learning rules is a 1D array instead of 2D array with shape (# parellel simulations, # policy params)"""
-            self.learning_rules = learning_rules
+            
 
         elif isinstance(learning_rules, chex.Array): # flat evosax format with dim (popsize, parameter.total_params)
-            self.learning_rules = self.parameter_reshaper.reshape(learning_rules)
+            learning_rules = self.parameter_reshaper.reshape(learning_rules)
+
+        if self.config["controller"]["biases"] == False:
+            policy_params = decay_kernel_bias_dict(policy_params, bias_decay=0.0)
+
+        self.learning_rules = learning_rules
 
 
     def apply(
@@ -165,6 +171,23 @@ class HebbianController(NNController):
                                                            learning_rules,
                                                            neuron_activities)
 
+        # bias/kernel decays
+        if self.config["controller"]["bias_decay"] != 1.0 or self.config["controller"]["kernel_decay"] != 1.0:
+            synapse_strengths = decay_kernel_bias_dict(synapse_strengths,
+                                                           kernel_decay=self.config["controller"]["kernel_decay"],
+                                                           bias_decay=self.config["controller"]["bias_decay"]
+                                                           )
+
+        # clipping the kernels between -3 and 3
+        if self.config["controller"]["kernel_clipping"] == True:
+            synapse_strengths = clip_kernel_biases_dict(synapse_strengths,
+                                                        kernel_min=-3.,
+                                                        kernel_max=3.)
+            
+        if self.config["controller"]["presynaptic_competition"] == True:
+            synapse_strengths = presynaptic_competition_rescale(synapse_strengths)
+
+
         # pass on the new synapse strengths to the super.apply() method
         actuator_output, neuron_activities = super().apply(sensory_input=sensory_input, synapse_strengths=synapse_strengths)
 
@@ -194,7 +217,15 @@ class HebbianController(NNController):
 
             ss_incr_kernel = self._apply_learning_rule(lr_kernel, input_nodes, output_nodes)
 
-            synapse_strengths["params"][f"layers_{p}"]["kernel"] += ss_incr_kernel
+            if self.config["controller"]["multiplicative_plasticity"] == False:
+                synapse_strengths["params"][f"layers_{p}"]["kernel"] += ss_incr_kernel
+            elif self.config["controller"]["multiplicative_plasticity"] == True:
+                synapse_strengths["params"][f"layers_{p}"]["kernel"] *= jnp.log(ss_incr_kernel)
+
+            else:
+                raise NotImplementedError("something went wrong witht the multiplicative_plasticity argument of the config file")
+
+
             synapse_strengths["params"][f"layers_{p}"]["bias"] = learning_rules["params"][f"layers_{p}"]["bias"]
 
         return synapse_strengths

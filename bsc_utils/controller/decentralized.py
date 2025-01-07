@@ -11,7 +11,7 @@ from bsc_utils.BrittleStarEnv import EnvContainer
 from bsc_utils.controller.base import NNController
 from bsc_utils.controller.hebbian import HebbianController
 from bsc_utils.miscellaneous import check_sensor_selection_order,\
-    calculate_arm_target_allignment_factors
+    calculate_arm_target_allignment_factors, decay_kernel_bias_dict
 
 
 class DecentralisedController():
@@ -256,7 +256,7 @@ class DecentralisedController():
 
     def set_model(
             self,
-            model: Tuple[Union[HebbianController, NNController]]
+            model: Tuple[Union[HebbianController, NNController]] # tuple with embed and output models
     ):
         self._model_embed = model[0]
         self._model_output = model[1]
@@ -378,6 +378,7 @@ class DecentralisedController():
         if isinstance(policy_params, chex.Array):
             policy_params = self.parameter_reshaper.reshape(policy_params)
         
+
         self._policy_params = policy_params
 
         self._model_embed.update_parameter_reshaper()
