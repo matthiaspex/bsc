@@ -129,7 +129,7 @@ class HebbianController(NNController):
             learning_rules = self.parameter_reshaper.reshape(learning_rules)
 
         if self.config["controller"]["biases"] == False:
-            policy_params = decay_kernel_bias_dict(policy_params, bias_decay=0.0)
+            learning_rules = decay_kernel_bias_dict(learning_rules, bias_decay=0.0)
 
         self.learning_rules = learning_rules
 

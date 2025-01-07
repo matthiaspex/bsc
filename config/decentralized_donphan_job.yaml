@@ -44,11 +44,11 @@
    num_hebbian_steps_per_control_step: 1
    hidden_layers: [ 128, 128 ]
    biases: False # False puts all biases to zero
-   bias_decay: 1.0 # float, preferably between 0. and 1.
-   kernel_decay: 1.0 # float, preferably between 0. and 1.
-   kernel_clipping: False # If True, synapses (kernel elements) can't go beyond +3.0 or -3.0 (if you want different values then +3 and -3, still implement)
-   multiplicative_plasticity: False # if True, weight increments become weight factors, avoids zero-crossing
-   presynaptic_competition: False
+   bias_decay: 0.97 # float, preferably between 0. and 1.
+   kernel_decay: 0.95 # float, preferably between 0. and 1.
+   kernel_clipping: True # If True, synapses (kernel elements) can't go beyond +3.0 or -3.0 (if you want different values then +3 and -3, still implement)
+   multiplicative_plasticity: True # if True, weight increments become weight factors, avoids zero-crossing
+   presynaptic_competition: True
    decentralized:
      decentralized_on: True
      embed_hidden_layers: [64, 64] # The hidden layers of the input network
