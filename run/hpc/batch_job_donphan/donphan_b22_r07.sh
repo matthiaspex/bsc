@@ -4,7 +4,7 @@
 #PBS -l nodes=1:ppn=2
 # #PBS -l gpus=1 # not necessary to specify on donphan, but DON'T FORGET on ACCELGOR
 #PBS -l mem=12gb
-#PBS -l walltime=48:00:00
+#PBS -l walltime=20:00:00
 #PBS -e /user/gent/457/vsc45787/bsc/Job_scripts_logs
 #PBS -o /user/gent/457/vsc45787/bsc/Job_scripts_logs
 #PBS -m abe
@@ -37,7 +37,7 @@ which python
 batch="b22"
 
 export PYTHONPATH="$HOME/bsc/:$HOME/bsc/bsc_utils/"
-export POLICY_PARAMS_DIR="./post_processing/$batch/"
+export POLICY_PARAMS_DIR="./post_processing/trained_policy_params/$batch/"
 export VIDEO_DIR="$VSC_DATA/brittle_star/$batch/"
 export IMAGE_DIR="$VSC_DATA/brittle_star/$batch/"
 

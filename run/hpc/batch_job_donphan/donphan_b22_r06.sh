@@ -37,7 +37,7 @@ which python
 batch="b22"
 
 export PYTHONPATH="$HOME/bsc/:$HOME/bsc/bsc_utils/"
-export POLICY_PARAMS_DIR="./post_processing/$batch/"
+export POLICY_PARAMS_DIR="./post_processing/trained_policy_params/$batch/"
 export VIDEO_DIR="$VSC_DATA/brittle_star/$batch/"
 export IMAGE_DIR="$VSC_DATA/brittle_star/$batch/"
 
