@@ -51,5 +51,5 @@ python './python_scripts/decentralized_hebbian_training.py'
 echo "Run finished"
 
 
-rm $VIDEO_DIR*
+# rm $VIDEO_DIR*
 # rm $IMAGE_DIR* # Only remove when it is actually different from the $VIDEO_DIR
