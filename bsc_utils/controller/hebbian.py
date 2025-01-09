@@ -8,7 +8,7 @@ from evosax import ParameterReshaper
 
 from bsc_utils.controller.base import NNController
 from bsc_utils.BrittleStarEnv import EnvContainer
-from bsc_utils.miscellaneous import clip_kernel_biases_dict, decay_kernel_bias_dict, presynaptic_competition_rescale
+from bsc_utils.miscellaneous import clip_kernel_biases_dict, decay_kernel_bias_dict, presynaptic_competition_rescale, prune_pytree
 
 class HebbianController(NNController):
     def __init__(
@@ -23,6 +23,10 @@ class HebbianController(NNController):
         Returns the attribute containing the policy params, being the learning rules for the HebbianController class.
         """
         return self.learning_rules
+    
+    @property
+    def anti_zero_crossing_mask(self):
+        return self._anti_zero_crossing_mask
 
     def get_policy_params_example(self) -> dict:
         """
@@ -83,6 +87,10 @@ class HebbianController(NNController):
         synapse_strengths_init_flat = jax.random.uniform(rng, shape=(parallel_dim, ss_num_params), minval = minval, maxval = maxval)
 
         self.synapse_strengths = ss_parameter_reshaper.reshape(synapse_strengths_init_flat)
+
+        if self.config["controller"]["anti_zero_crossing"] == True:
+            anti_zero_crossing_mask = AntiZeroCrossingMask(self.synapse_strengths)
+            self._anti_zero_crossing_mask = anti_zero_crossing_mask
 
     def get_synapse_strengths(
             self
@@ -187,6 +195,9 @@ class HebbianController(NNController):
         if self.config["controller"]["presynaptic_competition"] == True:
             synapse_strengths = presynaptic_competition_rescale(synapse_strengths)
 
+        if self.config["controller"]["anti_zero_crossing"] == True:
+            synapse_strengths = self._anti_zero_crossing_mask.apply(synapse_strengths)
+
 
         # pass on the new synapse strengths to the super.apply() method
         actuator_output, neuron_activities = super().apply(sensory_input=sensory_input, synapse_strengths=synapse_strengths)
@@ -270,6 +281,58 @@ class HebbianController(NNController):
     
 
     
+
+class AntiZeroCrossingMask():
+    def __init__(self, param_dict_original):
+        self._param_dict_original = param_dict_original
+
+        self._generate_binary_mask_dict()
+
+    
+    def _generate_binary_mask_dict(self):
+        """"
+        Generates binary mask based on the signs of the initial weights in kernels defined in param_dict
+        provided at initialisation of the class instance.
+        """
+        # param_dict_only_kernels = prune_pytree(self.param_dict_original, obligatory_keyword="kernel")
+        # -> they way the put_wrong_signs_to_zero is built, there is no need to remove non-kernel leaves
+        binary_mask_dict = jax.tree.map(lambda x: jnp.where(x>=0, 1., -1.), self._param_dict_original)
+        self._binary_mask_dict = binary_mask_dict
+    
+    @property
+    def param_dict_original(self):
+        return self._param_dict_original
+
+    @property
+    def binary_mask_dict(self):
+        return self._binary_mask_dict
+    
+    def apply(self, param_dict):
+        """
+        Based on the signs in the binary_mask_dict, put all elements of param_dict to zero which
+        have the opposite sign compared to the param_dict.
+
+        input:
+        - param_dict: param_dict with weights that should not cross zero
+        
+        output:
+        - param_dict with certain values put to zero
+        """
+        def set_to_zero(path, leaf, template_leaf):
+            """
+            used within tree_map_with_path.
+            Will return a tree with the same structure as the tree from the "leaf" and "template_leaf"
+            If "kernel" occurs in path, it will check whether the elements of leaf have the same sign
+            as the ones from "template_leaf", otherwise they are set to zero.
+            """
+            if "kernel" in jax.tree_util.keystr(path):
+                correct_signs = leaf*template_leaf # positive values if leaf and template leaf still have the same sign
+                correct_signs = jnp.where(correct_signs >=0, 1., 0.)
+                return leaf*correct_signs  # Modify leaf
+            return leaf
+
+        corrected_param_dict = jax.tree_util.tree_map_with_path(set_to_zero, param_dict, self._binary_mask_dict)
+        return corrected_param_dict
 
     
 

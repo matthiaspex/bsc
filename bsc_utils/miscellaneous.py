@@ -347,6 +347,11 @@ def complete_config_with_defaults(config):
     except:
         config["controller"]["presynaptic_competition"] = False
 
+    try:
+        config["controller"]["anti_zero_crossing"]
+    except:
+        config["controller"]["anti_zero_crossing"] = False
+
     return config
 
 
@@ -550,10 +555,12 @@ def presynaptic_competition_rescale(
     def rescale_kernel_columns(path, leaf):
         if "kernel" in jax.tree_util.keystr(path):
             num_rows = leaf.shape[0]
-            maximums = jnp.max(leaf, axis=0)
-            maximums = jnp.where(maximums < 1., 1., maximums)
+            maximums = jnp.max(jnp.abs(leaf), axis=0) # also look at biggest negative values. Also taken into account for the rescaling
+            maximums = jnp.where(maximums < 1., 1., maximums) # if maximum in column is less then 1., division by 1.
+            # will occur in that column. If it is greater then 1, division by the maximum will occur in that column.
             maximums_2D = jnp.tile(maximums, (num_rows,1))
             return leaf/maximums_2D  # Modify leaf
+            # division is automatically by positive value, so no signs will switch (since maximums_2D only comes from jnp.abs(leaf) values)
         return leaf  # Keep unchanged otherwise
 
     param_dict = jax.tree_util.tree_map_with_path(rescale_kernel_columns, param_dict)
@@ -604,9 +611,41 @@ def multimodal_normal_sampling(
     x = jax.random.permutation(rng_permutation, x)
 
     return x
-        
 
 
 
+
+def prune_pytree(pytree, obligatory_keyword="kernel"):
+    """
+    Keeps only the leaves from a PyTree where the path contains `obligatory_keyword`.
+
+    Args:
+        pytree: The input PyTree (nested dictionary, tuple, etc.).
+        obligatory_keyword: String that must be in the path for the leaf to be kept.
+
+    Returns:
+        A pruned PyTree containing only leaves with paths that include the `obligatory_keyword`.
+    """
+    def filter_fn(path, leaf):
+        """Return True if the obligatory keyword is in the path."""
+        return obligatory_keyword in str(path)
+
+    # Use `tree_map_with_path` to retain only elements that contain the `obligatory_keyword`
+    pruned_pytree = jax.tree_util.tree_map_with_path(
+        lambda path, leaf: leaf if filter_fn(path, leaf) else None,
+        pytree
+    )
+
+    # Recursively prune any `None` values from the structure
+    def remove_nones(x):
+        if isinstance(x, dict):
+            return {k: remove_nones(v) for k, v in x.items() if v is not None}
+        elif isinstance(x, tuple):
+            return tuple(remove_nones(v) for v in x if v is not None)
+        else:
+            return x
+
+    # Apply the pruning
+    return remove_nones(pruned_pytree)
    
 
