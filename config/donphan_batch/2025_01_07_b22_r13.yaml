@@ -5,8 +5,8 @@
  wandb:
    project: "Decentralized"
    group: "Plasticity variations"
-   tags: ["cost_efficiency", "hebbian", "distributed", "force_single_target", "400 pop", "10s", "500 gen", "anti_zero_crossing"]
-   notes: "b22_r13"
+   tags: ["cost_efficiency", "hebbian", "distributed", "force_single_target", "6912 pop", "10s", "500 gen", "anti_zero_crossing"]
+   notes: "b22_r13_accelgor"
  morphology:
    arm_setup: [ 5, 5, 5, 5, 5 ]
    joint_control: 'position'
@@ -33,7 +33,7 @@
    damage: True # try to write code indepent of this argument
    arm_setup_damage: [ 5, 0, 5, 5, 5]
  evolution:
-   es_popsize: 400
+   es_popsize: 6912
    num_generations: 500
    centered_rank: true
    cost_expr: "torque" # choose from ["nocost", "torque x angvel", "torque"]

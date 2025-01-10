@@ -1,6 +1,6 @@
 #!/bin/bash
 
-#PBS -N b22_r13
+#PBS -N b22_r13_accelgor
 #PBS -l nodes=1:ppn=2
 #PBS -l gpus=1 # not necessary to specify on donphan, but DON'T FORGET on ACCELGOR
 #PBS -l mem=16gb
