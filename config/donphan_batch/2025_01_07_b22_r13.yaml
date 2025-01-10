@@ -66,5 +66,3 @@
      parallel_constant: False # whether all parallel environments during training get the same targets
      force_single_direction: !!python/tuple [ True, "rowing", 0] # First element: whether forced target is enabled. Second: "rowing" or "reverse_rowing". Third: which arm direction.
                                                                  # reverse_rowing and index 0: in between arm 0 and 1.
-     
- 

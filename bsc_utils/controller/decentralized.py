@@ -9,7 +9,7 @@ from evosax import ParameterReshaper
 
 from bsc_utils.BrittleStarEnv import EnvContainer
 from bsc_utils.controller.base import NNController
-from bsc_utils.controller.hebbian import HebbianController
+from bsc_utils.controller.hebbian import HebbianController, AntiZeroCrossingMask
 from bsc_utils.miscellaneous import check_sensor_selection_order,\
     calculate_arm_target_allignment_factors, decay_kernel_bias_dict
 
@@ -346,7 +346,10 @@ class DecentralisedController():
                 dim = states[f"arm_{i}_output"][f"layers_{k}"]["kernel"].shape
                 states[f"arm_{i}_output"][f"layers_{k}"]["kernel"] =\
                     jax.random.uniform(rng_unif, shape=dim, minval = minval, maxval = maxval)
-                
+        
+        if self._config["controller"]["anti_zero_crossing"] == True:
+            self._anti_zero_crossing_mask_states = AntiZeroCrossingMask(states)
+
         return states
 
 
@@ -503,6 +506,9 @@ class DecentralisedController():
                                                                                 axis = 1)
         
         actuation_signal_brittle_star_agent = self.get_actuation_signal_brittle_star_agent_from_arm_states(states=states)
+        
+        if self._config["controller"]["anti_zero_crossing"] == True:
+            states = self._anti_zero_crossing_mask_states.apply(states)
 
         return actuation_signal_brittle_star_agent, states
     

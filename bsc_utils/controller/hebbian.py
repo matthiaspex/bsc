@@ -195,7 +195,8 @@ class HebbianController(NNController):
         if self.config["controller"]["presynaptic_competition"] == True:
             synapse_strengths = presynaptic_competition_rescale(synapse_strengths)
 
-        if self.config["controller"]["anti_zero_crossing"] == True:
+        if self.config["controller"]["anti_zero_crossing"] == True and self.config["controller"]["decentralized"]["decentralized_on"] == False:
+            # if decentralized, it is states based and the anti-zero-crossing is applied after the action is generated
             synapse_strengths = self._anti_zero_crossing_mask.apply(synapse_strengths)
 
 
