@@ -8,7 +8,7 @@ from evosax import ParameterReshaper
 
 from bsc_utils.controller.base import NNController
 from bsc_utils.BrittleStarEnv import EnvContainer
-from bsc_utils.miscellaneous import clip_kernel_biases_dict, decay_kernel_bias_dict, presynaptic_competition_rescale, prune_pytree
+from bsc_utils.miscellaneous import clip_kernel_biases_dict, decay_kernel_bias_dict, postsynaptic_competition_rescale, presynaptic_competition_rescale, prune_pytree
 
 class HebbianController(NNController):
     def __init__(
@@ -194,6 +194,10 @@ class HebbianController(NNController):
             
         if self.config["controller"]["presynaptic_competition"] == True:
             synapse_strengths = presynaptic_competition_rescale(synapse_strengths)
+
+        if self.config["controller"]["postsynaptic_competition"] == True:
+            # note: postsynaptic competition will not happen if presynaptic competition has already occurred
+            synapse_strengths = postsynaptic_competition_rescale(synapse_strengths)
 
         if self.config["controller"]["anti_zero_crossing"] == True and self.config["controller"]["decentralized"]["decentralized_on"] == False:
             # if decentralized, it is states based and the anti-zero-crossing is applied after the action is generated

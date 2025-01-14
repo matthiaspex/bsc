@@ -1,12 +1,12 @@
  experiment:
    interface: 'HPC' # HPC or VSC 
    run_name_format: "{notes} decentralized hebbian single target popsize {es_popsize}"
-   seed: 2024
+   seed: 4000
  wandb:
-   project: "job_sub_test"
+   project: "Decentralized"
    group: "Plasticity variations"
-   tags: ["cost_efficiency", "hebbian", "distributed", "force_single_target", "400 pop", "10s", "500 generations", "no_biases"]
-   notes: "b22_test"
+   tags: ["reward", "hebbian", "distributed", "force_single_target", "6912 pop", "10s", "500 gen", "presynaptic competition"]
+   notes: "b22_r15_accelgor"
  morphology:
    arm_setup: [ 5, 5, 5, 5, 5 ]
    joint_control: 'position'
@@ -33,22 +33,22 @@
    damage: True # try to write code indepent of this argument
    arm_setup_damage: [ 5, 0, 5, 5, 5]
  evolution:
-   es_popsize: 200
-   num_generations: 30
+   es_popsize: 6912
+   num_generations: 500
    centered_rank: true
-   cost_expr: "torque" # choose from ["nocost", "torque x angvel", "torque"]
+   cost_expr: "nocost" # choose from ["nocost", "torque x angvel", "torque"]
    penal_expr: "nopenal" # choose from ["nopenal", "body_stability"]
-   efficiency_expr: "reward _ cost" # choose from ["reward", "reward _ cost", "reward + reward _ cost"]
+   efficiency_expr: "reward" # choose from ["reward", "reward _ cost", "reward + reward _ cost"]
  controller:
    hebbian: True
    num_hebbian_steps_per_control_step: 1
    hidden_layers: [ 128, 128 ]
    biases: True # False puts all biases to zero
-   bias_decay: 0.97 # float, preferably between 0. and 1.
-   kernel_decay: 0.95 # float, preferably between 0. and 1.
+   bias_decay: 1.0 # float, preferably between 0. and 1.
+   kernel_decay: 1.0 # float, preferably between 0. and 1.
    kernel_clipping: False # If True, synapses (kernel elements) can't go beyond +3.0 or -3.0 (if you want different values then +3 and -3, still implement)
    multiplicative_plasticity: False # if True, weight increments become weight factors, avoids zero-crossing
-   presynaptic_competition: False # if True, the weights of every column in the kernel will be rescaled so that none of the weights are bigger than 1.0. This is done with formula 3 from Fung and Fukai (2023)
+   presynaptic_competition: True # if True, the weights of every column in the kernel will be rescaled so that none of the weights are bigger than 1.0. This is done with formula 3 from Fung and Fukai (2023)
    postsynaptic_competition: False # if True, the weights in every row are rescaled, inspired by Fung and Fukai (2023) eq 13.
    anti_zero_crossing: False # the signs of the weights at initialisation are remembered in the class (stored in a mask), if the weight signs ever start deviating from these values, they are forcefully set to 0.
    decentralized:
@@ -67,5 +67,3 @@
      parallel_constant: False # whether all parallel environments during training get the same targets
      force_single_direction: !!python/tuple [ True, "rowing", 0] # First element: whether forced target is enabled. Second: "rowing" or "reverse_rowing". Third: which arm direction.
                                                                  # reverse_rowing and index 0: in between arm 0 and 1.
-     
- 

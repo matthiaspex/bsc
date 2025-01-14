@@ -348,6 +348,11 @@ def complete_config_with_defaults(config):
         config["controller"]["presynaptic_competition"] = False
 
     try:
+        config["controller"]["postsynaptic_competition"]
+    except:
+        config["controller"]["postsynaptic_competition"] = False
+
+    try:
         config["controller"]["anti_zero_crossing"]
     except:
         config["controller"]["anti_zero_crossing"] = False
@@ -553,7 +558,7 @@ def presynaptic_competition_rescale(
     - dict (pytree) containing the rescaled weights
     """
     def rescale_kernel_columns(path, leaf):
-        if "kernel" in jax.tree_util.keystr(path):
+        if "kernel" in jax.tree_util.keystr(path): # only kernels will be rescaled, not biases, inputs, central reservoirs, ...
             num_rows = leaf.shape[0]
             maximums = jnp.max(jnp.abs(leaf), axis=0) # also look at biggest negative values. Also taken into account for the rescaling
             maximums = jnp.where(maximums < 1., 1., maximums) # if maximum in column is less then 1., division by 1.
@@ -564,6 +569,36 @@ def presynaptic_competition_rescale(
         return leaf  # Keep unchanged otherwise
 
     param_dict = jax.tree_util.tree_map_with_path(rescale_kernel_columns, param_dict)
+    
+    return param_dict
+
+
+def postsynaptic_competition_rescale(
+        param_dict: dict
+):
+    """
+    Inspired by Fung and Fukai (2023) eq (13)
+    For every input node (row in the kernel matrix), check whether any weight surpasses value 1.0
+    If it surpasses, than divide entire row by the maximum value.
+
+    Input:
+    - param_dict: a pytree containing the weight kernels (can be arm_states object as well)
+
+    Output:
+    - dict (pytree) containing the rescaled weights
+    """
+    def rescale_kernel_rows(path, leaf):
+        if "kernel" in jax.tree_util.keystr(path): # only kernels will be rescaled, not biases, inputs, central reservoirs, ...
+            num_columns = leaf.shape[1]
+            maximums = jnp.max(jnp.abs(leaf), axis=1) # also look at biggest negative values. Also taken into account for the rescaling
+            maximums = jnp.where(maximums < 1., 1., maximums) # if maximum in column is less then 1., division by 1.
+            # will occur in that column. If it is greater then 1, division by the maximum will occur in that column.
+            maximums_2D = jnp.tile(maximums, (num_columns,1)).T
+            return leaf/maximums_2D  # Modify leaf
+            # division is automatically by positive value, so no signs will switch (since maximums_2D only comes from jnp.abs(leaf) values)
+        return leaf  # Keep unchanged otherwise
+
+    param_dict = jax.tree_util.tree_map_with_path(rescale_kernel_rows, param_dict)
     
     return param_dict
 
