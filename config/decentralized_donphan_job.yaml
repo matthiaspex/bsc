@@ -1,12 +1,12 @@
  experiment:
    interface: 'HPC' # HPC or VSC 
-   run_name_format: "{notes} decentralized {decentralized_on} {reward_type} {arm_setup} popsize {es_popsize} hebbian {hebbian}"
+   run_name_format: "{notes} decentralized hebbian single target popsize {es_popsize}"
    seed: 2024
  wandb:
    project: "job_sub_test"
-   group: "decentralized_donphan"
-   tags: ["decentralized", "hebbian", "force single target"]
-   notes: "Donphan_decentralized_b21"
+   group: "Plasticity variations"
+   tags: ["cost_efficiency", "hebbian", "distributed", "force_single_target", "400 pop", "10s", "500 generations", "no_biases"]
+   notes: "b22_test"
  morphology:
    arm_setup: [ 5, 5, 5, 5, 5 ]
    joint_control: 'position'
@@ -15,15 +15,15 @@
    replace_joint_armature: !!python/tuple [ True, 0.02] # if False, default value of 0.001 will be used
  arena:
    arena_size: !!python/tuple [ 12, 12 ]
-   sand_ground_color: False # must be true for light escape environment
+   sand_ground_color: True # must be true for light escape environment
  environment:
    reward_type: 'target' # choose from distance, target or light
    sensor_selection: !!python/tuple [ 'joint_position', 'joint_actuator_force', 'segment_contact']
    num_physics_steps_per_control_step: 10
-   simulation_time: 5 # seconds, can be float
+   simulation_time: 10 # seconds, can be float
    joint_randomization_noise_scale: 0.0
    light_perlin_noise_scale: 4
-   target_distance: 5
+   target_distance: 7
    target_position: [ 7., 0., 0.] # must fit in the arena
    color_contacts: False
    render:
@@ -33,16 +33,24 @@
    damage: True # try to write code indepent of this argument
    arm_setup_damage: [ 5, 0, 5, 5, 5]
  evolution:
-   es_popsize: 100
-   num_generations: 100
+   es_popsize: 200
+   num_generations: 30
    centered_rank: true
    cost_expr: "torque" # choose from ["nocost", "torque x angvel", "torque"]
    penal_expr: "nopenal" # choose from ["nopenal", "body_stability"]
    efficiency_expr: "reward _ cost" # choose from ["reward", "reward _ cost", "reward + reward _ cost"]
  controller:
-   hebbian: False
+   hebbian: True
    num_hebbian_steps_per_control_step: 1
    hidden_layers: [ 128, 128 ]
+   biases: True # False puts all biases to zero
+   bias_decay: 0.97 # float, preferably between 0. and 1.
+   kernel_decay: 0.95 # float, preferably between 0. and 1.
+   kernel_clipping: False # If True, synapses (kernel elements) can't go beyond +3.0 or -3.0 (if you want different values then +3 and -3, still implement)
+   multiplicative_plasticity: False # if True, weight increments become weight factors, avoids zero-crossing
+   presynaptic_competition: False # if True, the weights of every column in the kernel will be rescaled so that none of the weights are bigger than 1.0. This is done with formula 3 from Fung and Fukai (2023)
+   postsynaptic_competition: False # if True, the weights in every row are rescaled, inspired by Fung and Fukai (2023) eq 13.
+   anti_zero_crossing: False # the signs of the weights at initialisation are remembered in the class (stored in a mask), if the weight signs ever start deviating from these values, they are forcefully set to 0.
    decentralized:
      decentralized_on: True
      embed_hidden_layers: [64, 64] # The hidden layers of the input network
@@ -51,7 +59,7 @@
      explicit_body_sensors: False # specifies whether body sensors are incorporated in the central reservoir
  training:
    target:
-     distance: 5
+     distance: 8
      num_rowing: 1 # max 5, only 5 different rowing positions possible
      num_reverse_rowing: 0 # max 5, only 5 different rowing positions possible
      num_random_positions: 0

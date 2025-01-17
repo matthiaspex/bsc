@@ -1,6 +1,8 @@
 import chex
+from git import Optional
+from networkx import ra_index_soundarajan_hopcroft
 import numpy as np
-from typing import Union
+from typing import Union, Optional, List, Tuple
 import jax
 from jax import numpy as jnp
 from PIL import Image
@@ -10,6 +12,7 @@ import sys
 
 
 from evosax import ParameterReshaper
+from scipy import interpolate
 
 from bsc_utils.BrittleStarEnv import EnvContainer
 from bsc_utils.controller.base import NNController
@@ -175,21 +178,133 @@ class Simulator(EnvContainer):
         if show_image:
             img.show()
 
-    def get_kernel_animation(
+    def get_decentralized_kernel_animation(
             self,
             file_path: str = None,
-            playback_speed: float = 1.0
+            playback_speed: float = 1.0,
+            arm_selection: Union[List[int], int]=[0,1,2,3,4],
     ):
         """
-        self.kernels is a tree (list with dicts)
-        has a shape like (#simulation timesteps, synapse strenghts dict)
+        alternative: self.nn_controller.states contains the time information of the arms
+
+        input:
+        - file_path (including extension .mp4 or .png/.jpg): where to save plot
+        - playback speed: if you want delayed version
+        - arm: for distributed controller: arms to plot
+
         Exports a video if it is a plastic controller
         Exports an image if it is a static controller
         """
+        states = self.nn_controller.states
+        
+        if isinstance(arm_selection, int):
+            arm_selection = [arm_selection]
+
         _fps = int(1/self.environment_configuration.control_timestep)
         _fps *= playback_speed
 
-        if len(self.kernels) >= 0:
+        if self.config["controller"]["hebbian"] == True:
+            # possibly correct the extensions so you get video (.mp4) or picture (.png, .jpg)
+            if file_path.endswith(".png") or file_path.endswith(".jpg"):
+                file_path = file_path[:-4]+".mp4"
+            elif file_path.endswith(".mp4"):
+                pass
+            else:
+                raise TypeError("Make sure the extension of the file_path if .mp4")
+            
+            if self.config["controller"]["decentralized"]["decentralized_on"]:
+                timesteps = jax.tree_util.tree_leaves(states)[0].shape[1]
+                horizontal_plot_dim = len(self.nn_controller.embed_layers) + len(self.nn_controller.output_layers) -2
+                vertical_plot_dim = len(arm_selection)
+                width_ratios = np.zeros(horizontal_plot_dim)
+                count = 0
+                for dim in self.nn_controller.embed_layers[1:]:
+                    width_ratios[count] = dim
+                    count += 1
+                for dim in self.nn_controller.output_layers[1:]:
+                    width_ratios[count] = dim
+                    count += 1
+                # rescale width_ratios for the subplots width scaling
+                width_ratios = width_ratios/np.sum(width_ratios)*len(width_ratios)
+
+                fig, axes = plt.subplots(vertical_plot_dim, horizontal_plot_dim,
+                                         figsize = (5*horizontal_plot_dim, 5*vertical_plot_dim),
+                                         width_ratios=width_ratios)
+                axes = np.atleast_2d(axes)
+                fig.tight_layout(pad=3)  
+
+                ims = []
+                cbs = []
+                for arm_count, arm_ind in enumerate(arm_selection):
+                    for i in range(horizontal_plot_dim):
+                        if i < len(self.nn_controller.embed_layers[1:]):
+                            embed_output = "embed"
+                            lyr = i # layer index to plot
+                        else:
+                            embed_output = "output"
+                            lyr = i - len(self.nn_controller.embed_layers[1:]) #layers index to plot
+                        ims.append(f"im_{i+arm_count*horizontal_plot_dim}")
+                        cbs.append(f"cb_{i+arm_count*horizontal_plot_dim}")
+                        globals()[ims[i+arm_count*horizontal_plot_dim]] = axes[arm_count, i].imshow(\
+                                                           states[f"arm_{arm_ind}_{embed_output}"][f"layers_{lyr}"]["kernel"][0,0,:,:],
+                                                           cmap="seismic",
+                                                           interpolation="nearest")
+                        globals()[cbs[i+arm_count*horizontal_plot_dim]] = fig.colorbar(globals()[ims[i+arm_count*horizontal_plot_dim]], orientation="vertical")
+                        axes[arm_count, i].set_title(f"arm_{arm_ind} {embed_output} layer {lyr}")
+                        axes[arm_count, i].set_xlabel('post-synaptic nodes')
+                        axes[arm_count, i].set_ylabel('pre-synaptic nodes')
+
+                def update(num, states): # num is timestep
+                    for arm_count, arm_ind in enumerate(arm_selection):
+                        for i in range(horizontal_plot_dim):
+                            if i < len(self.nn_controller.embed_layers[1:]):
+                                embed_output = "embed"
+                                lyr = i # layer index to plot
+                            else:
+                                embed_output = "output"
+                                lyr = i - len(self.nn_controller.embed_layers[1:]) #layers index to plot
+                            arr = states[f"arm_{arm_ind}_{embed_output}"][f"layers_{lyr}"]["kernel"][0,num,:,:]
+                            vmax = np.max(arr)
+                            vmin = np.min(arr)
+                            globals()[ims[i+arm_count*horizontal_plot_dim]].set_data(arr)
+                            globals()[ims[i+arm_count*horizontal_plot_dim]].set_clim(vmin, vmax)
+                ani = animation.FuncAnimation(fig=fig, func=update, frames=timesteps, fargs=[states])
+                ani.save(filename=file_path, writer="ffmpeg", fps=_fps) # either "ffmpeg" or "imagemagick if you want gifs"
+
+
+
+            else:
+                raise NotImplementedError("You are supposed to only use this funcion for decentralized controllers")
+        else:
+            raise NotImplementedError("""still implement a static plot? 
+                                         In this case figures should be returned""")
+
+
+
+
+    def get_kernel_animation(
+            self,
+            file_path: str = None,
+            playback_speed: float = 1.0,
+            arm_selection: Union[List[int], int]=[0,1,2,3,4],
+    ):
+        """
+        self.kernels is a tree (list with dicts), leaves have a shape like:
+            (#simulation timesteps, synapse strenghts dict)
+
+        input:
+        - file_path (including extension .mp4 or .png/.jpg): where to save plot
+        - playback speed: if you want delayed version
+
+        Exports a video if it is a plastic controller
+        Exports an image if it is a static controller
+        """
+
+
+        _fps = int(1/self.environment_configuration.control_timestep)
+        _fps *= playback_speed
+
+        if self.config["controller"]["hebbian"] == True:
             # possibly correct the extensions so you get video (.mp4) or picture (.png, .jpg)
             if file_path.endswith(".png") or file_path.endswith(".jpg"):
                 file_path = file_path[:-4]+".mp4"
@@ -307,6 +422,112 @@ class Simulator(EnvContainer):
         fig = create_histogram(data, **kwargs) 
         plt.savefig(file_path)
 
+
+
+    def get_synapse_time_evolutions(
+            self,
+            file_path: str,
+            rng: chex.PRNGKey,
+            specific_synapses: List[Union[Tuple[str, int, int, int, int],Tuple[int, int, int]]] = [],
+            num_random_synapses: int=0,
+    ):
+        """
+        Plots curves throughout episode of the evolution of specific synapses
+        Inputs:
+            file_path: ends with .jpg or .png
+            rng required when num_random_synapses != 0,
+            specific synapses: 2 options for lists of tuples
+                - decentralized contoller: ("embed/output", arm_number, layer_number, kernel_row, kernel_column)
+                - centralized controller: (layer_number, kernel_row, kernel_column)
+            num_random_synapses: specify how many synapses you want to see plotted
+
+
+        No output
+        Saves a plot to file location
+        """
+        states = self.nn_controller.states
+        total_curves = num_random_synapses + len(specific_synapses)
+        timesteps = jax.tree_util.tree_leaves(states)[0].shape[1]
+        timestep_array = jnp.arange(timesteps)
+        synapse_data = jnp.zeros((total_curves, timesteps))
+        if isinstance(self.nn_controller, DecentralisedController):
+            embed_output_options = ["embed", "output"]
+            for i in range(num_random_synapses):
+                rngs = jax.random.split(rng, 6)
+                rng = rngs[0]
+                index = jax.random.randint(rngs[1], shape=(), minval=0, maxval=len(embed_output_options))
+                embed_output = embed_output_options[index]
+                arm_number = jax.random.randint(rngs[2], shape=(), minval=0, maxval=5)
+                if embed_output == "embed":
+                    layer_number = jax.random.randint(rngs[3], shape=(), minval=0, maxval=len(self.nn_controller.embed_layers)-1)
+                    kernel_row_number = jax.random.randint(rngs[4], shape=(), minval=0, maxval=self.nn_controller.embed_layers[layer_number])
+                    kernel_column_number = jax.random.randint(rngs[4], shape=(), minval=0, maxval=self.nn_controller.embed_layers[layer_number+1])
+                elif embed_output == "output":
+                    layer_number = jax.random.randint(rngs[3], shape=(), minval=0, maxval=len(self.nn_controller.output_layers)-1)
+                    kernel_row_number = jax.random.randint(rngs[4], shape=(), minval=0, maxval=self.nn_controller.output_layers[layer_number])
+                    kernel_column_number = jax.random.randint(rngs[4], shape=(), minval=0, maxval=self.nn_controller.output_layers[layer_number+1])
+                synapse_data = synapse_data.at[i,:].set(states[f"arm_{arm_number}_{embed_output}"][f"layers_{layer_number}"]["kernel"][0,:,kernel_row_number, kernel_column_number])
+            
+            for j in range(len(specific_synapses)):
+                ind = j + num_random_synapses
+                synapse_data = synapse_data.at[ind,:].set(states[f"arm_{specific_synapses[j][1]}_{specific_synapses[j][0]}"][f"layers_{specific_synapses[j][2]}"]["kernel"]\
+                    [0,:,specific_synapses[j][3], specific_synapses[j][4]])
+
+        else:
+            raise NotImplementedError("still implement for non-decentralized controllers")
+        
+
+        plt.figure(figsize=(8,6))
+
+        for i in range(total_curves):
+            plt.plot(timestep_array, synapse_data[i,:])
+        
+        plt.xlabel("timesteps")
+        plt.ylabel("synapse strength")
+        plt.title(f"Time evolution of {total_curves} synaptic strengths")
+        plt.grid(True)
+        plt.savefig(file_path)
+
+    
+    def get_learning_rule_histograms(
+            self,
+            file_path: str = None,
+            **kwargs
+    ):
+        """
+        Plots all the learning rule parameters across the entire controller together.
+        In case of a decentralized controller, the parameters of the embedding and output arms
+        are also plotted together.
+        """
+        policy_params = self.nn_controller.policy_params
+        assert isinstance(policy_params, dict), "the policy params are not yet a dictionary. Make sure the parameter reshaper has been applied"
+
+        if self.config["controller"]["hebbian"] == True:
+            leaves_with_path = jax.tree_util.tree_leaves_with_path(policy_params)
+            for key_path, leaf in leaves_with_path:
+                if "kernel" in jax.tree_util.keystr(key_path):
+                    lr_dim = leaf.shape[-1]
+                    break
+            
+            data_list = []
+            subtitles = []
+            for i in range(lr_dim):
+                tmp_store = []
+                for key_path, leaf in leaves_with_path:
+                    if "kernel" in jax.tree_util.keystr(key_path):
+                        tmp_store.append(leaf[:,:,:,i].flatten())
+                data_list.append(jnp.concatenate(tmp_store))
+                subtitles.append(f"lr_param_{i}")
+            
+            fig = create_histogram(data_list, **kwargs, subtitles=subtitles)
+            plt.savefig(file_path)
+
+            print("remove sys.exit() from simulate.analyze.get_leraning_rule_histograms")
+            sys.exit()
+
+
+        else:
+            print("Learning rules parameter distributions cannot be plotted as a static controller is used")
 
 
     
@@ -439,6 +660,7 @@ class Simulator(EnvContainer):
             if t == 0:
                 _observations = jax.tree_util.tree_map(lambda x: jnp.expand_dims(x, axis = -1), _vectorized_env_state.observations)
                 _rewards = jnp.expand_dims(_vectorized_env_state.reward, axis = -1)
+                _actions = jnp.expand_dims(_action, axis = -1)
             else:
                 _observations = jax.tree_util.tree_map(
                     lambda x, y: jnp.concatenate(
@@ -447,6 +669,9 @@ class Simulator(EnvContainer):
                     _observations, _vectorized_env_state.observations)
                 _rewards = jnp.concatenate(
                     [_rewards, jnp.expand_dims(_vectorized_env_state.reward, axis = -1)],
+                    axis = -1)
+                _actions = jnp.concatenate(
+                    [_actions, jnp.expand_dims(_action, axis = -1)],
                     axis = -1)
 
 
@@ -475,6 +700,7 @@ class Simulator(EnvContainer):
         self.background_frame = _background_frame
         self.observations = _observations
         self.rewards = _rewards
+        self.actions = _actions
         self.kernels = _kernels
 
 
@@ -500,7 +726,8 @@ class Simulator(EnvContainer):
         _vectorized_env_reset = jax.jit(jax.vmap(_env.reset))
 
         if not isinstance(self.nn_controller, DecentralisedController):
-            raise TypeError(f"""the specified controller if of type {type(nn_controller)}, which is not supported by the "_states_based_generate_episode_data" method.
+            raise TypeError(f"""the specified controller if of type {type(nn_controller)},
+                                which is not supported by the "_states_based_generate_episode_data" method.
                                 Consider using the '_generate_episode_data' method""")
 
         if self.config["environment"]["reward_type"] == 'target':
@@ -508,7 +735,8 @@ class Simulator(EnvContainer):
                 self.targets
             except AttributeError:
                 raise Exception("first call the update_targets method")
-            assert self.targets.shape == (_NUM_MJX_ENVIRONMENTS, 3), "the targets provided don't have the correct dimension (parallel_envs, 3)"
+            assert self.targets.shape == (_NUM_MJX_ENVIRONMENTS, 3),\
+                "the targets provided don't have the correct dimension (parallel_envs, 3)"
             _vectorized_env_state = _vectorized_env_reset(rng=_vectorized_env_rng, target_position = self.targets)
         else:
             _vectorized_env_state = _vectorized_env_reset(rng=_vectorized_env_rng)

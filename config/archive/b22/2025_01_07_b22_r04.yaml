@@ -1,0 +1,69 @@
+ experiment:
+   interface: 'HPC' # HPC or VSC 
+   run_name_format: "{notes} decentralized hebbian single target popsize {es_popsize}"
+   seed: 2024
+ wandb:
+   project: "Decentralized"
+   group: "Plasticity variations"
+   tags: ["cost_efficiency", "hebbian", "distributed", "force_single_target", "400 pop", "10s", "500 gen", "kernel_clipping"]
+   notes: "b22_r04"
+ morphology:
+   arm_setup: [ 5, 5, 5, 5, 5 ]
+   joint_control: 'position'
+   replace_joint_stiffness: !!python/tuple [ True, 0.1] # if False, default value of 0.01 will be used
+   replace_joint_damping: !!python/tuple [ True, 0.5] # if False, default value of 0.1 will be used
+   replace_joint_armature: !!python/tuple [ True, 0.02] # if False, default value of 0.001 will be used
+ arena:
+   arena_size: !!python/tuple [ 12, 12 ]
+   sand_ground_color: True # must be true for light escape environment
+ environment:
+   reward_type: 'target' # choose from distance, target or light
+   sensor_selection: !!python/tuple [ 'joint_position', 'joint_actuator_force', 'segment_contact']
+   num_physics_steps_per_control_step: 10
+   simulation_time: 10 # seconds, can be float
+   joint_randomization_noise_scale: 0.0
+   light_perlin_noise_scale: 4
+   target_distance: 7
+   target_position: [ 7., 0., 0.] # must fit in the arena
+   color_contacts: False
+   render:
+     camera_ids: [ 0, 1 ]
+     render_size: [ 480, 640 ] # choose ratio 3:4 --> [ 480, 640  ], [ 720, 960 ], [ 960, 1280 ] (720p), [ 1440, 1920 ] (1080p), [ 3072, 4069 ] (HDTV 4k)
+ damage:
+   damage: True # try to write code indepent of this argument
+   arm_setup_damage: [ 5, 0, 5, 5, 5]
+ evolution:
+   es_popsize: 400
+   num_generations: 500
+   centered_rank: true
+   cost_expr: "torque" # choose from ["nocost", "torque x angvel", "torque"]
+   penal_expr: "nopenal" # choose from ["nopenal", "body_stability"]
+   efficiency_expr: "reward _ cost" # choose from ["reward", "reward _ cost", "reward + reward _ cost"]
+ controller:
+   hebbian: True
+   num_hebbian_steps_per_control_step: 1
+   hidden_layers: [ 128, 128 ]
+   biases: True # False puts all biases to zero
+   bias_decay: 1.0 # float, preferably between 0. and 1.
+   kernel_decay: 1.0 # float, preferably between 0. and 1.
+   kernel_clipping: True # If True, synapses (kernel elements) can't go beyond +3.0 or -3.0 (if you want different values then +3 and -3, still implement)
+   multiplicative_plasticity: False # if True, weight increments become weight factors, avoids zero-crossing
+   presynaptic_competition: False
+   decentralized:
+     decentralized_on: True
+     embed_hidden_layers: [64, 64] # The hidden layers of the input network
+     output_hidden_layers: [64, 64] # The hidden layers of the output network
+     embedding_dim_per_arm: 20
+     explicit_body_sensors: False # specifies whether body sensors are incorporated in the central reservoir
+ training:
+   target:
+     distance: 8
+     num_rowing: 1 # max 5, only 5 different rowing positions possible
+     num_reverse_rowing: 0 # max 5, only 5 different rowing positions possible
+     num_random_positions: 0
+     # total number of targets is the sum of targets in rowing, reverse_rowing and random positions
+     parallel_constant: False # whether all parallel environments during training get the same targets
+     force_single_direction: !!python/tuple [ True, "rowing", 0] # First element: whether forced target is enabled. Second: "rowing" or "reverse_rowing". Third: which arm direction.
+                                                                 # reverse_rowing and index 0: in between arm 0 and 1.
+     
+ 

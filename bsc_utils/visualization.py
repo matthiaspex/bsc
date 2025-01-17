@@ -166,9 +166,10 @@ def change_alpha(
 
 
 
-def create_histogram(data, bins=30, title='Histogram', xlabel='Value', ylabel='Frequency', color='blue', edgecolor='black', alpha=0.7):
+def create_histogram(data, bins=30, title='Histogram', xlabel='Value', ylabel='Frequency', color='blue', edgecolor='black', alpha=0.7, subtitles=None):
     """
     Creates a histogram plot and returns the figure object.
+    Can also take list of data and list of subtitles
 
     Parameters:
     - data: array-like, the data to plot
@@ -183,12 +184,36 @@ def create_histogram(data, bins=30, title='Histogram', xlabel='Value', ylabel='F
     Returns:
     - fig: matplotlib.figure.Figure, the figure object of the histogram
     """
-    fig, ax = plt.subplots(figsize=(8, 6))
-    ax.hist(data, bins=bins, color=color, edgecolor=edgecolor, alpha=alpha)
-    ax.set_title(title)
-    ax.set_xlabel(xlabel)
-    ax.set_ylabel(ylabel)
-    ax.grid(True, linestyle='--', alpha=0.5)
+    if isinstance(data, list):
+        num_histograms = len(data)
+        fig, axes = plt.subplots(num_histograms, 1, figsize=(8, 6 * num_histograms))
+
+        # Ensure axes is iterable
+        if num_histograms == 1:
+            axes = [axes]
+
+        for i, data in enumerate(data):
+            ax = axes[i]
+            ax.hist(data, bins=bins, color=color, edgecolor=edgecolor, alpha=alpha)
+            ax.set_xlabel(xlabel, fontsize = 16)
+            ax.set_ylabel(ylabel, fontsize = 16)
+            if subtitles and (len(subtitles)==num_histograms):
+                ax.set_title(subtitles[i], fontsize=20)
+                ax.grid(True, linestyle='--', alpha=0.5)
+
+        # Set the global title
+        fig.suptitle(title, fontsize=24)  # Adjust y for spacing
+        plt.tight_layout()
+        plt.subplots_adjust(top=1-(0.25/num_histograms))  # Add space for the global title
+
+
+    else:
+        fig, ax = plt.subplots(figsize=(8, 6))
+        ax.hist(data, bins=bins, color=color, edgecolor=edgecolor, alpha=alpha)
+        ax.set_title(title)
+        ax.set_xlabel(xlabel)
+        ax.set_ylabel(ylabel)
+        ax.grid(True, linestyle='--', alpha=0.5)
     
     return fig
 

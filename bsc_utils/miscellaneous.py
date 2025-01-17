@@ -1,3 +1,4 @@
+from ast import List
 import os
 import subprocess
 import logging
@@ -276,6 +277,86 @@ def complete_config_with_defaults(config):
     except:
         config["evolution"]["centered_rank"] = True
 
+    try:
+        config["training"]
+    except:
+        config["training"] = {}
+    
+    try:
+        config["training"]["target"]
+    except:
+        config["training"]["target"] = {}
+    
+    try:
+        config["training"]["target"]["force_single_direction"]
+    except:
+        config["training"]["target"]["force_single_direction"] = [False, "rowing", 0]
+
+    try:
+        config["controller"]["decentralized"]
+    except:
+        config["controller"]["decentralized"] = {}
+    
+    try:
+        config["controller"]["decentralized"]["decentralized_on"]
+    except:
+        config["controller"]["decentralized"]["decentralized_on"] = False
+
+    try:
+        config["morphology"]["replace_joint_stiffness"]
+    except:
+        config["morphology"]["replace_joint_stiffness"] = (False, 0.1)
+    
+    try:
+        config["morphology"]["replace_joint_damping"]
+    except:
+        config["morphology"]["replace_joint_damping"] = (False, 0.5)
+    
+    try:
+        config["morphology"]["replace_joint_armature"]
+    except:
+        config["morphology"]["replace_joint_armature"] = (False, 0.02)
+
+    try:
+        config["controller"]["biases"]
+    except:
+        config["controller"]["biases"] = True
+    
+    try:
+        config["controller"]["bias_decay"]
+    except:
+        config["controller"]["bias_decay"] = 1.0
+
+    try:
+        config["controller"]["kernel_decay"]
+    except:
+        config["controller"]["kernel_decay"] = 1.0
+    
+    try:
+        config["controller"]["kernel_clipping"]
+    except:
+        config["controller"]["kernel_clipping"] = False
+
+    try:
+        config["controller"]["multiplicative_plasticity"]
+    except:
+        config["controller"]["multiplicative_plasticity"] = False
+
+    try:
+        config["controller"]["presynaptic_competition"]
+    except:
+        config["controller"]["presynaptic_competition"] = False
+
+    try:
+        config["controller"]["postsynaptic_competition"]
+    except:
+        config["controller"]["postsynaptic_competition"] = False
+
+    try:
+        config["controller"]["anti_zero_crossing"]
+    except:
+        config["controller"]["anti_zero_crossing"] = False
+
     return config
 
 
@@ -378,6 +459,228 @@ def calculate_arm_target_allignment_factors(
     return arm_projections
 
 
+def decay_kernel_bias_dict(
+        param_dict: dict,
+        kernel_decay: float=1.0,
+        bias_decay: float=1.0
+    ) -> dict:
+    """
+    Takes policy params or arm states as input and all the leaves which have "kernel" and/or "bias"
+    in their path will be decayed with the provided factor
 
+    inputs:
+    - param_dict: the dictionary with policy params or arm states
+    - kernel_decay: the factor to apply to the kernel_decay; if 1: no decay applied
+    - bias_decay: the factor to apply to the bias_decay; if 1: no decay applied
+
+    output:
+    - return dict (pytree) with modified weights and/or biases
+    """
+    def modify_leaves_with_kernel_in_path(path, leaf):
+        if "kernel" in jax.tree_util.keystr(path):
+            leaf = leaf*kernel_decay
+            return leaf  # Modify leaf
+        return leaf  # Keep unchanged otherwise
+
+    def modify_leaves_with_bias_in_path(path, leaf):
+        if "bias" in jax.tree_util.keystr(path):
+            leaf = leaf*bias_decay
+            return leaf  # Modify leaf
+        return leaf  # Keep unchanged otherwise
+    
+    if kernel_decay != 1.0:
+        param_dict = jax.tree_util.tree_map_with_path(modify_leaves_with_kernel_in_path, param_dict)
+    if bias_decay != 1.0:
+        param_dict = jax.tree_util.tree_map_with_path(modify_leaves_with_bias_in_path, param_dict)
+
+    return param_dict
+
+
+def clip_kernel_biases_dict(
+        param_dict: dict,
+        kernel_min: Optional[float]=None,
+        kernel_max: Optional[float]=None,
+        bias_min: Optional[float]=None,
+        bias_max: Optional[float]=None
+) -> dict:
+    """
+    Takes policy params or arm states as input and all the leaves which have "kernel" and/or "bias" in their path
+    will be clipped to not go outside the provided interval (or only max/min value)
+    
+    inputs:
+    - param_dict: the dictionary with policy params or arm states
+    - kernel_min: the lowest value in the kernel arrays which will still occur in the resulting dict
+    - kernel_max: the highest value in the kernel arrays which will still occur in the resulting dict
+    - bias_min: the lowest value in the bias arrays which will still occur in the resulting dict
+    - bias_max: the highest value in the bias arrays which will still occur in the resulting dict
+    
+    output:
+    - return dict (pytree) with the modified weights and/or biases
+    """
+    def clip_leaves_with_kernel_in_path(path, leaf):
+        if "kernel" in jax.tree_util.keystr(path):
+            leaf = jnp.clip(leaf, min=kernel_min, max=kernel_max)
+            return leaf  # Modify leaf
+        return leaf  # Keep unchanged otherwise
+
+    def clip_leaves_with_bias_in_path(path, leaf):
+        if "bias" in jax.tree_util.keystr(path):
+            leaf = jnp.clip(leaf, min=bias_min, max=bias_max)
+            return leaf  # Modify leaf
+        return leaf  # Keep unchanged otherwise
+    
+    if kernel_min != None or kernel_max != None:
+        if kernel_min and kernel_max:
+            assert kernel_min < kernel_max, "kernel_min should be smaller than kernel_max"
+        param_dict = jax.tree_util.tree_map_with_path(clip_leaves_with_kernel_in_path, param_dict)
+
+    if bias_min != None or bias_max != None:
+        if bias_min and bias_max:
+            assert bias_min < bias_max, "bias_min should be smaller than bias_max"
+        param_dict = jax.tree_util.tree_map_with_path(clip_leaves_with_bias_in_path, param_dict)
+
+    return param_dict
+
+
+def presynaptic_competition_rescale(
+        param_dict: dict,
+
+):
+    """
+    Based on Fung and Fukai (2023) eq (3)
+    For every output node (column in the kernel matrix), check whether any weight surpasses value 1.0
+    If it surpasses, than divide entire column by the maximum value.
+
+    Input:
+    - param_dict: a pytree containing the weight kernels (can be arm_states object as well)
+
+    Output:
+    - dict (pytree) containing the rescaled weights
+    """
+    def rescale_kernel_columns(path, leaf):
+        if "kernel" in jax.tree_util.keystr(path): # only kernels will be rescaled, not biases, inputs, central reservoirs, ...
+            num_rows = leaf.shape[0]
+            maximums = jnp.max(jnp.abs(leaf), axis=0) # also look at biggest negative values. Also taken into account for the rescaling
+            maximums = jnp.where(maximums < 1., 1., maximums) # if maximum in column is less then 1., division by 1.
+            # will occur in that column. If it is greater then 1, division by the maximum will occur in that column.
+            maximums_2D = jnp.tile(maximums, (num_rows,1))
+            return leaf/maximums_2D  # Modify leaf
+            # division is automatically by positive value, so no signs will switch (since maximums_2D only comes from jnp.abs(leaf) values)
+        return leaf  # Keep unchanged otherwise
+
+    param_dict = jax.tree_util.tree_map_with_path(rescale_kernel_columns, param_dict)
+    
+    return param_dict
+
+
+def postsynaptic_competition_rescale(
+        param_dict: dict
+):
+    """
+    Inspired by Fung and Fukai (2023) eq (13)
+    For every input node (row in the kernel matrix), check whether any weight surpasses value 1.0
+    If it surpasses, than divide entire row by the maximum value.
+
+    Input:
+    - param_dict: a pytree containing the weight kernels (can be arm_states object as well)
+
+    Output:
+    - dict (pytree) containing the rescaled weights
+    """
+    def rescale_kernel_rows(path, leaf):
+        if "kernel" in jax.tree_util.keystr(path): # only kernels will be rescaled, not biases, inputs, central reservoirs, ...
+            num_columns = leaf.shape[1]
+            maximums = jnp.max(jnp.abs(leaf), axis=1) # also look at biggest negative values. Also taken into account for the rescaling
+            maximums = jnp.where(maximums < 1., 1., maximums) # if maximum in column is less then 1., division by 1.
+            # will occur in that column. If it is greater then 1, division by the maximum will occur in that column.
+            maximums_2D = jnp.tile(maximums, (num_columns,1)).T
+            return leaf/maximums_2D  # Modify leaf
+            # division is automatically by positive value, so no signs will switch (since maximums_2D only comes from jnp.abs(leaf) values)
+        return leaf  # Keep unchanged otherwise
+
+    param_dict = jax.tree_util.tree_map_with_path(rescale_kernel_rows, param_dict)
+    
+    return param_dict
+
+
+def multimodal_normal_sampling(
+        rng: chex.PRNGKey,
+        means: List,
+        stds: List,
+        sample_sizes: List,
+        trunc_mins: List,
+        trunc_maxs: List
+) -> chex.Array:
+    """
+    Samples from a multimodal normal distribution.
+    Inputs:
+    - rng: jax random number generator key
+    - means: means of the different normal distributions
+    - stds: standard deviations of the different normal distributions
+    - sample_sizes: how many samples to pick randomly from every distribution
+    - trunc_min: to prevent large initialisations, truncate the distributions minimums
+    - trunc_max: to prevent large initialisations, truncate the distribution maximums
+    The lengths of all inputs should be identical
+    """
+    lengths = []
+    lengths.append(len(means))
+    lengths.append(len(stds))
+    lengths.append(len(sample_sizes))
+    lengths.append(len(trunc_mins))
+    lengths.append(len(trunc_maxs))
+    num = lengths[0]
+
+    assert all(element == lengths[0] for element in lengths), "make sure all the provided lists have the same length"
+
+    rng, rng_tmp = jax.random.split(rng, 2)
+    rngs = jax.random.split(rng_tmp, num)
+
+    x_list = []
+    for i in range(num):
+        x_tmp = jax.random.truncated_normal(rngs[i], (trunc_mins[i]-means[i])/stds[i], (trunc_maxs[i]-means[i])/stds[i], sample_sizes[i]) * stds[i] + means[i]
+        x_list.append(x_tmp)
+
+    x = jnp.concatenate(x_list)
+
+    rng, rng_permutation = jax.random.split(rng, 2)
+    x = jax.random.permutation(rng_permutation, x)
+
+    return x
+
+
+
+
+def prune_pytree(pytree, obligatory_keyword="kernel"):
+    """
+    Keeps only the leaves from a PyTree where the path contains `obligatory_keyword`.
+
+    Args:
+        pytree: The input PyTree (nested dictionary, tuple, etc.).
+        obligatory_keyword: String that must be in the path for the leaf to be kept.
+
+    Returns:
+        A pruned PyTree containing only leaves with paths that include the `obligatory_keyword`.
+    """
+    def filter_fn(path, leaf):
+        """Return True if the obligatory keyword is in the path."""
+        return obligatory_keyword in str(path)
+
+    # Use `tree_map_with_path` to retain only elements that contain the `obligatory_keyword`
+    pruned_pytree = jax.tree_util.tree_map_with_path(
+        lambda path, leaf: leaf if filter_fn(path, leaf) else None,
+        pytree
+    )
+
+    # Recursively prune any `None` values from the structure
+    def remove_nones(x):
+        if isinstance(x, dict):
+            return {k: remove_nones(v) for k, v in x.items() if v is not None}
+        elif isinstance(x, tuple):
+            return tuple(remove_nones(v) for v in x if v is not None)
+        else:
+            return x
+
+    # Apply the pruning
+    return remove_nones(pruned_pytree)
    
 

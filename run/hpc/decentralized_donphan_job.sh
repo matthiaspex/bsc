@@ -1,10 +1,10 @@
 #!/bin/bash
 
-#PBS -N batch_20_run_1_donphan
+#PBS -N job_sub_test_b22
 #PBS -l nodes=1:ppn=2
 # #PBS -l gpus=1 # not necessary to specify on donphan, but DON'T FORGET on ACCELGOR
 #PBS -l mem=12gb
-#PBS -l walltime=72:00:00
+#PBS -l walltime=10:00:00
 #PBS -e /user/gent/457/vsc45787/bsc/Job_scripts_logs
 #PBS -o /user/gent/457/vsc45787/bsc/Job_scripts_logs
 #PBS -m abe
@@ -35,7 +35,7 @@ echo "which python"
 which python
 
 export PYTHONPATH="$HOME/bsc/:$HOME/bsc/bsc_utils/"
-export POLICY_PARAMS_DIR="./post_processing/trained_policy_params/"
+export POLICY_PARAMS_DIR="./post_processing/trained_policy_params/tmp/"
 export VIDEO_DIR="$VSC_DATA/brittle_star/tmp/"
 export IMAGE_DIR="$VSC_DATA/brittle_star/tmp/"
 

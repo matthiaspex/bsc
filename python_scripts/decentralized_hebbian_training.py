@@ -23,7 +23,8 @@ from bsc_utils.simulate.analyze import Simulator
 from bsc_utils.simulate.base import states_based_rollout
 from bsc_utils.miscellaneous import check_GPU_access, load_config_from_yaml, \
     store_config_and_policy_params, get_run_name_from_config, complete_sensor_selection, \
-    get_target_positions, check_sensor_selection_order, order_sensor_selection_in_config
+    get_target_positions, check_sensor_selection_order, order_sensor_selection_in_config, \
+    complete_config_with_defaults
 from bsc_utils.evolution import efficiency_from_reward_cost, fitness_from_stacked_data
 
 jnp.set_printoptions(precision=3, suppress=False, linewidth=100)
@@ -38,6 +39,7 @@ POLICY_PARAMS_DIR = os.environ["POLICY_PARAMS_DIR"] # where to store trained pol
 CONFIG_FILE = os.environ["CONFIG_FILE"]
 
 config = load_config_from_yaml(CONFIG_FILE)
+config = complete_config_with_defaults(config)
 
 try:
     config["controller"]["decentralized"]["decentralized_on"]
@@ -304,12 +306,15 @@ cost  = simulator.get_episode_cost()
 penalty = simulator.get_episode_penalty()
 efficiency = simulator.get_episode_efficiency()
 fitness = simulator.get_episode_fitness()
-simulator.get_ip_oop_joint_angles_plot(file_path = IMAGE_DIR + run_name + ".png")
-simulator.get_episode_video(file_path = VIDEO_DIR + run_name + ".mp4")
-# simulator.get_kernel_animation(file_path = VIDEO_DIR + run_name + " kernel" + ".mp4")
+simulator.get_ip_oop_joint_angles_plot(file_path = IMAGE_DIR + run_name + " joint plots.png")
+simulator.get_episode_video(file_path = VIDEO_DIR + run_name + " episode.mp4")
+simulator.get_decentralized_kernel_animation(file_path = VIDEO_DIR + run_name + " kernel" + ".mp4")
 simulator.get_final_kernel_histogram(file_path=IMAGE_DIR + run_name + " histogram" + ".png",\
                                         xlabel="synapse weights",\
                                         title="Final weight distribution - Undamaged")
+simulator.get_synapse_time_evolutions(file_path=IMAGE_DIR + run_name + " synapse plots.png",
+                                        rng=rng,
+                                        num_random_synapses=30)   
 
 
 print(f"""
@@ -331,12 +336,15 @@ if config["damage"]["damage"]:
     penalty_damage = simulator.get_episode_penalty()
     efficiency_damage = simulator.get_episode_efficiency()
     fitness_damage = simulator.get_episode_fitness()
-    simulator.get_ip_oop_joint_angles_plot(file_path = IMAGE_DIR + run_name + " DAMAGE.png")
-    simulator.get_episode_video(file_path = VIDEO_DIR + run_name + " DAMAGE.mp4")
-    # simulator.get_kernel_animation(file_path = VIDEO_DIR + run_name + " kernel" + " DAMAGE.mp4")
+    simulator.get_ip_oop_joint_angles_plot(file_path = IMAGE_DIR + run_name + " joint plots DAMAGE.png")
+    simulator.get_episode_video(file_path = VIDEO_DIR + run_name + " episode DAMAGE.mp4")
+    simulator.get_decentralized_kernel_animation(file_path = VIDEO_DIR + run_name + " kernel" + " DAMAGE.mp4")
     simulator.get_final_kernel_histogram(file_path=IMAGE_DIR + run_name + " histogram" + "DAMAGE.png",\
                                             xlabel="synapse weights",\
                                             title="Final weight distribution - Damaged")
+    simulator.get_synapse_time_evolutions(file_path=IMAGE_DIR + run_name + " synapse plots DAMAGE.png",
+                                            rng=rng,
+                                            num_random_synapses=30)   
 
     print(f"""
     reward_damage = {reward_damage}
@@ -362,15 +370,20 @@ if config["damage"]["damage"]:
 
 
 fps = int(1/simulator.environment_configuration.control_timestep)
-wandb.log({"Video trained model": wandb.Video(VIDEO_DIR + run_name + ".mp4", caption=run_name, fps=fps, format='mp4')})
-wandb.log({"Joint Angles trained model": wandb.Image(IMAGE_DIR + run_name + ".png")})
-# wandb.log({"Kernel visualisation": wandb.Video(VIDEO_DIR + run_name + " kernel" + ".mp4", caption=run_name, fps=fps, format='mp4')})
-wandb.log({"Kernel visualisation": wandb.Image(IMAGE_DIR + run_name + " histogram" + ".png")})
+wandb.log({"Video trained model": wandb.Video(VIDEO_DIR + run_name + " episode.mp4", caption=run_name, fps=fps, format='mp4')})
+wandb.log({"Joint Angles": wandb.Image(IMAGE_DIR + run_name + " joint plots.png")})
+wandb.log({"Kernel visualisation": wandb.Video(VIDEO_DIR + run_name + " kernel" + ".mp4", caption=run_name, fps=fps, format='mp4')}) # when hebbian controller
+# wandb.log({"Kernel visualisation": wandb.Image(IMAGE_DIR + run_name + " histogram" + ".png")}) # when static controller
+wandb.log({"Kernel final histogram": wandb.Image(IMAGE_DIR + run_name + " histogram" + ".png")})
+wandb.log({"Synapse time evolution": wandb.Image(IMAGE_DIR + run_name + " synapse plots.png")})
 
-wandb.log({"Video damaged morphology": wandb.Video(VIDEO_DIR + run_name + " DAMAGE.mp4", caption=run_name, fps=fps, format='mp4')})
-wandb.log({"Joint Angles damaged morophology": wandb.Image(IMAGE_DIR + run_name + " DAMAGE.png")})
-# wandb.log({"Kernel visualisation damaged": wandb.Video(VIDEO_DIR + run_name + " kernel" + " DAMAGE.mp4", caption=run_name, fps=fps, format='mp4')})
-wandb.log({"Kernel visualisation": wandb.Image(IMAGE_DIR + run_name + " histogram" + "DAMAGE.png")})
+
+wandb.log({"Video trained model damaged ": wandb.Video(VIDEO_DIR + run_name + " episode DAMAGE.mp4", caption=run_name, fps=fps, format='mp4')})
+wandb.log({"Joint Angles damaged": wandb.Image(IMAGE_DIR + run_name + " joint plots DAMAGE.png")})
+wandb.log({"Kernel visualisation damaged": wandb.Video(VIDEO_DIR + run_name + " kernel" + " DAMAGE.mp4", caption=run_name, fps=fps, format='mp4')}) # when hebbian controller
+# wandb.log({"Kernel visualisation": wandb.Image(IMAGE_DIR + run_name + " histogram" + "DAMAGE.png")}) # when static controller
+wandb.log({"Kernel final histogram damaged": wandb.Image(IMAGE_DIR + run_name + " histogram" + "DAMAGE.png")})
+wandb.log({"Synapse time evolution damaged": wandb.Image(IMAGE_DIR + run_name + " synapse plots DAMAGE.png")})
 
 
 
